@@ -291,3 +291,6 @@ type OrderDailyCostInfo struct {
 	ValueReward float64
 	Time        string
 }
+
+type PleageInfo struct{
+}
