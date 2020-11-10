@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"profit-allocation/lotus"
-
 	_ "profit-allocation/models"
 	_ "profit-allocation/routers"
 	_ "profit-allocation/tool"
@@ -14,6 +13,7 @@ func main() {
 	log.Init("profit.log", "debug")
 	//reward.TetsGetInfo()
 	go lotus.Setup()
-	//reward.GetMienrPleage("f021704")
+	//p,_:=reward.GetMienrPleage("f021704",195059)
+	//fmt.Println("-----",p)
 	beego.Run()
 }

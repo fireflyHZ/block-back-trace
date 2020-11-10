@@ -22,18 +22,42 @@ type RewardResp struct {
 
 type PostResp struct {
 	Code string
-	Msg string
+	Msg  string
 }
 
 type OrderInfoRequest struct {
-	OrderId    int
-	UserId     int
-	Share      int
-	Power      float64
+	OrderId int
+	UserId  int
+	Share   int
+	Power   float64
 }
 
 type OrderDailyRewardResp struct {
 	Code string
-	Msg string
+	Msg  string
 	Data []models.OrderDailyRewardInfo
 }
+
+type UserInfoResp struct {
+	Code string
+	Msg  string
+	Data models.UserInfo
+}
+
+type UserDailyInfoResp struct {
+	Code       string
+	Msg        string
+	TotalCount int
+	TotalPage  int
+	Data       []models.UserDailyRewardInfo
+}
+
+//--------------------------------
+type RewardRespTmp struct {
+	Code   string
+	Msg    string
+	Reward float64
+	Pledge float64
+}
+
+//-----------------------------

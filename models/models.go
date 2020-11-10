@@ -76,7 +76,7 @@ type MinerInfo struct {
 	Id           int `orm:"pk;auto"`
 	MinerId      string
 	QualityPower float64
-	Pleage    float64
+	Pleage       float64
 	CreateTime   int64
 	UpdateTime   int64
 }
@@ -148,11 +148,18 @@ type MineMessages struct {
 }
 
 type UserInfo struct {
-	Id     int `orm:"pk;auto"`
-	UserId int
-	Share  float64
-	Power  float64
-	Reward float64
+	Id            int `orm:"pk;auto"`
+	UserId        int
+	Share         int
+	Power         float64 //算力
+	Available     float64 //可用余额
+	TotalPleage   float64 //总质押
+	AdvancePleage float64 //垫付质押
+	Vesting       float64 //锁定金额
+	Release       float64 //已释放
+	Reward        float64 //总奖励
+	Fee           float64 //总奖励
+	UpdateTime    string
 }
 
 type UserBlockRewardInfo struct {
@@ -166,14 +173,15 @@ type UserBlockRewardInfo struct {
 }
 
 type UserDailyRewardInfo struct {
-	Id     int `orm:"pk;auto"`
-	UserId int
-	//MinerId    string
-	Reward     float64
-	Power      float64
-	Epoch      string
-	Time       string
-	UpdateTime uint64
+	Id               int `orm:"pk;auto"`
+	UserId           int
+	Reward           float64
+	Power            float64
+	Pledge           float64
+	Fee              float64
+	ImmediateRelease float64
+	LinearRelease    float64
+	Time             string
 }
 
 type OrderInfo struct {
@@ -205,6 +213,7 @@ type OrderDailyRewardInfo struct {
 	Reward     float64
 	Pleage     float64
 	Power      float64
+	Fee        float64
 	Epoch      int
 	Time       string
 	UpdateTime uint64
@@ -292,5 +301,45 @@ type OrderDailyCostInfo struct {
 	Time        string
 }
 
-type PleageInfo struct{
+type VestingInfo struct {
+	Id        int `orm:"pk;auto"`
+	UserId    int
+	Vesting   float64
+	Release   float64
+	Times     int32
+	StartTime string
+}
+
+//转账记录表
+type Transfer struct {
+	Id            int `orm:"pk;auto"`
+	From          string
+	To            string
+	ServiceCharge float64
+	Value         float64
+	Time          int64
+}
+
+//user 信息初始化表
+type UserFilDaily struct {
+	Id        int `orm:"pk;auto"`
+	UserId    int
+	Date      string
+	FilAmount float64
+	Type      int32
+	Days      int32
+	Remark    string
+	AddTime   string
+}
+
+type UserFilPledge struct {
+	Id         int `orm:"pk;auto"`
+	UserId     int
+	Date       string
+	FilPledge  float64
+	FilRelease float64
+	Type       int32
+	Days       int32
+	Remark     string
+	AddTime    string
 }

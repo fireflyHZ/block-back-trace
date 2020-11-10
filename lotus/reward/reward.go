@@ -189,7 +189,7 @@ func handleRequestInfo(dealBlcokHeight int, end int) (int, error) {
 		blocks := chainHeightHandle.Blocks()
 		for index, block := range blocks {
 			if inMiners(block.Miner.String()) {
-				err := calculateMineReward(index, blocks, chainHeightHandle.Cids(), chainHeightHandle.Key(), chainHeightAfter.Cids()[0], blockMessageResp)
+				err = calculateMineReward(index, blocks, chainHeightHandle.Cids(), chainHeightHandle.Key(), chainHeightAfter.Cids()[0], blockMessageResp)
 				if err != nil {
 					log.Logger.Error("ERROR: handleRequestInfo() calculateMineReward height:%+v err=%+v", dealBlcokHeight-1, err)
 					return end, err
@@ -431,6 +431,71 @@ func recordCostMessageInfo(gasout vm.GasOutputs, message api.Message, block type
 			return err
 		}
 	}
+	feeStr := bit.CalculateReward(expendInfo.Gas, expendInfo.BaseBurnFee)
+	feeStr = bit.CalculateReward(feeStr, expendInfo.OverEstimationBurn)
+	fee, _ := strconv.ParseFloat(feeStr, 64)
+	ordersInfo := make([]models.OrderInfo, 0)
+	_, err = o.QueryTable("fly_order_info").All(&ordersInfo)
+	if err != nil {
+		log.Logger.Error("Error  query order info time:%+v err:%+v ", walletId, t, err)
+		err := o.Rollback()
+		if err != nil {
+			log.Logger.Debug("DEBUG: query order info transation rollback error: %+v", err)
+		}
+		return err
+	}
+	netData := new(models.NetRunDataPro)
+	_, err = o.QueryTable("fly_net_run_data_pro").All(netData)
+	if err != nil {
+		log.Logger.Error("Error query net run data table err:%+v", err)
+		err = o.Rollback()
+		if err != nil {
+			log.Logger.Error("Error query table rollback err:%+v", err)
+		}
+		return err
+	}
+	for _, orderInfo := range ordersInfo {
+		orderFee := fee * float64(orderInfo.Share) / float64(netData.AllShare)
+		orderDaliyReward := new(models.OrderDailyRewardInfo)
+		n, err := o.QueryTable("fly_order_daily_reward_info").Filter("order_id", orderInfo.OrderId).Filter("time", t).All(orderDaliyReward)
+		if err != nil {
+			log.Logger.Error("Error  QueryTable OrderDailyRewardInfo user:%+v err:%+v", orderInfo.OrderId, err)
+			err = o.Rollback()
+			if err != nil {
+				log.Logger.Error("Error  QueryTable rollback err:%+v", err)
+			}
+			return err
+		}
+		if n == 0 {
+			orderDaliyReward.OrderId = orderInfo.OrderId
+			orderDaliyReward.Fee = orderFee
+			orderDaliyReward.UpdateTime = block.Timestamp
+			orderDaliyReward.Time = t
+			_, err = o.Insert(orderDaliyReward)
+			if err != nil {
+				log.Logger.Error("Error  Insert OrderDailyRewardInfo user:%+v err:%+v", orderInfo.OrderId, err)
+				err = o.Rollback()
+				if err != nil {
+					log.Logger.Error("Error  Insert rollback err:%+v", err)
+				}
+				return err
+			}
+		} else {
+			orderDaliyReward.Fee = orderFee
+			orderDaliyReward.UpdateTime = block.Timestamp
+			_, err = o.Update(orderDaliyReward)
+			if err != nil {
+				log.Logger.Error("Error  Update OrderDailyRewardInfo user:%+v err:%+v", orderInfo.OrderId, err)
+				err = o.Rollback()
+				if err != nil {
+					log.Logger.Error("Error  Update rollback err:%+v", err)
+				}
+				return err
+			}
+		}
+
+	}
+
 	err = o.Commit()
 	if err != nil {
 		log.Logger.Debug("DEBUG: recordCostMessageInfo orm transation Commit error: %+v", err)
@@ -601,9 +666,9 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 		return err
 	}
 	//获取质押
-	pleage,err:=GetMienrPleage(miner,blocks[0].Height)
+	pleage, err := GetMienrPleage(miner, blocks[0].Height)
 	if err != nil {
-		log.Logger.Error("ERROR GetMienrPleage ParseFloat err:%+v",err)
+		log.Logger.Error("ERROR GetMienrPleage ParseFloat err:%+v", err)
 		err := o.Rollback()
 		if err != nil {
 			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
@@ -611,7 +676,6 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 		return err
 	}
 	//	log.Logger.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-
 
 	//收益分配
 	minerInfo := new(models.MinerInfo)
@@ -648,7 +712,7 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 			return err
 		}
 	}
-	err = allocation(o, value, power-oldPower,pleage-oldPleage, epoch, miner, blocks[index].Timestamp)
+	err = allocation(o, value, power-oldPower, pleage-oldPleage, epoch, miner, blocks[index].Timestamp)
 	if err != nil {
 		err := o.Rollback()
 		if err != nil {
@@ -715,7 +779,7 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 	} else {
 		//记录块收益 todo
 		//更新walletinfo
-		if rewardInfo.Epoch != epoch {
+		if rewardInfo.Epoch < epoch {
 			rewardInfo.Reward = bit.CalculateReward(rewardInfo.Reward, mine)
 			//rewardInfo.Time=t
 			//rewardInfo.MinerId=minerId
@@ -894,101 +958,8 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 	return gas, mine, penalty, totalValue, minerPower, nil
 }
 
-/*func allocation1(o orm.Ormer, mine string, power float64, epoch string, miner string, timestamp uint64) error {
-
-	profitUsers := make([]models.UserInfo, 0)
-	commonUsers := make([]models.UserInfo, 0)
-	var allocatePower float64
-	_, err := o.QueryTable("fly_user_info").Filter("power__gt", 10).All(&profitUsers)
-	if err != nil {
-		log.Logger.Error("Error query table err:%+v", err)
-		err = o.Rollback()
-		if err != nil {
-			log.Logger.Error("Error query table rollback err:%+v", err)
-		}
-		return err
-	}
-
-	_, err = o.QueryTable("fly_user_info").Filter("power__lte", 10).All(&commonUsers)
-	if err != nil {
-		log.Logger.Error("Error query table err:%+v", err)
-		err = o.Rollback()
-		if err != nil {
-			log.Logger.Error("Error query table rollback err:%+v", err)
-		}
-		return err
-	}
-	//要分配的总算力 todo 别的什么方法通过sql直接查询
-	for _, user := range profitUsers {
-		allocatePower += user.Share
-	}
-
-	for _, user := range profitUsers {
-		//分配收益
-		mineFloat, err := strconv.ParseFloat(mine, 64)
-		if err != nil {
-			log.Logger.Error("Error  ParseFloat err:%+v", err)
-			err = o.Rollback()
-			if err != nil {
-				log.Logger.Error("Error  ParseFloat rollback err:%+v", err)
-			}
-			return err
-		}
-		user.Reward += user.Share / allocatePower * mineFloat
-
-		//分配算力
-		user.Power += power * user.Share
-		//log.Logger.Debug("------Update profitUsers:%+v increass %+v userPower:%+v", user.UserId, power*user.Share, user.Power)
-		//log.Logger.Debug("======Update profitUsers:%+v power %+v share:%+v", user.UserId, power,user.Share)
-		_, err = o.Update(&user)
-		if err != nil {
-			log.Logger.Error("Error  Update profitUsers:%+v err:%+v", user.UserId, err)
-			err = o.Rollback()
-			if err != nil {
-				log.Logger.Error("Error  Update rollback err:%+v", err)
-			}
-			return err
-		}
-		err = recordUserBlockAndDailyReward(o, user.UserId, user.Share/allocatePower*mineFloat, power*user.Share, epoch, miner, timestamp)
-		if err != nil {
-			log.Logger.Error("Error  Update profitUsers:%+v err:%+v", user.UserId, err)
-			err = o.Rollback()
-			if err != nil {
-				log.Logger.Error("Error  Update rollback err:%+v", err)
-			}
-			return err
-		}
-	}
-	for _, user := range commonUsers {
-		//分配算力
-		user.Power += power * user.Share
-		//log.Logger.Debug("------Update profitUsers:%+v increass %+v userPower:%+v", user.UserId, power*user.Share, user.Power)
-
-		_, err = o.Update(&user)
-		if err != nil {
-			log.Logger.Error("Error  Update commonUsers:%+v err:%+v", user.UserId, err)
-			err = o.Rollback()
-			if err != nil {
-				log.Logger.Error("Error  Update rollback err:%+v", err)
-			}
-			return err
-		}
-		err = recordUserBlockAndDailyReward(o, user.UserId, 0, power*user.Share, epoch, miner, timestamp)
-		if err != nil {
-			log.Logger.Error("Error  Update profitUsers:%+v err:%+v", user.UserId, err)
-			err = o.Rollback()
-			if err != nil {
-				log.Logger.Error("Error  Update rollback err:%+v", err)
-			}
-			return err
-		}
-	}
-
-	return nil
-}*/
-
-func allocation(o orm.Ormer, mine string, power float64,pleage float64, epoch int, miner string, timestamp uint64) error {
-		//log.Logger.Debug("allocation  epoch:%+v", epoch)
+func allocation(o orm.Ormer, mine string, power float64, pleage float64, epoch int, miner string, timestamp uint64) error {
+	//log.Logger.Debug("allocation  epoch:%+v", epoch)
 	netData := new(models.NetRunDataPro)
 	_, err := o.QueryTable("fly_net_run_data_pro").All(netData)
 	if err != nil {
@@ -1025,8 +996,8 @@ func allocation(o orm.Ormer, mine string, power float64,pleage float64, epoch in
 	for _, order := range profitOrders {
 		allocatePower += order.Share
 	}
-	allocatePower+=netData.AllShare-netData.TotalShare
-	log.Logger.Debug("DEBUG allocatePower :%+v",allocatePower)
+	allocatePower += netData.AllShare - netData.TotalShare
+	log.Logger.Debug("DEBUG allocatePower :%+v", allocatePower)
 	mineFloat, err := strconv.ParseFloat(mine, 64)
 	mineFloat *= 0.8
 	if err != nil {
@@ -1057,10 +1028,10 @@ func allocation(o orm.Ormer, mine string, power float64,pleage float64, epoch in
 				}
 				return err
 			}
-			increaseReward:=float64(order.Share)/float64(allocatePower)*mineFloat
-			increasePower:=power*float64(order.Share)/float64(netData.AllShare)
-			increasePleage:=pleage*float64(order.Share)/float64(netData.AllShare)
-			err = recordUserBlockAndDailyReward(o, order.OrderId, increaseReward, increasePower,increasePleage, epoch, miner, timestamp)
+			increaseReward := float64(order.Share) / float64(allocatePower) * mineFloat
+			increasePower := power * float64(order.Share) / float64(netData.AllShare)
+			increasePleage := pleage * float64(order.Share) / float64(netData.AllShare)
+			err = recordUserBlockAndDailyReward(o, order.OrderId, increaseReward, increasePower, increasePleage, epoch, miner, timestamp)
 			if err != nil {
 				log.Logger.Error("Error  Update profitUsers:%+v err:%+v", order.UserId, err)
 				err = o.Rollback()
@@ -1087,9 +1058,9 @@ func allocation(o orm.Ormer, mine string, power float64,pleage float64, epoch in
 				}
 				return err
 			}
-			increasePower:=power*float64(order.Share)/float64(netData.AllShare)
-			increasePleage:=pleage*float64(order.Share)/float64(netData.AllShare)
-			err = recordUserBlockAndDailyReward(o, order.OrderId, 0, increasePower,increasePleage, epoch, miner, timestamp)
+			increasePower := power * float64(order.Share) / float64(netData.AllShare)
+			increasePleage := pleage * float64(order.Share) / float64(netData.AllShare)
+			err = recordUserBlockAndDailyReward(o, order.OrderId, 0, increasePower, increasePleage, epoch, miner, timestamp)
 			if err != nil {
 				log.Logger.Error("Error  Update profitUsers:%+v err:%+v", order.OrderId, err)
 				err = o.Rollback()
@@ -1105,10 +1076,10 @@ func allocation(o orm.Ormer, mine string, power float64,pleage float64, epoch in
 	return nil
 }
 
-func recordUserBlockAndDailyReward(o orm.Ormer, orderId int, reward, power,pleage float64, epoch int, miner string, timestamp uint64) error {
+func recordUserBlockAndDailyReward(o orm.Ormer, orderId int, reward, power, pleage float64, epoch int, miner string, timestamp uint64) error {
 	//插入块收益
-	if orderId==2{
-		log.Logger.Debug("recordUserBlockAndDailyReward reward :%+v epoch :%+v",reward,epoch)
+	if orderId == 2 {
+		log.Logger.Debug("recordUserBlockAndDailyReward reward :%+v epoch :%+v", reward, epoch)
 	}
 	orderEpochReward := new(models.OrderBlockRewardInfo)
 	orderEpochReward.OrderId = orderId
@@ -1156,7 +1127,7 @@ func recordUserBlockAndDailyReward(o orm.Ormer, orderId int, reward, power,pleag
 			}
 			return err
 		}
-	}else {
+	} else {
 		orderDaliyReward.Reward += reward
 		orderDaliyReward.Pleage += pleage
 		orderDaliyReward.Power += power

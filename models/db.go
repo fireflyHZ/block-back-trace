@@ -15,7 +15,7 @@ import (
 func init() {
 	// 注册数据库驱动
 	if err := orm.RegisterDriver("mysql", orm.DRMySQL); err != nil {
-		log.Logger.Error("Error RegisterDriver err:%+v",err)
+		log.Logger.Error("Error RegisterDriver err:%+v", err)
 		return
 	}
 	userName := beego.AppConfig.String("mysqluser")
@@ -25,11 +25,10 @@ func init() {
 	url := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&allowOldPasswords=1",
 		userName, password, address, dbName)
 
-
 	// 注册数据库
 	if err := orm.RegisterDataBase("default", "mysql", url); err != nil {
 		//log.Logger.Error("Error RegisterDataBase err:%+v",err)
-		fmt.Println("RegisterDataBase err:",err)
+		fmt.Println("RegisterDataBase err:", err)
 		return
 	}
 
@@ -55,9 +54,17 @@ func init() {
 		new(Orders),
 		new(SettlePlan),
 		new(OrderGoods),
+		new(VestingInfo),
+		new(UserFilDaily),
+		new(UserFilPledge),
+		new(Transfer),
+		//---------------
+		new(MinerInfoTmp),
+		new(NetRunDataProTmp),
+		new(RewardInfoTmp),
 	)
-	if err:=orm.RunSyncdb("default", false, true);err!=nil{
-		log.Logger.Error("Error RunSyncdb err:%+v",err)
+	if err := orm.RunSyncdb("default", false, true); err != nil {
+		log.Logger.Error("Error RunSyncdb err:%+v", err)
 		return
 	}
 
@@ -70,6 +77,6 @@ func init() {
 	o:=orm.NewOrm()
 	num,err:=o.InsertMulti(5,users)
 	fmt.Println(num,err)
-*/
+	*/
 
 }
