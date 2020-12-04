@@ -334,5 +334,9 @@ func initTmpData() {
 		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation4)
 		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation5)
 		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation6)
+		n, err = o.InsertMulti(6, minerAndWalletRelations)
+		if err != nil {
+			fmt.Println("insert minerAndWalletRelations err:", err)
+		}
 	}
 }

@@ -37,9 +37,9 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 	rewardInfo := make([]models.RewardInfoTmp, 0)
 	o := orm.NewOrm()
 
-	num, err := o.QueryTable("fly_reward_info_tmp").Filter("time", t).All(&rewardInfo)
+	_, err := o.QueryTable("fly_reward_info_tmp").Filter("time", t).All(&rewardInfo)
 	log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
-	if err != nil || num == 0 {
+	if err != nil  {
 		resp := data.RewardRespTmp{
 			Code:       "fail",
 			Msg:        "get reward info fail",
@@ -68,9 +68,9 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 
 	expendInfo := make([]models.ExpendInfo, 0)
 
-	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
+	_, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
-	if err != nil || num == 0 {
+	if err != nil   {
 		resp := data.RewardRespTmp{
 			Code:       "fail",
 			Msg:        "get expend info fail",
@@ -83,7 +83,7 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 		c.Data["json"] = &resp
 		c.ServeJSON()
 		return
-	} else {
+	} else{
 		for _, info := range expendInfo {
 			gas = bit.CalculateReward(gas, info.Gas)
 			gas = bit.CalculateReward(gas, info.BaseBurnFee)
@@ -92,8 +92,8 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 	}
 	//todo totalpower
 	minerPowerStatus:=make([]models.MinerPowerStatus,0)
-	num,err=o.QueryTable("fly_miner_power_status").Filter("time",t).All(&minerPowerStatus)
-	if err != nil || num==0 {
+	_,err=o.QueryTable("fly_miner_power_status").Filter("time",t).All(&minerPowerStatus)
+	if err != nil  {
 		resp := data.RewardRespTmp{
 			Code:       "fail",
 			Msg:        "get miner power info fail",
@@ -204,7 +204,7 @@ func (c *RewardTmpController) GetMinerInfo() {
 
 	num, err := o.QueryTable("fly_reward_info_tmp").Filter("miner_id",miner).Filter("time", t).All(rewardInfo)
 	//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
-	if err != nil || num == 0 {
+	if err != nil  {
 		resp := data.RewardRespTmp{
 			Code:       "fail",
 			Msg:        "get reward info fail",
@@ -217,9 +217,9 @@ func (c *RewardTmpController) GetMinerInfo() {
 		c.Data["json"] = &resp
 		c.ServeJSON()
 		return
-	} else {
+	} else if num!=0 {
 			r, _ := strconv.ParseFloat(rewardInfo.Value, 64)
-			reward += r
+			reward = r
 			pledge = rewardInfo.Pledge
 			power = rewardInfo.Power
 	}
@@ -241,9 +241,9 @@ func (c *RewardTmpController) GetMinerInfo() {
 	}else {
 		for _,wallet:=range minerAndWalletRelations{
 			expendInfo := new(models.ExpendInfo)
-			num, err = o.QueryTable("fly_expend_info").Filter("wallet_id",wallet.WalletId).Filter("time", t).All(&expendInfo)
-			log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
-			if err != nil || num == 0 {
+			num, err = o.QueryTable("fly_expend_info").Filter("wallet_id",wallet.WalletId).Filter("time", t).All(expendInfo)
+			//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
+			if err != nil  {
 				resp := data.RewardRespTmp{
 					Code:       "fail",
 					Msg:        "get expend info fail",
@@ -256,7 +256,7 @@ func (c *RewardTmpController) GetMinerInfo() {
 				c.Data["json"] = &resp
 				c.ServeJSON()
 				return
-			} else {
+			} else if num!=0{
 					gas = bit.CalculateReward(gas, expendInfo.Gas)
 					gas = bit.CalculateReward(gas, expendInfo.BaseBurnFee)
 					gas = bit.CalculateReward(gas, expendInfo.OverEstimationBurn)
@@ -265,8 +265,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 		}
 	//todo totalpower
 	minerPowerStatus:=new(models.MinerPowerStatus)
-	num,err=o.QueryTable("fly_miner_power_status").Filter("miner_id",miner).Filter("time",t).All(minerPowerStatus)
-	if err != nil || num==0 {
+	_,err=o.QueryTable("fly_miner_power_status").Filter("miner_id",miner).Filter("time",t).All(minerPowerStatus)
+	if err != nil  {
 		resp := data.RewardRespTmp{
 			Code:       "fail",
 			Msg:        "get miner power info fail",
