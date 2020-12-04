@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/astaxie/beego/orm"
 	"profit-allocation/lotus/reward"
-	"profit-allocation/lotus/wallet"
 	"profit-allocation/models"
 	"profit-allocation/tool/log"
 	"profit-allocation/tool/sync"
@@ -12,29 +11,36 @@ import (
 	"time"
 )
 
+//var HandleChannel = make(chan int)
+
 func Setup() {
-	walletProfit := time.NewTicker(time.Second * time.Duration(3600))
+	//walletProfit := time.NewTicker(time.Second * time.Duration(3600))
 	collectTime := time.NewTicker(time.Second * time.Duration(30))
-	defer walletProfit.Stop()
+	//defer walletProfit.Stop()
 	defer collectTime.Stop()
 
 	//完成数据初始化
 
-	initOrderData()
+	//initOrderData()
 	initTmpData()
-	reward.CalculateUserFund()
+
 	//---------------------------------------------
+	//HandleChannel<-0
 	for {
 		select {
-		case nowDatetime := <-walletProfit.C:
-			//判断每天0点进行数据获取
-			if isExecutingPoint(nowDatetime) {
-				wallet.CalculateWalletProfit()
-				reward.CalculateUserFund()
-			}
+		//case nowDatetime := <-walletProfit.C:
+		//	//判断每天0点进行数据获取
+		//	if isExecutingPoint(nowDatetime) {
+		//		wallet.CalculateWalletProfit()
+		//		//reward.CalculateUserFund()
+		//	}
 		case <-collectTime.C:
 			loop()
+		//case <-HandleChannel:
+		//	time.Sleep(time.Second*20)
+		//	reward.CollectTotalRerwardAndPledge()
 		}
+
 	}
 }
 func isExecutingPoint(nowDatetime time.Time) bool {
@@ -47,11 +53,12 @@ func isExecutingPoint(nowDatetime time.Time) bool {
 }
 
 func loop() {
-	sync.Wg.Add(3)
-	go wallet.CollectWalletData()
-	go reward.CollectLotusChainBlockRunData()
+	sync.Wg.Add(2)
+//	go wallet.CollectWalletData()
+//	go reward.CollectLotusChainBlockRunData()
 	//================
 	go reward.CollectTotalRerwardAndPledge()
+	go reward.CalculateMsgGasData()
 	sync.Wg.Wait()
 }
 
@@ -229,30 +236,30 @@ func initTmpData() {
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
-	pleagef02420, err := strconv.ParseFloat("32958.213756507100668595", 64)
-	pleagef021695, err := strconv.ParseFloat("1754.011856122781753658", 64)
-	pleagef021704, err := strconv.ParseFloat("505.89973939318149791", 64)
+	pleagef02420, err := strconv.ParseFloat("40740.0792792743", 64)
+	pleagef021695, err := strconv.ParseFloat("1752.1556517147642", 64)
+	pleagef021704, err := strconv.ParseFloat("1740.0369707424757", 64)
 	if err != nil {
 		log.Logger.Error("ParseFloat err:%+v", err)
 	}
 	if n == 0 {
 		miner1 := models.MinerInfoTmp{
 			MinerId:      "f02420",
-			QualityPower: 1855.65625,
+			QualityPower: 3064.53125,
 			Pleage:       pleagef02420,
 			CreateTime:   0,
 			UpdateTime:   0,
 		}
 		miner2 := models.MinerInfoTmp{
 			MinerId:      "f021695",
-			QualityPower: 187.59375,
+			QualityPower: 199.03125,
 			Pleage:       pleagef021695,
 			CreateTime:   0,
 			UpdateTime:   0,
 		}
 		miner3 := models.MinerInfoTmp{
 			MinerId:      "f021704",
-			QualityPower: 51.53125,
+			QualityPower: 255.78125,
 			Pleage:       pleagef021704,
 			CreateTime:   0,
 			UpdateTime:   0,
@@ -273,10 +280,22 @@ func initTmpData() {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
 	if n == 0 {
-		netRunData.ReceiveBlockHeight = 148888
+		netRunData.ReceiveBlockHeight = 221040
 		n, err = o.Insert(netRunData)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
+		}
+	}
+	msgGasNetRunData := new(models.MsgGasNetRunDataProTmp)
+	n, err = o.QueryTable("fly_msg_gas_net_run_data_pro_tmp").All(msgGasNetRunData)
+	if err != nil {
+		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
+	}
+	if n == 0 {
+		msgGasNetRunData.ReceiveBlockHeight = 221040
+		n, err = o.Insert(msgGasNetRunData)
+		if err != nil {
+			fmt.Println("insert msgGasNetRunData err:", err)
 		}
 	}
 }

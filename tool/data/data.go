@@ -58,6 +58,13 @@ type RewardRespTmp struct {
 	Msg    string
 	Reward float64
 	Pledge float64
+	Power float64
+	Update string
 }
 
+type MessageGasTmp struct {
+	Code   string
+	Msg    string
+	Gas    string
+}
 //-----------------------------

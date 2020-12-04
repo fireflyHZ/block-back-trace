@@ -32,6 +32,7 @@ import (
 )
 
 var DealMessageBlockHeight = 148888
+var UserInfoFundData = "2020-10-15"
 
 func CollectLotusChainBlockRunData() {
 	defer sync.Wg.Done()
@@ -42,6 +43,13 @@ func CollectLotusChainBlockRunData() {
 		return
 	} else {
 		DealMessageBlockHeight = height
+	}
+
+	if data, err := queryUserInfoFundDate(); err != nil {
+		log.Logger.Error("ERROR: queryUserInfoFundDate(), err=%v", err)
+		return
+	} else {
+		UserInfoFundData = data
 	}
 
 	//全网总算力
@@ -108,6 +116,29 @@ func queryNetRunData() (height int, err error) {
 	}
 	return
 }
+
+func queryUserInfoFundDate() ( string,  error) {
+	var date string
+	o := orm.NewOrm()
+	userInfo := new(models.UserInfo)
+	n, err := o.QueryTable("fly_user_info").All(userInfo)
+	if err != nil {
+		return date,err
+	}
+	if n == 0 {
+		date = UserInfoFundData
+		return date,err
+	} else {
+		t, err := time.Parse("2006-01-02", userInfo.UpdateTime)
+		if err != nil {
+			return date,err
+		}
+		handleTime := t.AddDate(0, 0, 1)
+		date = handleTime.Format("2006-01-02")
+	}
+	return date ,nil
+}
+
 func updateNetRunData(height int) (err error) {
 	o := orm.NewOrm()
 	netRunData := new(models.NetRunDataPro)
@@ -186,7 +217,11 @@ func handleRequestInfo(dealBlcokHeight int, end int) (int, error) {
 			return end, err
 		}
 
+		//
 		blocks := chainHeightHandle.Blocks()
+		//timeStamp:=blocks[0].Timestamp
+		go userInfoFund(int64(blocks[0].Timestamp))
+
 		for index, block := range blocks {
 			if inMiners(block.Miner.String()) {
 				err = calculateMineReward(index, blocks, chainHeightHandle.Cids(), chainHeightHandle.Key(), chainHeightAfter.Cids()[0], blockMessageResp)
@@ -219,6 +254,21 @@ func handleRequestInfo(dealBlcokHeight int, end int) (int, error) {
 		////}
 	}
 	return dh, nil
+}
+
+func userInfoFund(t int64)  {
+	blockTimeStr := time.Unix(t, 0).Format("2006-01-02")
+	blockTime, err := time.Parse("2006-01-02", blockTimeStr)
+	if err != nil {
+		return
+	}
+	userInfoTime, err := time.Parse("2006-01-02", UserInfoFundData)
+	if err != nil {
+		return
+	}
+	if blockTime.Unix() > userInfoTime.Unix() {
+		CalculateUserFund(blockTime.Unix())
+	}
 }
 
 func getChainHeadByHeight(height int) (tipset *types.TipSet, err error) {
@@ -602,7 +652,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 
 	nodeApi, closer, err := lotusClient.NewFullNodeRPC(ctx, lotusHost, requestHeader)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error("getGasout  NewFullNodeRPC err:%+v", err)
 		return
 	}
 	defer closer()
@@ -611,12 +661,14 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 	resp, err := nodeApi.ChainGetParentReceipts(ctx, blockCid)
 	//fmt.Printf("resp :%+v", resp[0])
 	if err != nil {
-		fmt.Println("StateCompute err", err)
+		log.Logger.Error("getGasout  ChainGetParentReceipts err:%+v", err)
 		return
 	}
-	//log.Logger.Debug("11111111resp:%+v\n blockCid:%+v\n,gasused:%+v\n msgid:%+v", len(resp), blockCid, resp[i].GasUsed, messages.Cid())
+/*	for in, r := range resp {
+		log.Logger.Debug("11111111 i:%+v  in:%+v used:%+v\n ", i, in, r.GasUsed)
+	}*/
 
-	gasout = vm.ComputeGasOutputs(resp[0].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium)
+	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium)
 	//fmt.Printf("gasout:%+v\n", gasout)
 	return
 }
@@ -628,12 +680,13 @@ func getBlockMessage(blockCid cid.Cid) (blockMsg *api.BlockMessages) {
 
 	nodeApi, closer, err := lotusClient.NewFullNodeRPC(ctx, lotusHost, requestHeader)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error("getBlockMessage  NewFullNodeRPC err:%+v", err)
 		return
 	}
 	defer closer()
 	blockMsg, err = nodeApi.ChainGetBlockMessages(ctx, blockCid)
 	if err != nil {
+		log.Logger.Error("getBlockMessage  ChainGetBlockMessages err:%+v", err)
 		return
 	}
 	return
@@ -801,6 +854,17 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 		}
 
 	}
+
+	err = updateNetRunData(epoch + 1)
+	if err != nil {
+		log.Logger.Error("Error  Update net run data  err:%+v height:%+v ", err, epoch)
+		err := o.Rollback()
+		if err != nil {
+			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+		}
+		return err
+	}
+
 	err = o.Commit()
 	if err != nil {
 		log.Logger.Debug("DEBUG: collectWalletData orm transation commit error: %+v", err)
@@ -833,11 +897,12 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 	//var mineReward string
 	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), lotusHost, requestHeader)
 	if err != nil {
-		fmt.Println(err)
+		log.Logger.Error("getRewardInfo NewFullNodeRPC err:%+v", err)
 		return "0.0", "0.0", "0.0", "0.0", 0, err
 	}
 	defer closer()
 	for i := index; i >= 0; i-- {
+		//自己挖出块的msgs
 		if i == index {
 			messages, err := nodeApi.ChainGetBlockMessages(context.Background(), blockCid[i])
 			if err != nil {
@@ -848,6 +913,7 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 				rewardMap[message.Cid().String()] = base
 			}
 		} else {
+			//在自己出块之前的矿工打包的msgs
 			messages, err := nodeApi.ChainGetBlockMessages(context.Background(), blockCid[i])
 			if err != nil {
 				log.Logger.Error("Error getRewardInfo ChainGetBlockMessages err:%+v", err)
@@ -1154,14 +1220,14 @@ func unmarshalState(r io.Reader) *reward.State {
 
 	maj, extra, err := cbg.CborReadHeaderBuf(br, scratch)
 	if err != nil {
-		fmt.Println("CborReadHeaderBuf err", err)
+		log.Logger.Error("CborReadHeaderBuf err:%+v", err)
 	}
 	if maj != cbg.MajArray {
-		fmt.Println("maj :", maj)
+		log.Logger.Debug("maj : %+v", maj)
 	}
 
 	if extra != 9 {
-		fmt.Println("extra :", extra)
+		log.Logger.Debug("extra != 9 extra :%+v", extra)
 	}
 
 	// t.CumsumBaseline (big.Int) (struct)
@@ -1169,7 +1235,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.CumsumBaseline.UnmarshalCBOR(br); err != nil {
-			fmt.Println("CumsumBaseline err :", err)
+			log.Logger.Error("CumsumBaseline err : %+v", err)
 		}
 
 	}
@@ -1178,7 +1244,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.CumsumRealized.UnmarshalCBOR(br); err != nil {
-			fmt.Println("CumsumRealized err :", err)
+			log.Logger.Error("CumsumRealized err : %+v", err)
 		}
 
 	}
@@ -1188,23 +1254,22 @@ func unmarshalState(r io.Reader) *reward.State {
 		var extraI int64
 		fmt.Println("maj", maj, "extar", extra)
 		if err != nil {
-			fmt.Println("CborReadHeaderBuf err :", err)
-
+			log.Logger.Error("CborReadHeaderBuf err : %+v", err)
 		}
 		switch maj {
 		case cbg.MajUnsignedInt:
 			extraI = int64(extra)
 			if extraI < 0 {
-				fmt.Println("int64 positive overflow")
+				log.Logger.Debug("int64 positive overflow")
 			}
 		case cbg.MajNegativeInt:
 			extraI = int64(extra)
 			if extraI < 0 {
-				fmt.Println("int64 negative oveflow")
+				log.Logger.Debug("int64 negative oveflow")
 			}
 			extraI = -1 - extraI
 		default:
-			fmt.Printf("wrong type for int64 field: %d \n", maj)
+			log.Logger.Debug("wrong type for int64 field: %d ", maj)
 		}
 
 		rewardActorState.EffectiveNetworkTime = abi.ChainEpoch(extraI)
@@ -1214,7 +1279,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.EffectiveBaselinePower.UnmarshalCBOR(br); err != nil {
-			fmt.Printf("unmarshaling t.EffectiveBaselinePower: %w \n", err)
+			log.Logger.Error("unmarshaling t.EffectiveBaselinePower: %+v", err)
 		}
 
 	}
@@ -1223,7 +1288,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.ThisEpochReward.UnmarshalCBOR(br); err != nil {
-			fmt.Printf("unmarshaling t.ThisEpochReward: %w\n", err)
+			log.Logger.Error("unmarshaling t.ThisEpochReward: %+v", err)
 		}
 
 	}
@@ -1233,17 +1298,15 @@ func unmarshalState(r io.Reader) *reward.State {
 
 		b, err := br.ReadByte()
 		if err != nil {
-			fmt.Printf("unmarshaling t.ReadByte: %w\n", err)
-
+			log.Logger.Error("unmarshaling t.ReadByte: %+v", err)
 		}
 		if b != cbg.CborNull[0] {
 			if err := br.UnreadByte(); err != nil {
-				fmt.Printf("unmarshaling t.UnreadByte: %w\n", err)
-
+				log.Logger.Error("unmarshaling t.UnreadByte: %+v", err)
 			}
 			rewardActorState.ThisEpochRewardSmoothed = new(smoothing.FilterEstimate)
 			if err := rewardActorState.ThisEpochRewardSmoothed.UnmarshalCBOR(br); err != nil {
-				fmt.Printf("ThisEpochRewardSmoothed: %w\n", err)
+				log.Logger.Error("ThisEpochRewardSmoothed: %+v", err)
 			}
 		}
 
@@ -1253,7 +1316,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.ThisEpochBaselinePower.UnmarshalCBOR(br); err != nil {
-			fmt.Printf("ThisEpochBaselinePower: %w\n", err)
+			log.Logger.Error("ThisEpochBaselinePower: %+v", err)
 		}
 
 	}
@@ -1262,22 +1325,22 @@ func unmarshalState(r io.Reader) *reward.State {
 		maj, extra, err := cbg.CborReadHeaderBuf(br, scratch)
 		var extraI int64
 		if err != nil {
-			fmt.Printf("CborReadHeaderBuf: %w\n", err)
+			log.Logger.Error("CborReadHeaderBuf: %+v", err)
 		}
 		switch maj {
 		case cbg.MajUnsignedInt:
 			extraI = int64(extra)
 			if extraI < 0 {
-				fmt.Println("int64 positive overflow")
+				log.Logger.Debug("int64 positive overflow")
 			}
 		case cbg.MajNegativeInt:
 			extraI = int64(extra)
 			if extraI < 0 {
-				fmt.Println("int64 negative oveflow")
+				log.Logger.Debug("int64 negative oveflow")
 			}
 			extraI = -1 - extraI
 		default:
-			fmt.Printf("wrong type for int64 field: %d \n", maj)
+			log.Logger.Debug("wrong type for int64 field: %+v", maj)
 		}
 
 		rewardActorState.Epoch = abi.ChainEpoch(extraI)
@@ -1287,7 +1350,7 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 
 		if err := rewardActorState.TotalMined.UnmarshalCBOR(br); err != nil {
-			fmt.Printf("unmarshaling t.TotalMined: %w\n", err)
+			log.Logger.Error("unmarshaling t.TotalMined: %+v", err)
 		}
 
 	}
@@ -1325,7 +1388,9 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(148887)
+	var epoch = abi.ChainEpoch(290159)
+	tipset,_:=nodeApi.ChainHead(context.Background())
+	fmt.Printf("444444%+v \n ",tipset.Height())
 	t := types.NewTipSetKey()
 	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
 	if err != nil {
@@ -1335,5 +1400,12 @@ func TetsGetInfo() {
 	}
 	miner, _ := address.NewFromString("f021704")
 	p, _ := nodeApi.StateMinerPower(context.Background(), miner, blocks.Key())
-	fmt.Printf("==========%+v", p)
+	fmt.Printf("==========%+v\n", p)
+	//mAddr,_:=address.NewFromString("f02420")
+	//fmt.Println("11111")
+	//minerINfo,err:= nodeApi.StateMinerInfo(context.Background(),mAddr,blocks.Key())
+	//fmt.Println("2222")
+	//fmt.Println("miner ger base info err:",err)
+	//pledge,err:=GetMienrPleage("f02420",267130)
+	//fmt.Printf("------%+v\n", pledge)
 }

@@ -10,7 +10,7 @@ import (
 var TimeFlag int64 = 1602633600         //"2020-10-14"日时间戳
 var AllocateTimeFlag int64 = 1603584000 //"2020-10-25"日时间戳
 
-func CalculateUserFund() {
+func CalculateUserFund(newTimeStamp int64) {
 	//遍历user
 	o := orm.NewOrm()
 	usersInfo := make([]models.UserInfo, 0)
@@ -37,17 +37,17 @@ func CalculateUserFund() {
 		return
 	}
 	//当前日期
-	nowTimeStr := time.Now().Format("2006-01-02")
-	nowTimeStamp, err := time.Parse("2006-01-02", nowTimeStr)
+	//nowTimeStr := time.Now().Format("2006-01-02")
+	//nowTimeStamp, err := time.Parse("2006-01-02", t)
 
-	if err != nil {
-		log.Logger.Error("ERROR: handleRequestInfo() calculateMineReward nowTimeStamp parse err=%+v", err)
-		return
-	}
-	log.Logger.Debug("Debug update :%+v  now:%+v ", updateTimeStamp.Format("2006-01-02"), nowTimeStamp.Format("2006-01-02"))
+	//if err != nil {
+	//	log.Logger.Error("ERROR: handleRequestInfo() calculateMineReward nowTimeStamp parse err=%+v", err)
+	//	return
+	//}
+	//log.Logger.Debug("Debug update :%+v  now:%+v ", updateTimeStamp.Format("2006-01-02"), nowTimeStamp.Format("2006-01-02"))
 
 	for {
-		if nowTimeStamp.Unix() > updateTimeStamp.Unix() {
+		if newTimeStamp > updateTimeStamp.Unix() {
 			t := updateTimeStamp.Format("2006-01-02")
 			//从10-25日开始，立即释放当天的25%
 			if updateTimeStamp.Unix() >= AllocateTimeFlag {

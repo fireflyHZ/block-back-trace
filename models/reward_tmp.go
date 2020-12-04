@@ -16,6 +16,13 @@ type NetRunDataProTmp struct {
 	UpdateTime         int64
 }
 
+type MsgGasNetRunDataProTmp struct {
+	Id                 int `orm:"pk;auto"`
+	ReceiveBlockHeight int
+	CreateTime         int64
+	UpdateTime         int64
+}
+
 type RewardInfoTmp struct {
 	Id      int `orm:"pk;auto"`
 	MinerId string
@@ -23,6 +30,7 @@ type RewardInfoTmp struct {
 	Epoch      int
 	Value      string
 	Pledge     float64
+	Power      float64
 	Time       string
 	UpdateTime int64
 }

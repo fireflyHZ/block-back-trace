@@ -62,6 +62,7 @@ func init() {
 		new(MinerInfoTmp),
 		new(NetRunDataProTmp),
 		new(RewardInfoTmp),
+		new(MsgGasNetRunDataProTmp),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		log.Logger.Error("Error RunSyncdb err:%+v", err)
