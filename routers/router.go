@@ -28,6 +28,7 @@ func init() {
 				// /firefly/profit/total_reward_info
 				beego.NSRouter("/total_reward_info", &controllers.RewardTmpController{}, "get:GetRewardAndPledge"),
 				beego.NSRouter("/total_messages_gas_info", &controllers.RewardTmpController{}, "get:GetMessagesGas"),
+				beego.NSRouter("/total_miner_info", &controllers.RewardTmpController{}, "get:GetMinerInfo"),
 			),
 		)
 

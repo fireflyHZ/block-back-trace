@@ -220,7 +220,15 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			return err
 		}
 		//	log.Logger.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-
+		err=putMinerPowerStatus(o,miner,power,t)
+		if err != nil {
+			log.Logger.Error("ERROR GetMienrPleage putMinerPowerStatus miner:%+v height:%+v err:%+v", miner, height, err)
+			err := o.Rollback()
+			if err != nil {
+				log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+			}
+			return err
+		}
 		//收益分配
 		minerInfo := new(models.MinerInfoTmp)
 		n, err := o.QueryTable("fly_miner_info_tmp").Filter("miner_id", miner).All(minerInfo)
@@ -349,7 +357,15 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	winCount := blocks[index].ElectionProof.WinCount
 	value, power, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages)
 	//	log.Logger.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-
+	if err != nil {
+		err := o.Rollback()
+		if err != nil {
+			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+		}
+		return err
+	}
+	//新增存储当天miner power状态、MinerPowerStatus
+	err=putMinerPowerStatus(o,miner,power,t)
 	if err != nil {
 		err := o.Rollback()
 		if err != nil {
@@ -701,4 +717,43 @@ func calculateRewardAndPledgeTest(index int, blocks []*types.BlockHeader, blockC
 	log.Logger.Debug("------miner:%+v,epoch:%+v,value:%+v,wincount:%+v", blocks[index].Miner, epoch, value, winCount)
 
 	return value, nil
+}
+
+func putMinerPowerStatus(o orm.Ormer,miner string,power float64,t string) error {
+	minerPowerStatus:=new(models.MinerPowerStatus)
+	num,err:=o.QueryTable("fly_miner_power_status").Filter("miner_id",miner).Filter("time",t).All(minerPowerStatus)
+	if err != nil {
+		log.Logger.Error("Error  QueryTable miner power status :%+v err:%+v num:%+v ", miner, err, num)
+		err := o.Rollback()
+		if err != nil {
+			log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+		}
+		return err
+	}
+	if num==0{
+		minerPowerStatus.Power=power
+		minerPowerStatus.Time=t
+		minerPowerStatus.MinerId=miner
+		_,err=o.Insert(minerPowerStatus)
+		if err != nil {
+			log.Logger.Error("Error  InsertTable miner power status :%+v err:%+v ", miner, err)
+			err := o.Rollback()
+			if err != nil {
+				log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+			}
+			return err
+		}
+	}else {
+		minerPowerStatus.Power=power
+		_,err=o.Update(minerPowerStatus)
+		if err != nil {
+			log.Logger.Error("Error  UpdateTable miner power status :%+v err:%+v ", miner, err)
+			err := o.Rollback()
+			if err != nil {
+				log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+			}
+			return err
+		}
+	}
+	return nil
 }

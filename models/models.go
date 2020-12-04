@@ -343,3 +343,17 @@ type UserFilPledge struct {
 	Remark     string
 	AddTime    string
 }
+
+//miner power status
+type MinerPowerStatus struct {
+	Id      int `orm:"pk;auto"`
+	MinerId string
+	Power   float64
+	Time    string
+}
+
+type MinerAndWalletRelation struct {
+	Id       int `orm:"pk;auto"`
+	MinerId  string
+	WalletId string
+}

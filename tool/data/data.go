@@ -59,6 +59,8 @@ type RewardRespTmp struct {
 	Reward float64
 	Pledge float64
 	Power float64
+	Gas string
+	TotalPower float64
 	Update string
 }
 
