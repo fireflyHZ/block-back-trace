@@ -7,16 +7,23 @@ import (
 	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
+	"github.com/filecoin-project/lotus/api/apibstore"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
+	"github.com/filecoin-project/lotus/chain/actors/adt"
+	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/vm"
+	"github.com/filecoin-project/lotus/lib/blockstore"
+	"github.com/filecoin-project/lotus/lib/bufbstore"
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
 	cid "github.com/ipfs/go-cid"
+	cbor "github.com/ipfs/go-ipld-cbor"
 	"io"
 	"net/http"
 	"profit-allocation/models"
@@ -117,26 +124,26 @@ func queryNetRunData() (height int, err error) {
 	return
 }
 
-func queryUserInfoFundDate() ( string,  error) {
+func queryUserInfoFundDate() (string, error) {
 	var date string
 	o := orm.NewOrm()
 	userInfo := new(models.UserInfo)
 	n, err := o.QueryTable("fly_user_info").All(userInfo)
 	if err != nil {
-		return date,err
+		return date, err
 	}
 	if n == 0 {
 		date = UserInfoFundData
-		return date,err
+		return date, err
 	} else {
 		t, err := time.Parse("2006-01-02", userInfo.UpdateTime)
 		if err != nil {
-			return date,err
+			return date, err
 		}
 		handleTime := t.AddDate(0, 0, 1)
 		date = handleTime.Format("2006-01-02")
 	}
-	return date ,nil
+	return date, nil
 }
 
 func updateNetRunData(height int) (err error) {
@@ -256,7 +263,7 @@ func handleRequestInfo(dealBlcokHeight int, end int) (int, error) {
 	return dh, nil
 }
 
-func userInfoFund(t int64)  {
+func userInfoFund(t int64) {
 	blockTimeStr := time.Unix(t, 0).Format("2006-01-02")
 	blockTime, err := time.Parse("2006-01-02", blockTimeStr)
 	if err != nil {
@@ -444,7 +451,7 @@ func recordCostMessageInfo(gasout vm.GasOutputs, message api.Message, block type
 		return err
 	}
 	if n == 0 {
-		//记录块收益 todo
+		//记录块收益
 		expendInfo.WalletId = walletId
 		expendInfo.Epoch = epoch
 		expendInfo.Gas = bit.TransFilToFIL(gasout.MinerTip.String())
@@ -464,7 +471,7 @@ func recordCostMessageInfo(gasout vm.GasOutputs, message api.Message, block type
 			return err
 		}
 	} else {
-		//记录块收益 todo
+		//记录块收益
 		expendInfo.Epoch = epoch
 		expendInfo.Gas = bit.CalculateReward(expendInfo.Gas, bit.TransFilToFIL(gasout.MinerTip.String()))
 		expendInfo.BaseBurnFee = bit.CalculateReward(expendInfo.BaseBurnFee, bit.TransFilToFIL(gasout.BaseFeeBurn.String()))
@@ -603,7 +610,7 @@ func recordRewardMessageInfo(message api.Message, block types.BlockHeader) error
 		return err
 	}
 	if n == 0 {
-		//记录块收益 todo
+		//记录块收益
 		msgRewardInfo.MinerId = minerId
 		msgRewardInfo.Time = t
 		msgRewardInfo.Value = bit.TransFilToFIL(value.String())
@@ -621,7 +628,7 @@ func recordRewardMessageInfo(message api.Message, block types.BlockHeader) error
 			return err
 		}
 	} else {
-		//记录块收益 todo
+		//记录块收益
 
 		msgRewardInfo.Value = bit.CalculateReward(msgRewardInfo.Value, bit.TransFilToFIL(value.String()))
 		//rewardInfo.Value = bit.StringAdd(value, rewardInfo.Value)
@@ -664,7 +671,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 		log.Logger.Error("getGasout  ChainGetParentReceipts err:%+v", err)
 		return
 	}
-/*	for in, r := range resp {
+	/*	for in, r := range resp {
 		log.Logger.Debug("11111111 i:%+v  in:%+v used:%+v\n ", i, in, r.GasUsed)
 	}*/
 
@@ -719,7 +726,7 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 		return err
 	}
 	//获取质押
-	pleage, err := GetMienrPleage(miner, blocks[0].Height)
+	_,_,_,pleage, err := GetMienrPleage(miner, blocks[0].Height)
 	if err != nil {
 		log.Logger.Error("ERROR GetMienrPleage ParseFloat err:%+v", err)
 		err := o.Rollback()
@@ -986,7 +993,7 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 	}
 	//fmt.Println("ChainReadObj resp", string(rewardStateRaw))
 
-	//记录miner的算力 todo
+	//记录miner的算力
 	power, err := nodeApi.StateMinerPower(ctx, miner, tipsetKey)
 	if err != nil {
 		log.Logger.Error("StateMinerPower err:%+v", err)
@@ -1058,7 +1065,7 @@ func allocation(o orm.Ormer, mine string, power float64, pleage float64, epoch i
 		}
 		return err
 	}
-	//要分配的总算力 todo 别的什么方法通过sql直接查询
+	//要分配的总算力
 	for _, order := range profitOrders {
 		allocatePower += order.Share
 	}
@@ -1388,9 +1395,9 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(290159)
-	tipset,_:=nodeApi.ChainHead(context.Background())
-	fmt.Printf("444444%+v \n ",tipset.Height())
+	var epoch = abi.ChainEpoch(221040)
+	tipset, _ := nodeApi.ChainHead(context.Background())
+	fmt.Printf("444444%+v \n ", tipset.Height())
 	t := types.NewTipSetKey()
 	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
 	if err != nil {
@@ -1398,14 +1405,34 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	miner, _ := address.NewFromString("f021704")
-	p, _ := nodeApi.StateMinerPower(context.Background(), miner, blocks.Key())
+	minerAddr, _ := address.NewFromString("f02420")
+	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
-	//mAddr,_:=address.NewFromString("f02420")
-	//fmt.Println("11111")
-	//minerINfo,err:= nodeApi.StateMinerInfo(context.Background(),mAddr,blocks.Key())
-	//fmt.Println("2222")
-	//fmt.Println("miner ger base info err:",err)
-	//pledge,err:=GetMienrPleage("f02420",267130)
-	//fmt.Printf("------%+v\n", pledge)
+
+	//---------------------
+	ctx := context.Background()
+	mact, err := nodeApi.StateGetActor(ctx, minerAddr, blocks.Key())
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	tbs := bufbstore.NewTieredBstore(apibstore.NewAPIBlockstore(nodeApi), blockstore.NewTemporary())
+	mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
+	if err != nil {
+		fmt.Println(err)
+	}
+	lockedFunds, err := mas.LockedFunds()
+	if err != nil {
+		fmt.Println(err)
+	}
+	availBalance, err := mas.AvailableBalance(mact.Balance)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Miner Balance: %s\n", color.YellowString("%s", types.FIL(mact.Balance)))
+	fmt.Printf("\tPreCommit:   %s\n", types.FIL(lockedFunds.PreCommitDeposits))
+	fmt.Printf("\tPledge:      %s\n", types.FIL(lockedFunds.InitialPledgeRequirement))
+	fmt.Printf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
+	color.Green("\tAvailable:   %s", types.FIL(availBalance))
+
 }

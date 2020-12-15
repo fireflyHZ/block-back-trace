@@ -131,6 +131,7 @@ type MineBlocks struct {
 	Penalty    string
 	Value      string
 	Power      float64
+	WinCount   int64
 	Time       string
 	CreateTime uint64
 }
@@ -346,10 +347,14 @@ type UserFilPledge struct {
 
 //miner power status
 type MinerPowerStatus struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	Power   float64
-	Time    string
+	Id        int `orm:"pk;auto"`
+	MinerId   string
+	Power     float64
+	Available float64
+	PreCommit float64
+	Vesting   float64
+	Pleage    float64
+	Time      string
 }
 
 type MinerAndWalletRelation struct {

@@ -61,6 +61,10 @@ type RewardRespTmp struct {
 	Power float64
 	Gas string
 	TotalPower float64
+	TotalAvailable  float64
+	TotalPreCommit  float64
+	TotalPleage   float64
+	TotalVesting   float64
 	Update string
 }
 

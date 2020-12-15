@@ -1,16 +1,26 @@
 package reward
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/lotus/api"
+	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/vm"
+	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
+	"github.com/filecoin-project/specs-actors/v2/actors/builtin/miner"
 	cid "github.com/ipfs/go-cid"
+	"math/big"
+	"net/http"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
 	"profit-allocation/tool/log"
 	"profit-allocation/tool/sync"
+	"strconv"
 	"time"
 )
 
@@ -26,7 +36,6 @@ func CalculateMsgGasData() {
 		CostFromHeight = height
 	}
 	log.Logger.Debug("DEBUG: CalculateMsgGasData(),  CostFromHeight:%v ", CostFromHeight)
-
 
 	chainHeadResp, err := collectLotusChainHeadBlock()
 	if err != nil {
@@ -59,7 +68,7 @@ func CalculateMsgGasData() {
 		CostFromHeight = h
 		//log.Logger.Debug("======== <500 ok")
 	}
-	err=updateMsgGasNetRunDataTmp(CostFromHeight)
+	err = updateMsgGasNetRunDataTmp(CostFromHeight)
 	if err != nil {
 		log.Logger.Error("updateMsgGasNetRunDataTmp height:%+v err :%+v\n", CostFromHeight, err)
 	}
@@ -110,9 +119,7 @@ func updateMsgGasNetRunDataTmp(height int) (err error) {
 	return nil
 }
 
-
 func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
-
 
 	chainHeightHandle, err := getChainHeadByHeight(end)
 	if err != nil {
@@ -144,7 +151,7 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 		//timeStamp:=blocks[0].Timestamp
 
 		//计算支出
-		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0])
+		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key())
 		if err != nil {
 			return end, err
 		}
@@ -155,18 +162,14 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 	return dh, nil
 }
 
-
-func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid) error {
+func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, tipsetKey types.TipSetKey) error {
 
 	messagesCostMap := make(map[string]bool)
-
+	consensusFaultMap := make(map[string]bool)
 	for i, message := range messages {
-		//?????
-		/*if v==5{
-			break
-		}*/
+
 		//计算支出
-		if inWallets(message.Message.From.String())||inMiners(message.Message.From.String()) {
+		if inWallets(message.Message.From.String()) || inMiners(message.Message.From.String()) {
 			if messagesCostMap[message.Cid.String()] {
 				continue
 			}
@@ -183,18 +186,44 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			messagesCostMap[message.Cid.String()] = true
 			//fmt.Println("----------------------------------------")
 		}
+		//计算ReportConsensusFault惩罚
+		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
+			if consensusFaultMap[message.Cid.String()] {
+				continue
+			}
+			//计算
 
-		/*if message.Message.Method==15&&inMiners(message.Message.To.String()){
-			gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
 			if err != nil {
 				return err
 			}
-			err = recordCostMessage(gasout, message, block)
+
+			burnInt, err := strconv.ParseInt(burn, 0, 64)
 			if err != nil {
 				return err
 			}
-			messagesCostMap[message.Cid.String()] = true
-		}*/
+			valueInt, err := strconv.ParseInt(value, 0, 64)
+			if err != nil {
+				return err
+			}
+			zeroTokenAmount := abi.NewTokenAmount(0)
+			burnTokenAmount := abi.NewTokenAmount(burnInt)
+			valueTokenAmount := abi.NewTokenAmount(valueInt)
+			gas := vm.GasOutputs{
+				BaseFeeBurn:        burnTokenAmount,
+				OverEstimationBurn: zeroTokenAmount,
+				MinerPenalty:       zeroTokenAmount,
+				MinerTip:           valueTokenAmount,
+				Refund:             zeroTokenAmount,
+				GasRefund:          0,
+				GasBurned:          0,
+			}
+			err = recordCostMessage(gas, message, block)
+			if err != nil {
+				return err
+			}
+			consensusFaultMap[message.Cid.String()] = true
+		}
 
 	}
 
@@ -301,54 +330,51 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	return nil
 }
 
-func TestMsg()  {
+func TestMsg() {
 	chainHeightHandle, err := getChainHeadByHeight(230056)
 	if err != nil {
 		log.Logger.Error("ERROR: handleRequestInfo() getChainHeadByHeight err=%+v", err)
 		return
 	}
 
+	chainHeightAfter, err := getChainHeadByHeight(230057)
+	if err != nil {
+		log.Logger.Error("ERROR: handleRequestInfo() getChainHeadByHeight  err=%+v", err)
+		return
+	}
+	//chainHeightHandle, err := getChainHeadByHeight(i)
+	//if err != nil {
+	//	log.Logger.Error("ERROR: handleRequestInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight-1, err)
+	//	return end, err
+	//}
+	blockMessageResp, err := getParentsBlockMessage(chainHeightAfter.Cids()[0])
+	if err != nil {
+		log.Logger.Error("ERROR: handleRequestInfo() getParentsBlockMessage   err=%v", err)
+		return
+	}
 
-		chainHeightAfter, err := getChainHeadByHeight(230057)
-		if err != nil {
-			log.Logger.Error("ERROR: handleRequestInfo() getChainHeadByHeight  err=%+v", err)
-			return
-		}
-		//chainHeightHandle, err := getChainHeadByHeight(i)
-		//if err != nil {
-		//	log.Logger.Error("ERROR: handleRequestInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight-1, err)
-		//	return end, err
-		//}
-		blockMessageResp, err := getParentsBlockMessage(chainHeightAfter.Cids()[0])
-		if err != nil {
-			log.Logger.Error("ERROR: handleRequestInfo() getParentsBlockMessage   err=%v",  err)
-			return
-		}
+	//
+	//blocks := chainHeightHandle.Blocks()
+	//timeStamp:=blocks[0].Timestamp
 
-		//
-		blocks := chainHeightHandle.Blocks()
-		//timeStamp:=blocks[0].Timestamp
-
-		//计算支出
-		err = calculateWalletCostTest(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0])
-		if err != nil {
-			log.Logger.Error("ERROR: handleRequestInfo() calculateWalletCost   err=%v",  err)
-			return
-		}
-
+	//计算支出
+	err = calculateWalletCostTest(chainHeightHandle.Key(), blockMessageResp)
+	if err != nil {
+		log.Logger.Error("ERROR: handleRequestInfo() calculateWalletCost   err=%v", err)
+		return
+	}
 
 }
 
-func calculateWalletCostTest(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid) error {
+func calculateWalletCostTest(tipsetKey types.TipSetKey, messages []api.Message) error {
 
-
-	for i, message := range messages {
+	for _, message := range messages {
 		//?????
 		/*if v==5{
 			break
 		}*/
 		//计算支出
-		if inWallets(message.Message.From.String())||inMiners(message.Message.From.String()) {
+		/*if inWallets(message.Message.From.String())||inMiners(message.Message.From.String()) {
 
 			gasout, err := getGasout(blockAfter, message.Message, basefee, i)
 			if err != nil {
@@ -358,17 +384,73 @@ func calculateWalletCostTest(block types.BlockHeader, messages []api.Message, ba
 
 			//fmt.Println("----------------------------------------")
 		}
-
-		if message.Message.Method==15&&inMiners(message.Message.To.String()){
-			gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+		*/
+		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
+			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
 			if err != nil {
 				return err
 			}
-		//	err = recordCostMessage(gasout, message, block)
-			log.Logger.Debug("Debug method == 15  msgid:%+v --gas:%+v",message.Cid,gasout)
+			//	err = recordCostMessage(gasout, message, block)
+			log.Logger.Debug("Debug method == 15  msgid:%+v --gas:%+v", burn, value)
 		}
 
 	}
 
 	return nil
+}
+
+func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (string, string, error) {
+	lotusHost := beego.AppConfig.String("lotusHost")
+	requestHeader := http.Header{}
+	ctx := context.Background()
+
+	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), lotusHost, requestHeader)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer closer()
+
+	rewardActor, err := nodeApi.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
+	if err != nil {
+		log.Logger.Error("StateGetActor err:%+v", err)
+	}
+
+	rewardStateRaw, err := nodeApi.ChainReadObj(ctx, rewardActor.Head)
+	if err != nil {
+		log.Logger.Error("ChainReadObj err:%+v", err)
+	}
+
+	r := bytes.NewReader(rewardStateRaw)
+	rewardActorState := unmarshalState(r)
+	//fmt.Printf("%+v\n", rewardActorState.ThisEpochRewardSmoothed.Estimate())
+	penaltyFee := miner.ConsensusFaultPenalty(rewardActorState.ThisEpochRewardSmoothed.Estimate())
+	//fmt.Printf("%+v\n", aiya)
+	rcfp := new(miner.ReportConsensusFaultParams)
+	b := new(bytes.Buffer)
+	_, err = b.Write(msg.Message.Params)
+	//fmt.Printf("msg :%+v",msg.Message)
+	//fmt.Println(n, err)
+	if err != nil {
+		log.Logger.Error("reportConsensusFaultPenalty Write Message.Params err:%+v", err)
+		return "0", "0", err
+	}
+	err = rcfp.UnmarshalCBOR(b)
+	if err != nil {
+		log.Logger.Error("reportConsensusFaultPenalty rcfp UnmarshalCBOR err:%+v", err)
+		return "0", "0", err
+	}
+	faultAge := abi.ChainEpoch(1000)
+	slasherReward := miner.RewardForConsensusSlashReport(faultAge, penaltyFee)
+	//fmt.Printf("%+v\n%+v\n", aiya.String(), slasherReward.String())
+	burnFee := big.NewInt(0)
+	burnFee.Sub(penaltyFee.Int, slasherReward.Int)
+	burnFeeStr:=burnFee.String()
+	if len(burnFeeStr)>19{
+		burnFeeStr=burnFeeStr[:19]
+	}
+	slasherRewardStr:=slasherReward.String()
+	if len(slasherRewardStr)>19{
+		slasherRewardStr=slasherRewardStr[:19]
+	}
+	return burnFeeStr, slasherRewardStr, nil
 }

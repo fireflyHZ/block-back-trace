@@ -163,9 +163,7 @@ func getRewardAndPledge(dealBlcokHeight int, end int) (int, error) {
 		if bFlag&&len(blocks)>0{
 			t := time.Unix(int64(blocks[0].Timestamp), 0)
 			if isExecutingPoint(t) {
-				tStr := time.Unix(int64(blocks[0].Timestamp), 0).Format("2006-01-02")
-
-				err = calculatePowerAndPledge(blocks[0].Height, chainHeightHandle.Key(), tStr)
+				err = calculatePowerAndPledge(blocks[0].Height, chainHeightHandle.Key(), int64(blocks[0].Timestamp))
 				if err != nil {
 					log.Logger.Error("ERROR: handleRequestInfo() calculatePowerAndPledge height:%+v err=%+v", end, err)
 					return end, err
@@ -190,7 +188,8 @@ func isExecutingPoint(nowDatetime time.Time) bool {
 	}
 }
 
-func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t string) error {
+func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, tStamp int64) error {
+	t := time.Unix(tStamp, 0).Format("2006-01-02")
 	epoch := int(height)
 	//获取质押
 	o := orm.NewOrm()
@@ -201,7 +200,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 	}
 	for _, miner := range tool.Miners {
 
-		pleage, err := GetMienrPleage(miner, height)
+		available,preCommit,vesting,pleage, err := GetMienrPleage(miner, height)
 		if err != nil {
 			log.Logger.Error("ERROR GetMienrPleage ParseFloat miner:%+v height:%+v err:%+v", miner, height, err)
 			err := o.Rollback()
@@ -220,7 +219,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			return err
 		}
 		//	log.Logger.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-		err=putMinerPowerStatus(o,miner,power,t)
+		err=putMinerPowerStatus(o,miner,power,available,preCommit,vesting,pleage,t)
 		if err != nil {
 			log.Logger.Error("ERROR GetMienrPleage putMinerPowerStatus miner:%+v height:%+v err:%+v", miner, height, err)
 			err := o.Rollback()
@@ -253,7 +252,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			minerInfo.Pleage = pleage
 			minerInfo.QualityPower = power
 
-			minerInfo.UpdateTime = time.Now().Unix()
+			minerInfo.UpdateTime = tStamp
 
 			_, err := o.Update(minerInfo)
 			if err != nil {
@@ -277,15 +276,13 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			return err
 		}
 		if n == 0 {
-			//记录块收益 todo
-
 			rewardInfo.Time = t
 			rewardInfo.MinerId = miner
 			rewardInfo.Pledge = pleage - oldPleage
 			rewardInfo.Power = power - oldPower
 			rewardInfo.Value = "0.0"
 			rewardInfo.Epoch = epoch
-			rewardInfo.UpdateTime = time.Now().Unix()
+			rewardInfo.UpdateTime = tStamp
 
 			_, err = o.Insert(rewardInfo)
 			if err != nil {
@@ -297,15 +294,14 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 				return err
 			}
 		} else {
-			//记录块收益 todo
-			//更新walletinfo
+
 			if rewardInfo.Epoch < epoch {
 
 				rewardInfo.Pledge += pleage - oldPleage
 				rewardInfo.Power += power - oldPower
 				//rewardInfo.Value = bit.CalculateReward(rewardInfo.Value, value)
 				rewardInfo.Epoch = epoch
-				rewardInfo.UpdateTime = time.Now().Unix()
+				rewardInfo.UpdateTime = tStamp
 				_, err := o.Update(rewardInfo)
 				if err != nil {
 					log.Logger.Error("Error  Update miner:%+v time:%+v err:%+v ", miner, t, err)
@@ -364,17 +360,9 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		}
 		return err
 	}
-	//新增存储当天miner power状态、MinerPowerStatus
-	err=putMinerPowerStatus(o,miner,power,t)
-	if err != nil {
-		err := o.Rollback()
-		if err != nil {
-			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
-		}
-		return err
-	}
+
 	//获取质押
-	pleage, err := GetMienrPleage(miner, blocks[0].Height)
+	available,preCommit,vesting,pleage, err := GetMienrPleage(miner, blocks[0].Height)
 	if err != nil {
 		log.Logger.Error("ERROR GetMienrPleage ParseFloat err:%+v", err)
 		err := o.Rollback()
@@ -384,7 +372,15 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		return err
 	}
 	//	log.Logger.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-
+	//新增存储当天miner power状态、MinerPowerStatus
+	err=putMinerPowerStatus(o,miner,power,available,preCommit,vesting,pleage,t)
+	if err != nil {
+		err := o.Rollback()
+		if err != nil {
+			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+		}
+		return err
+	}
 	//收益分配
 	minerInfo := new(models.MinerInfoTmp)
 	n, err := o.QueryTable("fly_miner_info_tmp").Filter("miner_id", miner).All(minerInfo)
@@ -409,7 +405,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		minerInfo.Pleage = pleage
 		minerInfo.QualityPower = power
 
-		minerInfo.UpdateTime = time.Now().Unix()
+		minerInfo.UpdateTime = int64(blocks[0].Timestamp)
 
 		_, err := o.Update(minerInfo)
 		if err != nil {
@@ -431,6 +427,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		Penalty:    "",
 		Value:      "",
 		Power:      0,
+		WinCount: winCount,
 		Time:       t,
 		CreateTime: blocks[0].Timestamp,
 	}
@@ -464,7 +461,9 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardInfo.Power = power - oldPower
 		rewardInfo.Value = value
 		rewardInfo.Epoch = epoch
-		rewardInfo.UpdateTime = time.Now().Unix()
+		rewardInfo.BlockNum=1
+		rewardInfo.WinCounts=winCount
+		rewardInfo.UpdateTime = int64(blocks[0].Timestamp)
 
 		_, err = o.Insert(rewardInfo)
 		if err != nil {
@@ -484,7 +483,9 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 			rewardInfo.Power += power - oldPower
 			rewardInfo.Value = bit.CalculateReward(rewardInfo.Value, value)
 			rewardInfo.Epoch = epoch
-			rewardInfo.UpdateTime = time.Now().Unix()
+			rewardInfo.BlockNum+=1
+			rewardInfo.WinCounts+=winCount
+			rewardInfo.UpdateTime = int64(blocks[0].Timestamp)
 			_, err := o.Update(rewardInfo)
 			if err != nil {
 				log.Logger.Error("Error  Update miner:%+v time:%+v err:%+v ", miner, t, err)
@@ -719,7 +720,7 @@ func calculateRewardAndPledgeTest(index int, blocks []*types.BlockHeader, blockC
 	return value, nil
 }
 
-func putMinerPowerStatus(o orm.Ormer,miner string,power float64,t string) error {
+func putMinerPowerStatus(o orm.Ormer,miner string,power,available,preCommit,vesting,pleage float64,t string) error {
 	minerPowerStatus:=new(models.MinerPowerStatus)
 	num,err:=o.QueryTable("fly_miner_power_status").Filter("miner_id",miner).Filter("time",t).All(minerPowerStatus)
 	if err != nil {
@@ -732,6 +733,10 @@ func putMinerPowerStatus(o orm.Ormer,miner string,power float64,t string) error 
 	}
 	if num==0{
 		minerPowerStatus.Power=power
+		minerPowerStatus.Available=available
+		minerPowerStatus.Pleage=pleage
+		minerPowerStatus.PreCommit=preCommit
+		minerPowerStatus.Vesting=vesting
 		minerPowerStatus.Time=t
 		minerPowerStatus.MinerId=miner
 		_,err=o.Insert(minerPowerStatus)
@@ -745,6 +750,10 @@ func putMinerPowerStatus(o orm.Ormer,miner string,power float64,t string) error 
 		}
 	}else {
 		minerPowerStatus.Power=power
+		minerPowerStatus.Available=available
+		minerPowerStatus.Pleage=pleage
+		minerPowerStatus.PreCommit=preCommit
+		minerPowerStatus.Vesting=vesting
 		_,err=o.Update(minerPowerStatus)
 		if err != nil {
 			log.Logger.Error("Error  UpdateTable miner power status :%+v err:%+v ", miner, err)

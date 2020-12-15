@@ -31,6 +31,8 @@ type RewardInfoTmp struct {
 	Value      string
 	Pledge     float64
 	Power      float64
-	Time       string
+	BlockNum   int
+	WinCounts  int64
+ 	Time       string
 	UpdateTime int64
 }

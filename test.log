@@ -1,0 +1,83 @@
+2020/12/10 17:08:16.175 [D] [reward.go:1230]  extra != 9 extra :11
+2020/12/10 17:10:30.406 [D] [reward.go:1230]  extra != 9 extra :11
+2020/12/10 17:11:39.921 [D] [reward.go:1230]  extra != 9 extra :11
+2020/12/10 17:16:00.748 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:25:15.222 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:27:16.917 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:28:08.390 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:46:28.848 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:46:28.848 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:48:36.403 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:48:36.404 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:49:44.948 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:49:44.948 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:51:10.105 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:51:10.105 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:52:07.505 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:52:07.505 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:52:43.562 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:52:43.563 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:53:15.242 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:53:15.243 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:64260525527578071
+2020/12/10 17:53:55.230 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:53:55.230 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:68948644570001904
+2020/12/10 17:54:13.417 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:54:13.418 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:139424897453373747
+2020/12/10 17:54:30.702 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 17:54:30.703 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 19:27:54.870 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:27:54.870 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:9022486273575547233 --gas:3218135924735210104
+2020/12/10 19:28:45.803 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:28:45.804 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:9022486273575547233 --gas:3218135924735210104
+2020/12/10 19:29:35.479 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:29:35.480 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 19:30:28.041 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:30:28.044 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 19:30:42.779 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:30:42.779 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 19:30:55.893 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:30:55.893 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:139424897453373747
+2020/12/10 19:31:11.191 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:31:11.191 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 19:36:58.423 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 19:36:58.424 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:8419477754872336446 --gas:3187985498800049564
+2020/12/10 20:10:16.475 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:10:16.475 [D] [msgGas_tmp.go:378]  Debug method == 15  msgid:63759709976000991294 --gas:3187985498800049564
+2020/12/10 20:15:40.618 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:15:40.618 [D] [msgGas_tmp.go:371]  Debug method == 15  msgid:63759709976000991294 --gas:3187985498800049564
+2020/12/10 20:16:44.902 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:16:44.903 [D] [msgGas_tmp.go:372]  Debug method == 15  msgid:63759709976000991294 --gas:3187985498800049564
+2020/12/10 20:19:35.247 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:19:35.247 [D] [msgGas_tmp.go:372]  Debug method == 15  msgid:63759709976000991294 --gas:3187985498800049564
+2020/12/10 20:21:15.236 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:21:15.236 [D] [msgGas_tmp.go:372]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:36:56.933 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:36:56.933 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:37:48.268 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:37:48.268 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:38:48.169 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:38:48.170 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:39:56.079 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:39:56.080 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:49:31.578 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:49:31.578 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:49:54.388 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:49:54.388 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:50:12.442 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:50:12.442 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:50:38.676 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:50:38.676 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:50:57.730 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:50:57.730 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:51:13.701 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:51:13.701 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:51:31.857 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:51:31.857 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:52:09.034 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:52:09.035 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 20:52:28.357 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:52:59.226 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 20:52:59.227 [D] [msgGas_tmp.go:385]  Debug method == 15  msgid:60571724477200941730 --gas:3187985498800049564
+2020/12/10 21:01:10.538 [D] [reward.go:1231]  extra != 9 extra :11
+2020/12/10 21:01:10.539 [D] [msgGas_tmp.go:394]  Debug method == 15  msgid:6057172447720094173 --gas:3187985498800049564
+2020/12/15 15:48:09.363 [D] [initData.go:19]  insert miner:f02420 wallet:f3va7lv4wkcfq5mmqirr4pyrogtnuknw2hma5y6luwbx6iv4qcwgrvzyn2zljgbgtmv7lxr3jsa4eo2az3kqra success
