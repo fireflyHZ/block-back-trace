@@ -16,6 +16,8 @@ type RewardTmpController struct {
 }
 
 func (c *RewardTmpController) GetRewardAndPledge() {
+	var blockNum int
+	var winCount int64
 	var reward, pledge, power, totalPower,totalAvailable,totalPreCommit,totalVesting,totalPleage float64
 	var timeStamp int64
 	gas := "0.0"
@@ -38,7 +40,7 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 	o := orm.NewOrm()
 
 	num, err := o.QueryTable("fly_reward_info_tmp").Filter("time", t).All(&rewardInfo)
-	log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
+	//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num ==0{
 		resp := data.RewardRespTmp{
 			Code:       "fail",
@@ -62,6 +64,8 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 			reward += r
 			pledge += info.Pledge
 			power += info.Power
+			blockNum+=info.BlockNum
+			winCount+=info.WinCounts
 		}
 
 	}
@@ -69,7 +73,7 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 	expendInfo := make([]models.ExpendInfo, 0)
 
 	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
-	log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
+	//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num==0{
 		resp := data.RewardRespTmp{
 			Code:       "fail",
@@ -78,6 +82,8 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 			Pledge:     pledge,
 			Power:      power,
 			Gas:        gas,
+			BlockNumber: blockNum,
+			WinCount: winCount,
 			TotalPower: totalPower,
 		}
 		c.Data["json"] = &resp
@@ -101,6 +107,8 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 			Pledge:     pledge,
 			Power:      power,
 			Gas:        gas,
+			BlockNumber: blockNum,
+			WinCount: winCount,
 			TotalPower: totalPower,
 		}
 		c.Data["json"] = &resp
@@ -124,6 +132,8 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 		Pledge:     pledge,
 		Power:      power,
 		Gas:        gas,
+		BlockNumber: blockNum,
+		WinCount: winCount,
 		TotalPower: totalPower,
 		TotalAvailable: totalAvailable,
 		TotalPreCommit: totalPreCommit,
@@ -181,6 +191,8 @@ func (c *RewardTmpController) GetMessagesGas() {
 }
 
 func (c *RewardTmpController) GetMinerInfo() {
+	var blockNum int
+	var winCount int64
 	var reward, pledge, power, totalPower,totalAvailable,totalPreCommit,totalVesting,totalPleage float64
 	var timeStamp int64
 	gas := "0.0"
@@ -230,6 +242,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 		reward = r
 		pledge = rewardInfo.Pledge
 		power = rewardInfo.Power
+		blockNum=rewardInfo.BlockNum
+		winCount=rewardInfo.WinCounts
 	}
 	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
 	num, err = o.QueryTable("fly_miner_and_wallet_relation").Filter("miner_id", miner).All(&minerAndWalletRelations)
@@ -241,6 +255,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 			Pledge:     pledge,
 			Power:      power,
 			Gas:        gas,
+			BlockNumber: blockNum,
+			WinCount: winCount,
 			TotalPower: totalPower,
 		}
 		c.Data["json"] = &resp
@@ -251,7 +267,7 @@ func (c *RewardTmpController) GetMinerInfo() {
 			expendInfo := new(models.ExpendInfo)
 			num, err = o.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
 			//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
-			if err != nil ||num==0{
+			if err != nil {
 				resp := data.RewardRespTmp{
 					Code:       "fail",
 					Msg:        "get expend info fail",
@@ -259,6 +275,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 					Pledge:     pledge,
 					Power:      power,
 					Gas:        gas,
+					BlockNumber: blockNum,
+					WinCount: winCount,
 					TotalPower: totalPower,
 				}
 				c.Data["json"] = &resp
@@ -282,6 +300,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 			Pledge:     pledge,
 			Power:      power,
 			Gas:        gas,
+			BlockNumber: blockNum,
+			WinCount: winCount,
 			TotalPower: totalPower,
 		}
 		c.Data["json"] = &resp
@@ -302,6 +322,8 @@ func (c *RewardTmpController) GetMinerInfo() {
 		Pledge:     pledge,
 		Power:      power,
 		Gas:        gas,
+		BlockNumber: blockNum,
+		WinCount: winCount,
 		TotalPower: totalPower,
 		TotalAvailable: totalAvailable,
 		TotalPreCommit: totalPreCommit,

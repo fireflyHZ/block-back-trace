@@ -60,6 +60,8 @@ type RewardRespTmp struct {
 	Pledge float64
 	Power float64
 	Gas string
+	BlockNumber int
+	WinCount int64
 	TotalPower float64
 	TotalAvailable  float64
 	TotalPreCommit  float64

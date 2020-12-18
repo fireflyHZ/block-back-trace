@@ -1395,7 +1395,7 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(221040)
+	var epoch = abi.ChainEpoch(326420)
 	tipset, _ := nodeApi.ChainHead(context.Background())
 	fmt.Printf("444444%+v \n ", tipset.Height())
 	t := types.NewTipSetKey()
@@ -1405,7 +1405,7 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f02420")
+	minerAddr, _ := address.NewFromString("f088290")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 
