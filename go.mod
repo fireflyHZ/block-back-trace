@@ -7,6 +7,7 @@ require github.com/astaxie/beego v1.12.1
 require (
 	github.com/fatih/color v1.9.0
 	github.com/filecoin-project/go-address v0.0.4
+	github.com/filecoin-project/go-crypto v0.0.0-20191218222705-effae4ea9f03
 	github.com/filecoin-project/go-fil-markets v0.9.1
 	github.com/filecoin-project/go-state-types v0.0.0-20201003010437-c33112184a2b
 	github.com/filecoin-project/lotus v0.10.2

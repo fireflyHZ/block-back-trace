@@ -9,6 +9,7 @@ import (
 	"github.com/astaxie/beego/orm"
 	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
+	"github.com/filecoin-project/go-crypto"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
@@ -726,7 +727,7 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 		return err
 	}
 	//获取质押
-	_,_,_,pleage, err := GetMienrPleage(miner, blocks[0].Height)
+	_, _, _, pleage, err := GetMienrPleage(miner, blocks[0].Height)
 	if err != nil {
 		log.Logger.Error("ERROR GetMienrPleage ParseFloat err:%+v", err)
 		err := o.Rollback()
@@ -1395,9 +1396,9 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(326420)
+	var epoch = abi.ChainEpoch(336239)
 	tipset, _ := nodeApi.ChainHead(context.Background())
-	fmt.Printf("444444%+v \n ", tipset.Height())
+	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
 	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
 	if err != nil {
@@ -1405,7 +1406,7 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f088290")
+	minerAddr, _ := address.NewFromString("f02420")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 
@@ -1435,4 +1436,11 @@ func TetsGetInfo() {
 	fmt.Printf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
 	color.Green("\tAvailable:   %s", types.FIL(availBalance))
 
+	pr, err := crypto.GenerateKey()
+	if err != nil {
+		fmt.Printf("err", err)
+	}
+
+	fmt.Printf("priv:%+v\n", pr)
+	fmt.Printf("priv:%+v\n", len(pr))
 }
