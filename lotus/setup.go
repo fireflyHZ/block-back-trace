@@ -36,9 +36,9 @@ func Setup() {
 		//	}
 		case <-collectTime.C:
 			loop()
-		//case <-HandleChannel:
-		//	time.Sleep(time.Second*20)
-		//	reward.CollectTotalRerwardAndPledge()
+			//case <-HandleChannel:
+			//	time.Sleep(time.Second*20)
+			//	reward.CollectTotalRerwardAndPledge()
 		}
 
 	}
@@ -53,11 +53,11 @@ func isExecutingPoint(nowDatetime time.Time) bool {
 }
 
 func loop() {
-	sync.Wg.Add(2)
-//	go wallet.CollectWalletData()
-//	go reward.CollectLotusChainBlockRunData()
+	sync.Wg.Add(1)
+	//	go wallet.CollectWalletData()
+	//	go reward.CollectLotusChainBlockRunData()
 	//================
-	go reward.CollectTotalRerwardAndPledge()
+	//	go reward.CollectTotalRerwardAndPledge()
 	go reward.CalculateMsgGasData()
 	sync.Wg.Wait()
 }
@@ -280,7 +280,7 @@ func initTmpData() {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
 	if n == 0 {
-		netRunData.ReceiveBlockHeight = 221040
+		netRunData.ReceiveBlockHeight = 344500
 		n, err = o.Insert(netRunData)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
@@ -292,49 +292,49 @@ func initTmpData() {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
 	if n == 0 {
-		msgGasNetRunData.ReceiveBlockHeight = 221040
+		msgGasNetRunData.ReceiveBlockHeight = 344500
 		n, err = o.Insert(msgGasNetRunData)
 		if err != nil {
 			fmt.Println("insert msgGasNetRunData err:", err)
 		}
 	}
-	minerAndWalletRelations:=make([]models.MinerAndWalletRelation,0)
+	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
 	n, err = o.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
 	if n == 0 {
-		minerAndWalletRelation1:=models.MinerAndWalletRelation{
+		minerAndWalletRelation1 := models.MinerAndWalletRelation{
 			MinerId:  "f02420",
-			WalletId: "f3rmhlmqfaph6czwiqwlg3kfjgejugt5thcviowlmt3l42464q25ptk3znphuuiwrdbyumun3ui7q2gut7v2da",
+			WalletId: "f3wykhltf7g7guch6sz6u6hs4gdmvxrz2likki7aaf7th23jmofrswbd6rmlhbxx4urt6ycbtmlhitgmynky3a",
 		}
-		minerAndWalletRelation2:=models.MinerAndWalletRelation{
-			MinerId:  "f02420",
-			WalletId: "f3vfgq65omcht6hbmlwe2g7mowf334zyoa6zcqm543vtmb3uqpnpei4bwhbmo2qi3qntrfiojhcnpciakea6ma",
-		}
-		minerAndWalletRelation3:=models.MinerAndWalletRelation{
-			MinerId:  "f021695",
-			WalletId: "f3qqdp53ooe4xvqwt4dmoixb6ej6jgmk7zbkjaiujfmfmuyrpenewqre6tlokcxnwp7zpmq3ohlw2wheqir2ga",
-		}
-		minerAndWalletRelation4:=models.MinerAndWalletRelation{
-			MinerId:  "f021695",
-			WalletId: "f3wqijosc44y6a6nckbobrwmq6cocoja3lgrly462z3sjwigyi6pzltourrk4lk4jkt332yr5k4xb6mxmct25a",
-		}
-		minerAndWalletRelation5:=models.MinerAndWalletRelation{
+		//minerAndWalletRelation2:=models.MinerAndWalletRelation{
+		//	MinerId:  "f02420",
+		//	WalletId: "f3vfgq65omcht6hbmlwe2g7mowf334zyoa6zcqm543vtmb3uqpnpei4bwhbmo2qi3qntrfiojhcnpciakea6ma",
+		//}
+		//minerAndWalletRelation3:=models.MinerAndWalletRelation{
+		//	MinerId:  "f021695",
+		//	WalletId: "f3qqdp53ooe4xvqwt4dmoixb6ej6jgmk7zbkjaiujfmfmuyrpenewqre6tlokcxnwp7zpmq3ohlw2wheqir2ga",
+		//}
+		//minerAndWalletRelation4:=models.MinerAndWalletRelation{
+		//	MinerId:  "f021695",
+		//	WalletId: "f3wqijosc44y6a6nckbobrwmq6cocoja3lgrly462z3sjwigyi6pzltourrk4lk4jkt332yr5k4xb6mxmct25a",
+		//}
+		minerAndWalletRelation5 := models.MinerAndWalletRelation{
 			MinerId:  "f021704",
-			WalletId: "f3sc6mo6jiwxwwgsx4gwz5vbpcn4p6ejybgogocfntujmjaibluzm6ngj7qqj72gck7rtuibtgsow6ttuq43dq",
+			WalletId: "f3spvlhfuga45prd7fg7dswphgm4hotpxmydyzpjloy2rekpyfnwpbdnd7wuyael2pryb3xztp4k56ju3ib5sq",
 		}
-		minerAndWalletRelation6:=models.MinerAndWalletRelation{
-			MinerId:  "f021704",
-			WalletId: "f3skdqsai23rhavva77g7nkr736j7mjql53xv7362ovlw7o3yz334ajchyb7fir35cnutijfusp6mngobyjvya",
-		}
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation1)
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation2)
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation3)
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation4)
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation5)
-		minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation6)
-		n, err = o.InsertMulti(6, minerAndWalletRelations)
+		//minerAndWalletRelation6:=models.MinerAndWalletRelation{
+		//	MinerId:  "f021704",
+		//	WalletId: "f3skdqsai23rhavva77g7nkr736j7mjql53xv7362ovlw7o3yz334ajchyb7fir35cnutijfusp6mngobyjvya",
+		//}
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
+		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation2)
+		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation3)
+		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation4)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation5)
+		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation6)
+		n, err = o.InsertMulti(2, minerAndWalletRelations)
 		if err != nil {
 			fmt.Println("insert minerAndWalletRelations err:", err)
 		}

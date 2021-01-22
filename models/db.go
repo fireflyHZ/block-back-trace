@@ -66,6 +66,8 @@ func init() {
 		//-----------------------
 		new(MinerPowerStatus),
 		new(MinerAndWalletRelation),
+		new(ExpendInfoTmp),
+		new(ExpendMessagesTmp),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		log.Logger.Error("Error RunSyncdb err:%+v", err)

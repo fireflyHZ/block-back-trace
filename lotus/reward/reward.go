@@ -676,7 +676,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 		log.Logger.Debug("11111111 i:%+v  in:%+v used:%+v\n ", i, in, r.GasUsed)
 	}*/
 
-	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium)
+	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium, false)
 	//fmt.Printf("gasout:%+v\n", gasout)
 	return
 }
@@ -1396,10 +1396,12 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(336239)
+	var epoch = abi.ChainEpoch(383966)
 	tipset, _ := nodeApi.ChainHead(context.Background())
 	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
+	ver, _ := nodeApi.StateNetworkVersion(context.Background(), tipset.Key())
+	fmt.Printf("version:%+v\n", ver)
 	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
 	if err != nil {
 		//	log.Logger.Error("Error get chain head err:%+v",err)

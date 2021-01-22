@@ -24,7 +24,7 @@ import (
 	"time"
 )
 
-var CostFromHeight = 221040
+var CostFromHeight = 334500
 
 func CalculateMsgGasData() {
 	defer sync.Wg.Done()
@@ -83,7 +83,7 @@ func queryMsgGasNetRunDataTmp() (height int, err error) {
 		return
 	}
 	if n == 0 {
-		height = 221040
+		height = 334500
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
@@ -130,10 +130,13 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 	dh := dealBlcokHeight
 
 	for i := end; i < dealBlcokHeight; i++ {
+		if i > 381727 {
+			return 400000, nil
+		}
 		chainHeightAfter, err := getChainHeadByHeight(i + 1)
 		if err != nil {
 			log.Logger.Error("ERROR: handleMsgGasInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight, err)
-			return end, err
+			return i, err
 		}
 		//chainHeightHandle, err := getChainHeadByHeight(i)
 		//if err != nil {
@@ -143,7 +146,7 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 		blockMessageResp, err := getParentsBlockMessage(chainHeightAfter.Cids()[0])
 		if err != nil {
 			log.Logger.Error("ERROR: handleMsgGasInfo() getParentsBlockMessage cid %s  err=%v", chainHeightAfter.Cids()[0].String(), err)
-			return end, err
+			return i, err
 		}
 
 		//
@@ -153,7 +156,7 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 		//计算支出
 		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key())
 		if err != nil {
-			return end, err
+			return i, err
 		}
 
 		chainHeightHandle = chainHeightAfter
@@ -444,13 +447,13 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (st
 	//fmt.Printf("%+v\n%+v\n", aiya.String(), slasherReward.String())
 	burnFee := big.NewInt(0)
 	burnFee.Sub(penaltyFee.Int, slasherReward.Int)
-	burnFeeStr:=burnFee.String()
-	if len(burnFeeStr)>19{
-		burnFeeStr=burnFeeStr[:19]
+	burnFeeStr := burnFee.String()
+	if len(burnFeeStr) > 19 {
+		burnFeeStr = burnFeeStr[:19]
 	}
-	slasherRewardStr:=slasherReward.String()
-	if len(slasherRewardStr)>19{
-		slasherRewardStr=slasherRewardStr[:19]
+	slasherRewardStr := slasherReward.String()
+	if len(slasherRewardStr) > 19 {
+		slasherRewardStr = slasherRewardStr[:19]
 	}
 	return burnFeeStr, slasherRewardStr, nil
 }
