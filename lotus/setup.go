@@ -2,304 +2,111 @@ package lotus
 
 import (
 	"fmt"
-	"github.com/astaxie/beego/orm"
+	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
-	"profit-allocation/tool/log"
 	"profit-allocation/tool/sync"
 	"strconv"
 	"time"
 )
 
-//var HandleChannel = make(chan int)
+var setupLog = logging.Logger("lotus-setup")
 
 func Setup() {
-	//walletProfit := time.NewTicker(time.Second * time.Duration(3600))
+	reward.CreateLotusClient()
 	collectTime := time.NewTicker(time.Second * time.Duration(30))
-	//defer walletProfit.Stop()
+
 	defer collectTime.Stop()
 
 	//完成数据初始化
-
-	//initOrderData()
 	initTmpData()
-
-	//---------------------------------------------
-	//HandleChannel<-0
 	for {
 		select {
-		//case nowDatetime := <-walletProfit.C:
-		//	//判断每天0点进行数据获取
-		//	if isExecutingPoint(nowDatetime) {
-		//		wallet.CalculateWalletProfit()
-		//		//reward.CalculateUserFund()
-		//	}
 		case <-collectTime.C:
 			loop()
-			//case <-HandleChannel:
-			//	time.Sleep(time.Second*20)
-			//	reward.CollectTotalRerwardAndPledge()
 		}
 
-	}
-}
-func isExecutingPoint(nowDatetime time.Time) bool {
-	nowH, _, _ := nowDatetime.Clock()
-	if nowH == 0 {
-		return true
-	} else {
-		return false
 	}
 }
 
 func loop() {
-	sync.Wg.Add(1)
-	//	go wallet.CollectWalletData()
-	//	go reward.CollectLotusChainBlockRunData()
-	//================
-	//	go reward.CollectTotalRerwardAndPledge()
+	sync.Wg.Add(2)
 	go reward.CalculateMsgGasData()
+	go reward.CollectTotalRerwardAndPledge()
 	sync.Wg.Wait()
 }
 
-func initOrderData() {
-	var goodNum int64
-	var orderNum int64
-	var total int
-	o := orm.NewOrm()
-	orderInfos := make([]models.OrderInfo, 0)
-	n, err := o.QueryTable("fly_order_info").All(&orderInfos)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_order_info", err)
-	}
-	if n == 0 {
-		settlePlans := make([]models.SettlePlan, 0)
-		n, err := o.QueryTable("fly_settle_plan").All(&settlePlans)
-		if err != nil {
-			fmt.Println("11111", err)
-		}
-
-		for _, settlePlan := range settlePlans {
-			orderGoods := make([]models.OrderGoods, 0)
-			n, err = o.QueryTable("fly_order_goods").Filter("article_id", settlePlan.ArticleId).All(&orderGoods)
-			if err != nil {
-				fmt.Println("22222", err)
-			}
-			goodNum += n
-			//fmt.Printf("order goods %+v\n", orderGoods)
-			for _, orderGood := range orderGoods {
-				orders := new(models.Orders)
-				n, err = o.QueryTable("fly_orders").Filter("id", orderGood.OrderId).Filter("status__in", 2, 3).All(orders)
-				if err != nil || n == 0 {
-					fmt.Println("333333", err, "n", n)
-					continue
-				}
-				orderNum += n
-
-				orderInfo := new(models.OrderInfo)
-				orderInfo.UserId = orders.UserId
-				orderInfo.OrderId = orders.Id
-				orderInfo.Power = 12
-				orderInfo.Share = orderGood.Quantity * int(settlePlan.Quantity)
-				total += (orderGood.Quantity) * int(settlePlan.Quantity)
-				_, err = o.Insert(orderInfo)
-				if err != nil || n == 0 {
-					fmt.Println("insert ", orders.UserId, err)
-				}
-			}
-		}
-	}
-	fmt.Printf("total:%+v\n  good：%+v\n order:%+v\n", total, goodNum, orderNum)
-	netRunData := new(models.NetRunDataPro)
-	n, err = o.QueryTable("fly_net_run_data_pro").All(netRunData)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
-	}
-	if n == 0 {
-		netRunData.TotalShare = total
-		netRunData.AllShare = 50000000
-		netRunData.ReceiveBlockHeight = 148888
-		n, err = o.Insert(netRunData)
-		if err != nil {
-			fmt.Println("insert netrundata err:", err)
-		}
-	}
+func initTmpData() {
 
 	minerInfo := make([]models.MinerInfo, 0)
-	n, err = o.QueryTable("fly_miner_info").All(&minerInfo)
+	n, err := models.O.QueryTable("fly_miner_info").All(&minerInfo)
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
-	pleagef02420, err := strconv.ParseFloat("32958.213756507100668595", 64)
-	pleagef021695, err := strconv.ParseFloat("1754.011856122781753658", 64)
-	pleagef021704, err := strconv.ParseFloat("505.89973939318149791", 64)
+	pleagef02420, err := strconv.ParseFloat("55890.17124143092", 64)
+	pleagef021695, err := strconv.ParseFloat("1752.1556517147642", 64)
+	pleagef021704, err := strconv.ParseFloat("1979.057228561", 64)
 	if err != nil {
-		log.Logger.Error("ParseFloat err:%+v", err)
+		setupLog.Error("ParseFloat err:%+v", err)
 	}
 	if n == 0 {
 		miner1 := models.MinerInfo{
 			MinerId:      "f02420",
-			QualityPower: 1855.65625,
+			QualityPower: 5200.78125,
 			Pleage:       pleagef02420,
-			CreateTime:   0,
-			UpdateTime:   0,
+			CreateTime:   time.Now(),
+			//UpdateTime:   0,
 		}
 		miner2 := models.MinerInfo{
 			MinerId:      "f021695",
-			QualityPower: 187.59375,
+			QualityPower: 199.03125,
 			Pleage:       pleagef021695,
-			CreateTime:   0,
-			UpdateTime:   0,
+			CreateTime:   time.Now(),
+			//UpdateTime:   0,
 		}
 		miner3 := models.MinerInfo{
 			MinerId:      "f021704",
-			QualityPower: 51.53125,
+			QualityPower: 301.0625,
 			Pleage:       pleagef021704,
-			CreateTime:   0,
-			UpdateTime:   0,
+			CreateTime:   time.Now(),
+			//	UpdateTime:   0,
 		}
 		minerInfo = append(minerInfo, miner1)
 		minerInfo = append(minerInfo, miner2)
 		minerInfo = append(minerInfo, miner3)
 		//minerInfo=append(minerInfo,miner1)
-		n, err = o.InsertMulti(3, minerInfo)
+		n, err = models.O.InsertMulti(3, minerInfo)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
 		}
 	}
 
-	//初始化userInfo表
-	userInfos := make([]models.UserInfo, 0)
-	n, err = o.QueryTable("fly_user_info").All(&userInfos)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_user_info", err)
-	}
-	if n == 0 {
-		orderInfos := make([]models.OrderInfo, 0)
-		_, err := o.QueryTable("fly_order_info").All(&orderInfos)
-		if err != nil {
-			fmt.Println("11111 QueryTable fly_order_info", err)
-		}
-		for _, order := range orderInfos {
-			uInfo := new(models.UserInfo)
-			n, err := o.QueryTable("fly_user_info").Filter("user_id", order.UserId).All(uInfo)
-			if err != nil {
-				fmt.Println("11111 QueryTable fly_user_info", err)
-			}
-			if n == 0 {
-				userFilDaily := new(models.UserFilDaily)
-				_, err := o.QueryTable("fly_user_fil_daily").Filter("user_id", order.UserId).All(userFilDaily)
-				if err != nil {
-					fmt.Println("11111 QueryTable fly_user_fil_daily", order.UserId, err)
-				}
-				userFilPledge := new(models.UserFilPledge)
-				_, err = o.QueryTable("fly_user_fil_pledge").Filter("user_id", order.UserId).All(userFilPledge)
-				if err != nil {
-					fmt.Println("11111 QueryTable fly_user_fil_pleage", order.UserId, err)
-				}
-				uInfo.UserId = order.UserId
-				//uInfo.Share=order.Share
-				uInfo.Reward = userFilDaily.FilAmount + userFilPledge.FilPledge
-				//uInfo.Available=userFilDaily.FilAmount*0.25
-				uInfo.Available = 0
-				//uInfo.Vesting=userFilDaily.FilAmount*0.75+userFilPledge.FilPledge
-				uInfo.Vesting = userFilDaily.FilAmount + userFilPledge.FilPledge
-				_, err = o.Insert(uInfo)
-				if err != nil {
-					fmt.Printf("11111 insert user:%+v to fly_user_info err:%+v \n", uInfo.UserId, err)
-				}
-				vesting := models.VestingInfo{
-					UserId: order.UserId,
-					//Vesting:   userFilDaily.FilAmount * 0.75,
-					Vesting: userFilDaily.FilAmount,
-					//Release:   userFilDaily.FilAmount * 0.75 / 180,
-					Release:   userFilDaily.FilAmount / 180,
-					Times:     0,
-					StartTime: "2020-10-15",
-				}
-				_, err = o.Insert(&vesting)
-				if err != nil {
-					fmt.Println("11111 insert Insret Table vesting info err: ", err)
-					//return
-				}
-
-			}
-		}
-	}
-
-}
-
-func initTmpData() {
-	o := orm.NewOrm()
-	minerInfo := make([]models.MinerInfoTmp, 0)
-	n, err := o.QueryTable("fly_miner_info_tmp").All(&minerInfo)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
-	}
-	pleagef02420, err := strconv.ParseFloat("40740.0792792743", 64)
-	pleagef021695, err := strconv.ParseFloat("1752.1556517147642", 64)
-	pleagef021704, err := strconv.ParseFloat("1740.0369707424757", 64)
-	if err != nil {
-		log.Logger.Error("ParseFloat err:%+v", err)
-	}
-	if n == 0 {
-		miner1 := models.MinerInfoTmp{
-			MinerId:      "f02420",
-			QualityPower: 3064.53125,
-			Pleage:       pleagef02420,
-			CreateTime:   0,
-			UpdateTime:   0,
-		}
-		miner2 := models.MinerInfoTmp{
-			MinerId:      "f021695",
-			QualityPower: 199.03125,
-			Pleage:       pleagef021695,
-			CreateTime:   0,
-			UpdateTime:   0,
-		}
-		miner3 := models.MinerInfoTmp{
-			MinerId:      "f021704",
-			QualityPower: 255.78125,
-			Pleage:       pleagef021704,
-			CreateTime:   0,
-			UpdateTime:   0,
-		}
-		minerInfo = append(minerInfo, miner1)
-		minerInfo = append(minerInfo, miner2)
-		minerInfo = append(minerInfo, miner3)
-		//minerInfo=append(minerInfo,miner1)
-		n, err = o.InsertMulti(3, minerInfo)
-		if err != nil {
-			fmt.Println("insert netrundata err:", err)
-		}
-	}
-
-	netRunData := new(models.NetRunDataProTmp)
-	n, err = o.QueryTable("fly_net_run_data_pro_tmp").All(netRunData)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
-	}
-	if n == 0 {
-		netRunData.ReceiveBlockHeight = 344500
-		n, err = o.Insert(netRunData)
-		if err != nil {
-			fmt.Println("insert netrundata err:", err)
-		}
-	}
-	msgGasNetRunData := new(models.MsgGasNetRunDataProTmp)
-	n, err = o.QueryTable("fly_msg_gas_net_run_data_pro_tmp").All(msgGasNetRunData)
-	if err != nil {
-		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
-	}
-	if n == 0 {
-		msgGasNetRunData.ReceiveBlockHeight = 344500
-		n, err = o.Insert(msgGasNetRunData)
-		if err != nil {
-			fmt.Println("insert msgGasNetRunData err:", err)
-		}
-	}
+	//netRunData := new(models.NetRunDataProTmp)
+	//n, err = models.O.QueryTable("fly_net_run_data_pro_tmp").All(netRunData)
+	//if err != nil {
+	//	fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
+	//}
+	//if n == 0 {
+	//	netRunData.ReceiveBlockHeight = 344500
+	//	n, err = models.O.Insert(netRunData)
+	//	if err != nil {
+	//		fmt.Println("insert netrundata err:", err)
+	//	}
+	//}
+	//msgGasNetRunData := new(models.MsgGasNetRunDataProTmp)
+	//n, err = models.O.QueryTable("fly_msg_gas_net_run_data_pro_tmp").All(msgGasNetRunData)
+	//if err != nil {
+	//	fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
+	//}
+	//if n == 0 {
+	//	msgGasNetRunData.ReceiveBlockHeight = 344500
+	//	n, err = models.O.Insert(msgGasNetRunData)
+	//	if err != nil {
+	//		fmt.Println("insert msgGasNetRunData err:", err)
+	//	}
+	//}
 	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
-	n, err = o.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
+	n, err = models.O.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
@@ -308,33 +115,48 @@ func initTmpData() {
 			MinerId:  "f02420",
 			WalletId: "f3wykhltf7g7guch6sz6u6hs4gdmvxrz2likki7aaf7th23jmofrswbd6rmlhbxx4urt6ycbtmlhitgmynky3a",
 		}
-		//minerAndWalletRelation2:=models.MinerAndWalletRelation{
-		//	MinerId:  "f02420",
-		//	WalletId: "f3vfgq65omcht6hbmlwe2g7mowf334zyoa6zcqm543vtmb3uqpnpei4bwhbmo2qi3qntrfiojhcnpciakea6ma",
-		//}
-		//minerAndWalletRelation3:=models.MinerAndWalletRelation{
-		//	MinerId:  "f021695",
-		//	WalletId: "f3qqdp53ooe4xvqwt4dmoixb6ej6jgmk7zbkjaiujfmfmuyrpenewqre6tlokcxnwp7zpmq3ohlw2wheqir2ga",
-		//}
-		//minerAndWalletRelation4:=models.MinerAndWalletRelation{
-		//	MinerId:  "f021695",
-		//	WalletId: "f3wqijosc44y6a6nckbobrwmq6cocoja3lgrly462z3sjwigyi6pzltourrk4lk4jkt332yr5k4xb6mxmct25a",
-		//}
+		minerAndWalletRelation2 := models.MinerAndWalletRelation{
+			MinerId:  "f02420",
+			WalletId: "f3vfgq65omcht6hbmlwe2g7mowf334zyoa6zcqm543vtmb3uqpnpei4bwhbmo2qi3qntrfiojhcnpciakea6ma",
+		}
+		minerAndWalletRelation3 := models.MinerAndWalletRelation{
+			MinerId:  "f02420",
+			WalletId: "f3rmhlmqfaph6czwiqwlg3kfjgejugt5thcviowlmt3l42464q25ptk3znphuuiwrdbyumun3ui7q2gut7v2da",
+		}
+		minerAndWalletRelation4 := models.MinerAndWalletRelation{
+			MinerId:  "f02420",
+			WalletId: "f3va7lv4wkcfq5mmqirr4pyrogtnuknw2hma5y6luwbx6iv4qcwgrvzyn2zljgbgtmv7lxr3jsa4eo2az3kqra",
+		}
 		minerAndWalletRelation5 := models.MinerAndWalletRelation{
+			MinerId:  "f021695",
+			WalletId: "f3qqdp53ooe4xvqwt4dmoixb6ej6jgmk7zbkjaiujfmfmuyrpenewqre6tlokcxnwp7zpmq3ohlw2wheqir2ga",
+		}
+		minerAndWalletRelation6 := models.MinerAndWalletRelation{
+			MinerId:  "f021695",
+			WalletId: "f3wqijosc44y6a6nckbobrwmq6cocoja3lgrly462z3sjwigyi6pzltourrk4lk4jkt332yr5k4xb6mxmct25a",
+		}
+		minerAndWalletRelation7 := models.MinerAndWalletRelation{
 			MinerId:  "f021704",
 			WalletId: "f3spvlhfuga45prd7fg7dswphgm4hotpxmydyzpjloy2rekpyfnwpbdnd7wuyael2pryb3xztp4k56ju3ib5sq",
 		}
-		//minerAndWalletRelation6:=models.MinerAndWalletRelation{
-		//	MinerId:  "f021704",
-		//	WalletId: "f3skdqsai23rhavva77g7nkr736j7mjql53xv7362ovlw7o3yz334ajchyb7fir35cnutijfusp6mngobyjvya",
-		//}
+		minerAndWalletRelation8 := models.MinerAndWalletRelation{
+			MinerId:  "f021704",
+			WalletId: "f3skdqsai23rhavva77g7nkr736j7mjql53xv7362ovlw7o3yz334ajchyb7fir35cnutijfusp6mngobyjvya",
+		}
+		minerAndWalletRelation9 := models.MinerAndWalletRelation{
+			MinerId:  "f021704",
+			WalletId: "f3sc6mo6jiwxwwgsx4gwz5vbpcn4p6ejybgogocfntujmjaibluzm6ngj7qqj72gck7rtuibtgsow6ttuq43dq",
+		}
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
-		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation2)
-		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation3)
-		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation4)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation2)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation3)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation4)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation5)
-		//minerAndWalletRelations=append(minerAndWalletRelations,minerAndWalletRelation6)
-		n, err = o.InsertMulti(2, minerAndWalletRelations)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation6)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation7)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation8)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation9)
+		n, err = models.O.InsertMulti(9, minerAndWalletRelations)
 		if err != nil {
 			fmt.Println("insert minerAndWalletRelations err:", err)
 		}

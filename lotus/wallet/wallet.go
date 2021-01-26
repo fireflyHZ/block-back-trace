@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 	"github.com/filecoin-project/go-address"
 	"net/http"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
-	"profit-allocation/tool/log"
 	"profit-allocation/tool/sync"
 	"strings"
 	"time"
@@ -20,30 +17,24 @@ import (
 
 func CollectWalletData() {
 	defer sync.Wg.Done()
-	//获取钱包地址
-	walletsStr := beego.AppConfig.String("wallets")
-	wallets := strings.Split(walletsStr, ",")
-	//log.Logger.Debug("Debug collectWalletData wallets:%+v", wallets)
-	//查询数据
-	o := orm.NewOrm()
-	//	walletsInfo:=make([]models.WalletBaseinfo,0)
+
 	walletsHistoryInfo := make([]models.WalletHistoryData, 0)
 	//轮询
-	err := o.Begin()
+	o, err := models.O.Begin()
 	if err != nil {
-		log.Logger.Debug("DEBUG: collectWalletData orm transation begin error: %+v", err)
+		walletLog.Debug("DEBUG: collectWalletData orm transation begin error: %+v", err)
 		return
 	}
 
-	for _, wallet := range wallets {
+	for _, wallet := range models.Wallets {
 		fil, attoFil := getWalletinfo(wallet)
 		walletInfo := new(models.WalletBaseinfo)
 		n, err := o.QueryTable("fly_wallet_baseinfo").Filter("wallet_id", wallet).All(walletInfo)
 		if err != nil {
-			log.Logger.Error("Error  QueryTable wallet:%+v err:%+v num:%+v", wallet, err, n)
+			walletLog.Error("Error  QueryTable wallet:%+v err:%+v num:%+v", wallet, err, n)
 			err := o.Rollback()
 			if err != nil {
-				log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+				walletLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 			}
 			return
 		}
@@ -56,10 +47,10 @@ func CollectWalletData() {
 			walletInfo.Status = "0"
 			_, err := o.Insert(walletInfo)
 			if err != nil {
-				log.Logger.Error("Error  Insert wallet:%+v err:%+v ", wallet, err)
+				walletLog.Error("Error  Insert wallet:%+v err:%+v ", wallet, err)
 				err := o.Rollback()
 				if err != nil {
-					log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+					walletLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 				}
 				return
 			}
@@ -70,10 +61,10 @@ func CollectWalletData() {
 			walletInfo.UpdateTime = time.Now().Unix()
 			_, err := o.Update(walletInfo)
 			if err != nil {
-				log.Logger.Error("Error  Update wallet:%+v err:%+v num:%+v", wallet, err)
+				walletLog.Error("Error  Update wallet:%+v err:%+v num:%+v", wallet, err)
 				err := o.Rollback()
 				if err != nil {
-					log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+					walletLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 				}
 				return
 			}
@@ -93,37 +84,35 @@ func CollectWalletData() {
 
 	num, err := o.InsertMulti(amount, walletsHistoryInfo)
 	if err != nil {
-		log.Logger.Error("Error  InsertMulti wallet history info  err:%+v ", err)
+		walletLog.Error("Error  InsertMulti wallet history info  err:%+v ", err)
 		err := o.Rollback()
 		if err != nil {
-			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+			walletLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 		}
 		return
 	}
 	if int(num) != amount {
-		log.Logger.Error("Error  InsertMulti wallet history info  num:%+v != len:%+v ", num, amount)
+		walletLog.Error("Error  InsertMulti wallet history info  num:%+v != len:%+v ", num, amount)
 		err := o.Rollback()
 		if err != nil {
-			log.Logger.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
+			walletLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 		}
 		return
 	}
 	err = o.Commit()
 	if err != nil {
-		log.Logger.Debug("DEBUG: collectWalletData orm transation Commit error: %+v", err)
+		walletLog.Debug("DEBUG: collectWalletData orm transation Commit error: %+v", err)
 		return
 	}
-
 
 }
 
 func CalculateWalletProfit() {
-	log.Logger.Debug("DEBUG: calculateWalletProfit()")
+	walletLog.Debug("DEBUG: calculateWalletProfit()")
 	//事务
-	o := orm.NewOrm()
-	err := o.Begin()
+	o, err := models.O.Begin()
 	if err != nil {
-		log.Logger.Debug("DEBUG: calculateWalletProfit orm transation begin error: %+v", err)
+		walletLog.Debug("DEBUG: calculateWalletProfit orm transation begin error: %+v", err)
 		return
 	}
 
@@ -132,15 +121,15 @@ func CalculateWalletProfit() {
 	sql := "select settlement_type,max(settlement_date)  settlement_date from fly_wallet_fund_settlement_persistence_data group by settlement_type"
 	_, err = o.Raw(sql).QueryRows(&walletProInfos)
 	if err != nil {
-		log.Logger.Error("ERROR: calculateWalletProfit() QueryRows err=%v", err)
+		walletLog.Error("ERROR: calculateWalletProfit() QueryRows err=%v", err)
 		err := o.Rollback()
 		if err != nil {
-			log.Logger.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
+			walletLog.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
 			return
 		}
 		return
 	} else {
-		log.Logger.Debug("DEBUG: calculateWalletProfit walletProInfos=%+v", walletProInfos)
+		walletLog.Debug("DEBUG: calculateWalletProfit walletProInfos=%+v", walletProInfos)
 	}
 	mapWalletFuncSettlementStatus := make(map[string]string)
 
@@ -154,16 +143,16 @@ func CalculateWalletProfit() {
 	ws := make([]models.WalletBaseinfo, 0)
 	//build wallet fund settlement daliy data
 	if wfsd, err := calculate(ws, mapWalletFuncSettlementStatus["1"]); err != nil {
-		log.Logger.Error("ERROR: DoWalletFundSettlement(), err=%v", err)
+		walletLog.Error("ERROR: DoWalletFundSettlement(), err=%v", err)
 
 		err := o.Rollback()
 		if err != nil {
-			log.Logger.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
+			walletLog.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
 			return
 		}
 		return
 	} else {
-		//log.Logger.Debug("DEBUG: DoWalletFundSettlement(), wfsd=%v", wfsd)
+		//walletLog.Debug("DEBUG: DoWalletFundSettlement(), wfsd=%v", wfsd)
 		if len(wfsd) > 0 {
 			walletProInfos = append(walletProInfos, wfsd...)
 		}
@@ -172,32 +161,32 @@ func CalculateWalletProfit() {
 	if len(walletProInfos) > 0 {
 		num, err := o.InsertMulti(4, walletProInfos)
 		if err != nil {
-			log.Logger.Error("ERROR: DoWalletFundSettlement(), InsertMulti error:%+v; sueccess num:%+v", err, num)
+			walletLog.Error("ERROR: DoWalletFundSettlement(), InsertMulti error:%+v; sueccess num:%+v", err, num)
 			err := o.Rollback()
 			if err != nil {
-				log.Logger.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
+				walletLog.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
 				return
 			}
 			return
 		}
 
 	} else {
-		log.Logger.Debug("DEBUG: DoWalletFundSettlement() calculate not have resp")
+		walletLog.Debug("DEBUG: DoWalletFundSettlement() calculate not have resp")
 		err := o.Rollback()
 		if err != nil {
-			log.Logger.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
+			walletLog.Debug("DEBUG: calculateWalletProfit orm transation rollback error: %+v", err)
 			return
 		}
 	}
 	err = o.Commit()
 	if err != nil {
-		log.Logger.Debug("DEBUG: calculateWalletProfit orm transation commit error: %+v", err)
+		walletLog.Debug("DEBUG: calculateWalletProfit orm transation commit error: %+v", err)
 		return
 	}
 }
 
 func calculate(ws []models.WalletBaseinfo, latestSettlementDate string) ([]models.WalletProfitInfo, error) {
-	log.Logger.Debug("DEBUG: DoWalletFundSettlementDaliyData() latestSettlementDate: %+v", latestSettlementDate)
+	walletLog.Debug("DEBUG: DoWalletFundSettlementDaliyData() latestSettlementDate: %+v", latestSettlementDate)
 
 	var rsp []models.WalletProfitInfo
 
@@ -207,11 +196,11 @@ func calculate(ws []models.WalletBaseinfo, latestSettlementDate string) ([]model
 	//判断查得的日期
 	if len(latestSettlementDate) > 0 {
 		if latestSettlementDate >= lastDate {
-			log.Logger.Debug("DEBUG: DoWalletFundSettlementDaliyData(), latestSettlement=%v, lastMonth=%v, return", latestSettlementDate, lastDate)
+			walletLog.Debug("DEBUG: DoWalletFundSettlementDaliyData(), latestSettlement=%v, lastMonth=%v, return", latestSettlementDate, lastDate)
 			return nil, nil
 		}
 		if tLatestSettlementDate, err := time.Parse("2006-01-02", latestSettlementDate); err != nil {
-			log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+			walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 			return nil, err
 		} else {
 			//下次处理的日期
@@ -243,45 +232,45 @@ func calculate(ws []models.WalletBaseinfo, latestSettlementDate string) ([]model
 			//day
 			dayStartFIL, dayStartAttoFil, err := getBalance(dayStartDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			dayEndFIL, dayEndAttoFil, err := getBalance(dayEndDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			//month
 			monthStartFIL, monthStartAttoFil, err := getBalance(monthStartDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			monthEndFIL, monthEndAttoFil, err := getBalance(monthEndDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			//quarter
 			quarterStartFIL, quarterStartAttoFil, err := getBalance(quarterStartDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			quarterEndFIL, quarterEndAttoFil, err := getBalance(quarterEndDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			//year
 			yearStartFIL, yearStartAttoFil, err := getBalance(yearStartDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			yearEndFIL, yearEndAttoFil, err := getBalance(yearEndDateTime, ws[i].WalletId)
 			if err != nil {
-				log.Logger.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
+				walletLog.Error("ERROR: DoWalletFundSettlementDaliyData(), err=%v", err)
 				return nil, err
 			}
 			//day
@@ -297,7 +286,7 @@ func calculate(ws []models.WalletBaseinfo, latestSettlementDate string) ([]model
 			amountYearFIL := bit.StringSub(yearEndFIL, yearStartFIL)
 			amountYearAttoFil := bit.StringSub(yearEndAttoFil, yearStartAttoFil)
 
-			log.Logger.Debug("DEBUG: DoWalletFundSettlementDaliyData(), amountFil=%+v amountAttoFil: %+v", amountDayFIL, amountDayAttoFil)
+			walletLog.Debug("DEBUG: DoWalletFundSettlementDaliyData(), amountFil=%+v amountAttoFil: %+v", amountDayFIL, amountDayAttoFil)
 			//day
 			dayStartAmount, dayEndAmount := getAmount(dayStartFIL, dayStartAttoFil, dayEndFIL, dayEndAttoFil)
 			monthStartAmount, monthEndAmount := getAmount(monthStartFIL, monthStartAttoFil, monthEndFIL, monthEndAttoFil)
@@ -322,9 +311,9 @@ func calculate(ws []models.WalletBaseinfo, latestSettlementDate string) ([]model
 func getBalance(time string, walletId string) (string, string, error) {
 	Fil := "0"
 	attoFil := "0"
-	o := orm.NewOrm()
+
 	walletHistoryInfo := models.WalletHistoryData{}
-	num, err := o.QueryTable("fly_wallet_history_data").Filter("wallet_id", walletId).Filter("create_time_lte", time).OrderBy("-create_time").All(&walletHistoryInfo)
+	num, err := models.O.QueryTable("fly_wallet_history_data").Filter("wallet_id", walletId).Filter("create_time_lte", time).OrderBy("-create_time").All(&walletHistoryInfo)
 	if err != nil {
 		return Fil, attoFil, err
 	}
@@ -335,7 +324,7 @@ func getBalance(time string, walletId string) (string, string, error) {
 	Fil = walletHistoryInfo.BalanceFil
 	attoFil = walletHistoryInfo.BalanceAttofil
 
-	log.Logger.Debug("DEBUG: DoWalletFundSettlementDaliyData() getBalance FIL:%+v;Fil:%+v", Fil, attoFil)
+	walletLog.Debug("DEBUG: DoWalletFundSettlementDaliyData() getBalance FIL:%+v;Fil:%+v", Fil, attoFil)
 	return Fil, attoFil, nil
 }
 
@@ -379,31 +368,30 @@ func getAmount(startFIL, startAttoFil, endFIL, endAttoFil string) (string, strin
 }
 
 func getWalletinfo(walletId string) (fil, attoFil string) {
-	lotusHost := beego.AppConfig.String("lotusHost")
 	requestHeader := http.Header{}
-	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), lotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), models.LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer closer()
-	//balance 处理 todo,如何组装address.Address
-	walletAddr,err:=address.NewFromString(walletId)
+	//balance 处理 组装address.Address
+	walletAddr, err := address.NewFromString(walletId)
 	if err != nil {
-		log.Logger.Error("Error  WalletBalance NewFromString error:%+v", err)
+		walletLog.Error("Error  WalletBalance NewFromString error:%+v", err)
 		return
 	}
-	//log.Logger.Debug("Debug  WalletBalance NewFromString walletAddr :%+v", walletAddr)
+	//walletLog.Debug("Debug  WalletBalance NewFromString walletAddr :%+v", walletAddr)
 
-	resp, err := nodeApi.WalletBalance(context.Background(),walletAddr)
+	resp, err := nodeApi.WalletBalance(context.Background(), walletAddr)
 	if err != nil {
-		log.Logger.Error("Error  WalletBalance error:%+v", err)
+		walletLog.Error("Error  WalletBalance error:%+v", err)
 		return
 	}
 	balance := resp.String()
-	amount:= bit.TransFilToFIL(balance)
-	filSlice:=strings.Split(amount,".")
-	fil=filSlice[0]
-	attoFil=filSlice[1]
+	amount := bit.TransFilToFIL(balance)
+	filSlice := strings.Split(amount, ".")
+	fil = filSlice[0]
+	attoFil = filSlice[1]
 	return
 }

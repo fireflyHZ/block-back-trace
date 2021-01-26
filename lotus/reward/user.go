@@ -1,22 +1,21 @@
 package reward
 
 import (
-	"github.com/astaxie/beego/orm"
+	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
-	"profit-allocation/tool/log"
 	"time"
 )
 
 var TimeFlag int64 = 1602633600         //"2020-10-14"日时间戳
 var AllocateTimeFlag int64 = 1603584000 //"2020-10-25"日时间戳
+var userLog = logging.Logger("user-log")
 
 func CalculateUserFund(newTimeStamp int64) {
 	//遍历user
-	o := orm.NewOrm()
 	usersInfo := make([]models.UserInfo, 0)
-	_, err := o.QueryTable("fly_user_info").All(&usersInfo)
+	_, err := models.O.QueryTable("fly_user_info").All(&usersInfo)
 	if err != nil {
-		log.Logger.Error("Error CalculateUserFund QueryTable user info err:%+v", err)
+		userLog.Error("Error CalculateUserFund QueryTable user info err:%+v", err)
 		return
 	}
 	//查看更新时间
@@ -24,7 +23,7 @@ func CalculateUserFund(newTimeStamp int64) {
 	if updateTime != "" {
 		tflag, err := time.Parse("2006-01-02", updateTime)
 		if err != nil {
-			log.Logger.Error("Error CalculateUserFund user info update pares err:%+v", err)
+			userLog.Error("Error CalculateUserFund user info update pares err:%+v", err)
 			return
 		}
 		TimeFlag = tflag.Unix()
@@ -33,7 +32,7 @@ func CalculateUserFund(newTimeStamp int64) {
 	updateTimeStr := time.Unix(TimeFlag, 0).AddDate(0, 0, 1).Format("2006-01-02")
 	updateTimeStamp, err := time.Parse("2006-01-02", updateTimeStr)
 	if err != nil {
-		log.Logger.Error("ERROR: handleRequestInfo() calculateMineReward updateTimeStamp parse err=%+v", err)
+		userLog.Error("ERROR: handleRequestInfo() calculateMineReward updateTimeStamp parse err=%+v", err)
 		return
 	}
 	//当前日期
@@ -41,10 +40,10 @@ func CalculateUserFund(newTimeStamp int64) {
 	//nowTimeStamp, err := time.Parse("2006-01-02", t)
 
 	//if err != nil {
-	//	log.Logger.Error("ERROR: handleRequestInfo() calculateMineReward nowTimeStamp parse err=%+v", err)
+	//	userLog.Error("ERROR: handleRequestInfo() calculateMineReward nowTimeStamp parse err=%+v", err)
 	//	return
 	//}
-	//log.Logger.Debug("Debug update :%+v  now:%+v ", updateTimeStamp.Format("2006-01-02"), nowTimeStamp.Format("2006-01-02"))
+	//userLog.Debug("Debug update :%+v  now:%+v ", updateTimeStamp.Format("2006-01-02"), nowTimeStamp.Format("2006-01-02"))
 
 	for {
 		if newTimeStamp > updateTimeStamp.Unix() {
@@ -53,14 +52,14 @@ func CalculateUserFund(newTimeStamp int64) {
 			if updateTimeStamp.Unix() >= AllocateTimeFlag {
 				err := allocateUsersProfit(usersInfo, t, 0.25, 0.75)
 				if err != nil {
-					log.Logger.Error("Error allocateUsersProfit err :%+v ", err)
+					userLog.Error("Error allocateUsersProfit err :%+v ", err)
 					return
 				}
 				updateTimeStamp = updateTimeStamp.AddDate(0, 0, 1)
 			} else {
 				err := allocateUsersProfit(usersInfo, t, 0, 1)
 				if err != nil {
-					log.Logger.Error("Error allocateUsersProfit err :%+v ", err)
+					userLog.Error("Error allocateUsersProfit err :%+v ", err)
 					return
 				}
 				updateTimeStamp = updateTimeStamp.AddDate(0, 0, 1)
@@ -74,21 +73,20 @@ func CalculateUserFund(newTimeStamp int64) {
 }
 
 func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportion, vestingProportion float64) error {
-	o := orm.NewOrm()
 	for _, userInfo := range usersInfo {
-		err := o.Begin()
+		o, err := models.O.Begin()
 		if err != nil {
-			log.Logger.Error("Error  orm transation begin err:%+v", err)
+			userLog.Error("Error  orm transation begin err:%+v", err)
 			return err
 		}
 		ordersInfo := make([]models.OrderInfo, 0)
 		//通过uid找到orderid
 		_, err = o.QueryTable("fly_order_info").Filter("user_id", userInfo.UserId).All(&ordersInfo)
 		if err != nil {
-			log.Logger.Error("Error CalculateUserFund QueryTable orders err:%+v", err)
+			userLog.Error("Error CalculateUserFund QueryTable orders err:%+v", err)
 			err = o.Rollback()
 			if err != nil {
-				log.Logger.Error("Error  QueryTable orders rollback err:%+v", err)
+				userLog.Error("Error  QueryTable orders rollback err:%+v", err)
 			}
 			return err
 		}
@@ -105,19 +103,19 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 			orderRewardInfo := new(models.OrderDailyRewardInfo)
 			n, err := o.QueryTable("fly_order_daily_reward_info").Filter("order_id", orderInfo.OrderId).Filter("time", t).All(orderRewardInfo)
 			if err != nil {
-				log.Logger.Error("Error CalculateUserFund QueryTable order inifo err:%+v t:%+v", err, t)
+				userLog.Error("Error CalculateUserFund QueryTable order inifo err:%+v t:%+v", err, t)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  QueryTable orders daily reward info rollback err:%+v", err)
+					userLog.Error("Error  QueryTable orders daily reward info rollback err:%+v", err)
 				}
 				return err
 			}
 
 			if n == 0 {
-				log.Logger.Error("Error CalculateUserFund QueryTable order inifo  n:%+v t:%+v", n, t)
+				userLog.Error("Error CalculateUserFund QueryTable order inifo  n:%+v t:%+v", n, t)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  QueryTable orders daily reward info rollback err:%+v", err)
+					userLog.Error("Error  QueryTable orders daily reward info rollback err:%+v", err)
 				}
 				return err
 			}
@@ -133,10 +131,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 		userVestings := make([]models.VestingInfo, 0)
 		n, err := o.QueryTable("fly_vesting_info").Filter("user_id", userInfo.UserId).Filter("times__lt", 180).All(&userVestings)
 		if err != nil {
-			log.Logger.Error("Error CalculateUserFund QueryTable vesting inifo err:%+v  n:%+v", err, n)
+			userLog.Error("Error CalculateUserFund QueryTable vesting inifo err:%+v  n:%+v", err, n)
 			err = o.Rollback()
 			if err != nil {
-				log.Logger.Error("Error  QueryTable vesting info rollback err:%+v", err)
+				userLog.Error("Error  QueryTable vesting info rollback err:%+v", err)
 			}
 			return err
 		}
@@ -175,10 +173,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 			userInfo.UpdateTime = t
 			_, err := o.Update(&userInfo)
 			if err != nil {
-				log.Logger.Error("Error CalculateUserFund UpdateTable users inifo err:%+v ", err)
+				userLog.Error("Error CalculateUserFund UpdateTable users inifo err:%+v ", err)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  update user info rollback err:%+v", err)
+					userLog.Error("Error  update user info rollback err:%+v", err)
 				}
 				return err
 			}
@@ -193,10 +191,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 			}
 			_, err = o.Insert(&vesting)
 			if err != nil {
-				log.Logger.Error("Error CalculateUserFund Insret Table vesting info err:%+v ", err)
+				userLog.Error("Error CalculateUserFund Insret Table vesting info err:%+v ", err)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  insert vesting info rollback err:%+v", err)
+					userLog.Error("Error  insert vesting info rollback err:%+v", err)
 				}
 				return err
 			}
@@ -209,10 +207,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 				totalVesting += userVesting.Vesting - float64(userVesting.Times)*userVesting.Release
 				_, err := o.Update(&userVesting)
 				if err != nil {
-					log.Logger.Error("Error CalculateUserFund UpdateTable vesting inifo err:%+v  ", err)
+					userLog.Error("Error CalculateUserFund UpdateTable vesting inifo err:%+v  ", err)
 					err = o.Rollback()
 					if err != nil {
-						log.Logger.Error("Error  update Table vesting rollback err:%+v", err)
+						userLog.Error("Error  update Table vesting rollback err:%+v", err)
 					}
 					return err
 				}
@@ -244,10 +242,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 
 			_, err := o.Update(&userInfo)
 			if err != nil {
-				log.Logger.Error("Error CalculateUserFund UpdateTable users info err:%+v ", err)
+				userLog.Error("Error CalculateUserFund UpdateTable users info err:%+v ", err)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  update Table user info rollback err:%+v", err)
+					userLog.Error("Error  update Table user info rollback err:%+v", err)
 				}
 				return err
 			}
@@ -261,10 +259,10 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 			}
 			_, err = o.Insert(&vesting)
 			if err != nil {
-				log.Logger.Error("Error CalculateUserFund Insret Table vesting inifo err:%+v ", err)
+				userLog.Error("Error CalculateUserFund Insret Table vesting inifo err:%+v ", err)
 				err = o.Rollback()
 				if err != nil {
-					log.Logger.Error("Error  insert vesting info rollback err:%+v", err)
+					userLog.Error("Error  insert vesting info rollback err:%+v", err)
 				}
 				return err
 			}
@@ -282,16 +280,16 @@ func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportio
 		}
 		_, err = o.Insert(&userDailyRewardInfo)
 		if err != nil {
-			log.Logger.Error("Error CalculateUserFund Insret Table user daily reward inifo err:%+v ", err)
+			userLog.Error("Error CalculateUserFund Insret Table user daily reward inifo err:%+v ", err)
 			err = o.Rollback()
 			if err != nil {
-				log.Logger.Error("Error  user daily reward info rollback err:%+v", err)
+				userLog.Error("Error  user daily reward info rollback err:%+v", err)
 			}
 			return err
 		}
 		err = o.Commit()
 		if err != nil {
-			log.Logger.Error("Error  orm transation commit err:%+v", err)
+			userLog.Error("Error  orm transation commit err:%+v", err)
 		}
 	}
 	return nil

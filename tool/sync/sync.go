@@ -2,4 +2,4 @@ package sync
 
 import "sync"
 
-var Wg      sync.WaitGroup
+var Wg sync.WaitGroup

@@ -1,22 +1,22 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/v2/server/web"
+	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
-	"profit-allocation/tool/data"
-	"profit-allocation/tool/log"
 )
 
+var userLog = logging.Logger("user-ctr-log")
+
 type UserController struct {
-	beego.Controller
+	web.Controller
 }
 
 func (c *UserController) GetUserInfo() {
 	userId := c.GetString("uid")
 
 	if userId == "" {
-		resp := data.UserInfoResp{
+		resp := models.UserInfoResp{
 			Code: "faile",
 			Msg:  "uid  is nil",
 		}
@@ -25,14 +25,13 @@ func (c *UserController) GetUserInfo() {
 		return
 	}
 
-	log.Logger.Debug("DEBUG: GetUserInfo() user: %+v", userId)
+	userLog.Debug("DEBUG: GetUserInfo() user: %+v", userId)
 
-	o := orm.NewOrm()
 	userInfo := new(models.UserInfo)
-	num, err := o.QueryTable("fly_user_info").Filter("user_id", userId).All(userInfo)
-	//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
+	num, err := models.O.QueryTable("fly_user_info").Filter("user_id", userId).All(userInfo)
+	//userLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
-		resp := data.UserInfoResp{
+		resp := models.UserInfoResp{
 			Code: "faile",
 			Msg:  "haven't this user info",
 		}
@@ -40,7 +39,7 @@ func (c *UserController) GetUserInfo() {
 		c.ServeJSON()
 		return
 	} else {
-		resp := data.UserInfoResp{
+		resp := models.UserInfoResp{
 			Code: "ok",
 			Msg:  "successful",
 			Data: *userInfo,
@@ -54,7 +53,7 @@ func (c *UserController) GetUserDailyInfo() {
 	userId := c.GetString("uid")
 	index, err := c.GetInt("index")
 	if err != nil {
-		resp := data.UserDailyInfoResp{
+		resp := models.UserDailyInfoResp{
 			Code: "faile",
 			Msg:  "get index  is faile",
 		}
@@ -64,7 +63,7 @@ func (c *UserController) GetUserDailyInfo() {
 	}
 	page, err := c.GetInt("page")
 	if err != nil {
-		resp := data.UserDailyInfoResp{
+		resp := models.UserDailyInfoResp{
 			Code: "faile",
 			Msg:  "get page  is faile",
 		}
@@ -73,7 +72,7 @@ func (c *UserController) GetUserDailyInfo() {
 		return
 	}
 	if userId == "" {
-		resp := data.UserDailyInfoResp{
+		resp := models.UserDailyInfoResp{
 			Code: "faile",
 			Msg:  "uid  is nil",
 		}
@@ -82,17 +81,16 @@ func (c *UserController) GetUserDailyInfo() {
 		return
 	}
 
-	log.Logger.Debug("DEBUG: GetUserDailyInfo() user: %+v", userId)
+	userLog.Debug("DEBUG: GetUserDailyInfo() user: %+v", userId)
 
-	o := orm.NewOrm()
 	userDailyInfo := make([]models.UserDailyRewardInfo, 0)
-	num, err := o.QueryTable("fly_user_daily_reward_info").Filter("user_id", userId).All(&userDailyInfo)
-	//log.Logger.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
+	num, err := models.O.QueryTable("fly_user_daily_reward_info").Filter("user_id", userId).All(&userDailyInfo)
+	//userLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil {
 
 	}
 	if num == 0 {
-		resp := data.UserDailyInfoResp{
+		resp := models.UserDailyInfoResp{
 			Code:       "ok",
 			Msg:        "successful ",
 			TotalCount: 0,
@@ -103,7 +101,7 @@ func (c *UserController) GetUserDailyInfo() {
 	} else {
 		result, pages := paging(userDailyInfo, page, index)
 
-		resp := data.UserDailyInfoResp{
+		resp := models.UserDailyInfoResp{
 			Code:       "ok",
 			Msg:        "successful",
 			TotalCount: int(num),

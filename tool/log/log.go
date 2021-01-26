@@ -1,42 +1,49 @@
 package log
 
 import (
-	"strings"
-
-	"github.com/astaxie/beego/logs"
+	logging "github.com/ipfs/go-log/v2"
 )
 
-var (
-	Logger *logs.BeeLogger
-)
-
-// 初始化日志
-func Init(filename string, level string) {
-	//logs.SetLogger("file")
-	Logger = logs.NewLogger(10000)
-
-	Logger.EnableFuncCallDepth(true)
-	Logger.SetLogger("file",   `{"filename":"test.log"}`)
-	Logger.SetLogger("console", "")
-	Logger.SetLogFuncCallDepth(2)
-
-	var logLevel int
-	switch strings.ToLower(level) {
-	case "trace":
-		logLevel = logs.LevelTrace
-	case "debug":
-		logLevel = logs.LevelDebug
-	case "info":
-		logLevel = logs.LevelInfo
-	case "warn":
-		logLevel = logs.LevelWarn
-	case "error":
-		logLevel = logs.LevelError
-	case "critical":
-		logLevel = logs.LevelCritical
-	default:
-		logLevel = logs.LevelWarn
+func Init() error {
+	logging.SetupLogging(logging.Config{File: "profit.log"})
+	//controller
+	if err := logging.SetLogLevel("order-ctr-log", "DEBUG"); err != nil {
+		return err
 	}
-
-	Logger.SetLevel(logLevel)
+	if err := logging.SetLogLevel("reward-ctr-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("user-ctr-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("wallet-ctr-log", "DEBUG"); err != nil {
+		return err
+	}
+	//models
+	if err := logging.SetLogLevel("models", "DEBUG"); err != nil {
+		return err
+	}
+	//lotus
+	if err := logging.SetLogLevel("miner-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("lotus-setup", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("wallet-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("message-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("reward-former-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("user-log", "DEBUG"); err != nil {
+		return err
+	}
+	if err := logging.SetLogLevel("reward-log", "DEBUG"); err != nil {
+		return err
+	}
+	return nil
 }

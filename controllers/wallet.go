@@ -1,21 +1,21 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
+	"github.com/beego/beego/v2/server/web"
+	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
-	"profit-allocation/tool/data"
-	"profit-allocation/tool/log"
 )
 
 type WalletController struct {
-	beego.Controller
+	web.Controller
 }
+
+var walletLog = logging.Logger("wallet-ctr-log")
 
 func (c *WalletController) QueryWalletBalance() {
 	walletId := c.GetString("wallet_id")
 	if walletId == "" {
-		resp := data.WalletInfoResp{
+		resp := models.WalletInfoResp{
 			Code:          "faile",
 			Msg:           "wallet id is nil",
 			WalletBalance: "",
@@ -24,12 +24,11 @@ func (c *WalletController) QueryWalletBalance() {
 		c.ServeJSON()
 		return
 	}
-	log.Logger.Debug("DEBUG: QueryWalletBalance()  walletId:%+v", walletId)
+	walletLog.Debug("DEBUG: QueryWalletBalance()  walletId:%+v", walletId)
 	walletInfo := make([]models.WalletBaseinfo, 0)
-	o := orm.NewOrm()
-	num, err := o.QueryTable("wallet_baseinfo").Filter("wallet_id", walletId).All(&walletInfo)
+	num, err := models.O.QueryTable("wallet_baseinfo").Filter("wallet_id", walletId).All(&walletInfo)
 	if err != nil || num == 0 {
-		resp := data.WalletInfoResp{
+		resp := models.WalletInfoResp{
 			Code:          "faile",
 			Msg:           "haven't this wallet info",
 			WalletBalance: "",
@@ -38,7 +37,7 @@ func (c *WalletController) QueryWalletBalance() {
 		c.ServeJSON()
 		return
 	} else {
-		resp := data.WalletInfoResp{
+		resp := models.WalletInfoResp{
 			Code:          "ok",
 			Msg:           "successful",
 			WalletBalance: walletInfo[0].BalanceFil,
@@ -54,9 +53,9 @@ func (c *WalletController) QueryWalletProfit() {
 	date := c.GetString("settlement_date")
 	typ := c.GetString("settlement_type")
 	if walletId == "" {
-		resp := data.WalletProfitResp{
-			Code:          "faile",
-			Msg:           "wallet id is nil",
+		resp := models.WalletProfitResp{
+			Code:   "faile",
+			Msg:    "wallet id is nil",
 			Amount: "",
 		}
 		c.Data["json"] = &resp
@@ -64,9 +63,9 @@ func (c *WalletController) QueryWalletProfit() {
 		return
 	}
 	if date == "" {
-		resp := data.WalletProfitResp{
-			Code:          "faile",
-			Msg:           "settlement_date  is nil",
+		resp := models.WalletProfitResp{
+			Code:   "faile",
+			Msg:    "settlement_date  is nil",
 			Amount: "",
 		}
 		c.Data["json"] = &resp
@@ -74,9 +73,9 @@ func (c *WalletController) QueryWalletProfit() {
 		return
 	}
 	if typ == "" {
-		resp := data.WalletProfitResp{
-			Code:          "faile",
-			Msg:           "settlement_type  is nil",
+		resp := models.WalletProfitResp{
+			Code:   "faile",
+			Msg:    "settlement_type  is nil",
 			Amount: "",
 		}
 		c.Data["json"] = &resp
@@ -84,24 +83,23 @@ func (c *WalletController) QueryWalletProfit() {
 		return
 	}
 
-	log.Logger.Debug("DEBUG: QueryWalletProfit() walletId: %+v -- date: %+v -- type: %+v", walletId, date, typ)
+	walletLog.Debug("DEBUG: QueryWalletProfit() walletId: %+v -- date: %+v -- type: %+v", walletId, date, typ)
 	walletProfitInfo := make([]models.WalletProfitInfo, 0)
-	o := orm.NewOrm()
-	q := o.QueryTable("fly_wallet_profit_info").Filter("wallet_id", walletId)
-	num,err:=q.Filter("settlement_date",date).Filter("settlement_type",typ).All(&walletProfitInfo)
+	q := models.O.QueryTable("fly_wallet_profit_info").Filter("wallet_id", walletId)
+	num, err := q.Filter("settlement_date", date).Filter("settlement_type", typ).All(&walletProfitInfo)
 
 	if err != nil || num == 0 {
-		resp := data.WalletProfitResp{
-			Code:          "faile",
-			Msg: "haven't this wallet info",
+		resp := models.WalletProfitResp{
+			Code: "faile",
+			Msg:  "haven't this wallet info",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
 		return
 	} else {
-		resp := data.WalletProfitResp{
-			Code:          "ok",
-			Msg:           "successful",
+		resp := models.WalletProfitResp{
+			Code:   "ok",
+			Msg:    "successful",
 			Amount: walletProfitInfo[0].Amount,
 		}
 		c.Data["json"] = &resp

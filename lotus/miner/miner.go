@@ -1,68 +1,64 @@
 package miner
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
+	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
-	"profit-allocation/tool/log"
-	"strings"
+
 	"time"
 )
 
+var minerLog = logging.Logger("miner-log")
+
 func collectMinerData() {
-	//获取minerid
-	minerIdStr := beego.AppConfig.String("miners")
-	minersId := strings.Split(minerIdStr, ",")
-	log.Logger.Debug("Debug collectMinerData wallets:%+v", minersId)
+
 	//查询数据
-	o := orm.NewOrm()
-	err := o.Begin()
+	o, err := models.O.Begin()
 	if err != nil {
-		log.Logger.Debug("DEBUG: collectMinerData orm transation begin error: %+v", err)
+		minerLog.Debug("DEBUG: collectMinerData orm transation begin error: %+v", err)
 		return
 	}
 
-	for _, minerId := range minersId {
-		qualityPower, rawPower ,available := stateMinerPowerInfo(minerId)
+	for _, minerId := range models.Miners {
+		qualityPower, _, _ := stateMinerPowerInfo(minerId)
 		minerInfo := new(models.MinerInfo)
 		n, err := o.QueryTable("fly_reward_info").Filter("miner_id", minerId).All(minerInfo)
 		if err != nil {
-			log.Logger.Error("Error  QueryTable minerInfo:%+v err:%+v num:%+v ", minerId, err, n)
+			minerLog.Error("Error  QueryTable minerInfo:%+v err:%+v num:%+v ", minerId, err, n)
 			err := o.Rollback()
 			if err != nil {
-				log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+				minerLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
 			}
 			return
 		}
 		if n == 0 {
 			minerInfo.QualityPower = qualityPower
-			minerInfo.RawPower = rawPower
-			minerInfo.Available = available
+			//minerInfo.RawPower = rawPower
+			//minerInfo.Available = available
 			minerInfo.CreateTime = time.Now().Unix()
 			minerInfo.UpdateTime = time.Now().Unix()
 
 			_, err := o.Insert(minerInfo)
 			if err != nil {
-				log.Logger.Error("Error  Insert minerInfo miner:%+v  err:%+v ", minerId, err)
+				minerLog.Error("Error  Insert minerInfo miner:%+v  err:%+v ", minerId, err)
 				err := o.Rollback()
 				if err != nil {
-					log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+					minerLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
 				}
 				return
 			}
 		} else {
 			//更新miner info
 			minerInfo.QualityPower = qualityPower
-			minerInfo.RawPower = rawPower
-			minerInfo.Available = available
+			//minerInfo.RawPower = rawPower
+			//minerInfo.Available = available
 			minerInfo.UpdateTime = time.Now().Unix()
 
 			_, err := o.Update(minerInfo)
 			if err != nil {
-				log.Logger.Error("Error  Update minerInfo miner:%+v  err:%+v ", minerId, err)
+				minerLog.Error("Error  Update minerInfo miner:%+v  err:%+v ", minerId, err)
 				err := o.Rollback()
 				if err != nil {
-					log.Logger.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
+					minerLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
 				}
 				return
 			}

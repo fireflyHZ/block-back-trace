@@ -1,28 +1,31 @@
 package models
 
-type RewardInfo struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	//	WalletId string
-	Epoch      int
-	Reward     string
-	Gas        string
-	Penalty    string
-	Value      string
-	Power      float64
-	Time       string
-	UpdateTime int64
-}
-type MessageRewardInfo struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	//	WalletId string
-	Epoch string
+import "time"
 
-	Value      string
-	Time       string
-	UpdateTime int64
+type ListenMsgGasNetStatus struct {
+	Id                 int `orm:"pk;auto"`
+	ReceiveBlockHeight int
+	CreateTime         time.Time
+	UpdateTime         time.Time
 }
+
+type ExpendMessages struct {
+	Id                 int `orm:"pk;auto"`
+	MessageId          string
+	WalletId           string
+	To                 string
+	Epoch              string
+	Gas                string
+	BaseBurnFee        string
+	OverEstimationBurn string
+	Value              string
+	//RewardValue        string
+	Penalty string
+	Method  uint64
+	//Time       string
+	CreateTime time.Time
+}
+
 type ExpendInfo struct {
 	Id int `orm:"pk;auto"`
 	//MinerId            string
@@ -34,6 +37,100 @@ type ExpendInfo struct {
 	Value              string
 	//RewardValue        string
 	Penalty    string
+	Time       string
+	UpdateTime time.Time
+}
+
+//reeward
+type ListenRewardNetStatus struct {
+	Id                 int `orm:"pk;auto"`
+	ReceiveBlockHeight int
+	CreateTime         time.Time
+	UpdateTime         time.Time
+}
+type MinerInfo struct {
+	Id           int `orm:"pk;auto"`
+	MinerId      string
+	QualityPower float64
+	Pleage       float64
+	CreateTime   time.Time
+	UpdateTime   time.Time
+}
+
+//miner power status
+type MinerPowerStatus struct {
+	Id        int `orm:"pk;auto"`
+	MinerId   string
+	Power     float64
+	Available float64
+	PreCommit float64
+	Vesting   float64
+	Pleage    float64
+	Time      string
+}
+
+type RewardInfo struct {
+	Id      int `orm:"pk;auto"`
+	MinerId string
+	//	WalletId string
+	Epoch      int
+	Value      string
+	Pledge     float64
+	Power      float64
+	BlockNum   int
+	WinCounts  int64
+	Time       string
+	UpdateTime time.Time
+}
+
+type RewardInfoFormer struct {
+	Id      int `orm:"pk;auto"`
+	MinerId string
+	//	WalletId string
+	Epoch      int
+	Reward     string
+	Gas        string
+	Penalty    string
+	Value      string
+	Power      float64
+	Time       string
+	UpdateTime time.Time
+}
+
+//出块记录
+type MineBlocks struct {
+	Id      int `orm:"pk;auto"`
+	MinerId string
+	//	WalletId string
+	Epoch    int
+	Reward   string
+	Gas      string
+	Penalty  string
+	Value    string
+	Power    float64
+	WinCount int64
+	//Time       string
+	CreateTime time.Time
+}
+
+//打包的message记录
+type MineMessages struct {
+	Id         int `orm:"pk;auto"`
+	MinerId    string
+	MessageId  string
+	Epoch      string
+	Gas        string
+	Penalty    string
+	CreateTime time.Time
+}
+
+type MessageRewardInfo struct {
+	Id      int `orm:"pk;auto"`
+	MinerId string
+	//	WalletId string
+	Epoch string
+
+	Value      string
 	Time       string
 	UpdateTime int64
 }
@@ -72,15 +169,6 @@ type WalletProfitInfo struct {
 	Status      string
 }
 
-type MinerInfo struct {
-	Id           int `orm:"pk;auto"`
-	MinerId      string
-	QualityPower float64
-	Pleage       float64
-	CreateTime   int64
-	UpdateTime   int64
-}
-
 type NetRunDataPro struct {
 	Id                 int `orm:"pk;auto"`
 	ReceiveBlockHeight int
@@ -89,22 +177,7 @@ type NetRunDataPro struct {
 	CreateTime         int64
 	UpdateTime         int64
 }
-type ExpendMessages struct {
-	Id                 int `orm:"pk;auto"`
-	MessageId          string
-	WalletId           string
-	To                 string
-	Epoch              string
-	Gas                string
-	BaseBurnFee        string
-	OverEstimationBurn string
-	Value              string
-	//RewardValue        string
-	Penalty    string
-	Method     uint64
-	Time       string
-	CreateTime uint64
-}
+
 type RewardMessages struct {
 	Id        int `orm:"pk;auto"`
 	MessageId string
@@ -120,34 +193,7 @@ type RewardMessages struct {
 	CreateTime uint64
 }
 
-//出块记录
-type MineBlocks struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	//	WalletId string
-	Epoch      int
-	Reward     string
-	Gas        string
-	Penalty    string
-	Value      string
-	Power      float64
-	WinCount   int64
-	Time       string
-	CreateTime uint64
-}
-
-//打包的message记录
-type MineMessages struct {
-	Id         int `orm:"pk;auto"`
-	MinerId    string
-	MessageId  string
-	Epoch      string
-	Gas        string
-	Penalty    string
-	Time       string
-	CreateTime uint64
-}
-
+//分配至order和user版本使用 以下
 type UserInfo struct {
 	Id            int `orm:"pk;auto"`
 	UserId        int
@@ -343,18 +389,6 @@ type UserFilPledge struct {
 	Days       int32
 	Remark     string
 	AddTime    string
-}
-
-//miner power status
-type MinerPowerStatus struct {
-	Id        int `orm:"pk;auto"`
-	MinerId   string
-	Power     float64
-	Available float64
-	PreCommit float64
-	Vesting   float64
-	Pleage    float64
-	Time      string
 }
 
 type MinerAndWalletRelation struct {

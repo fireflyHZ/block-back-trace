@@ -2,9 +2,9 @@ module profit-allocation
 
 go 1.14
 
-require github.com/astaxie/beego v1.12.1
-
 require (
+	github.com/astaxie/beego v1.12.3
+	github.com/beego/beego/v2 v2.0.1
 	github.com/fatih/color v1.9.0
 	github.com/filecoin-project/go-address v0.0.5-0.20201103152444-f2023ef3f5bb
 	github.com/filecoin-project/go-crypto v0.0.0-20191218222705-effae4ea9f03
@@ -17,6 +17,8 @@ require (
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-ipld-cbor v0.0.5
+	github.com/ipfs/go-log/v2 v2.1.2-0.20200626104915-0016c0b4b3e4
+	github.com/prometheus/common v0.10.0
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/urfave/cli v1.22.1
