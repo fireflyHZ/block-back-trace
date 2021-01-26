@@ -1,31 +1,46 @@
 package main
 
 import (
+	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	_ "github.com/go-sql-driver/mysql"
-	"profit-allocation/lotus/reward"
+	"os"
+	"os/signal"
+	"profit-allocation/lotus"
 	"profit-allocation/models"
 	_ "profit-allocation/routers"
+	"syscall"
 )
 
 func main() {
 
-	//if err := initDatabase(); err != nil {
-	//	fmt.Println("init database error:", err)
-	//	return
-	//}
-	//if err := models.InitData(); err != nil {
-	//	fmt.Println("init data error:", err)
-	//	return
-	//}
+	if err := initDatabase(); err != nil {
+		fmt.Println("init database error:", err)
+		return
+	}
+	if err := models.InitData(); err != nil {
+		fmt.Println("init data error:", err)
+		return
+	}
 
-	reward.TetsGetInfo()
-	//go lotus.Setup()
-	//controllers.InitData()
-	//p,_:=reward.GetMienrPleage("f021704",195059)
-	//fmt.Println("-----",p)
+	//reward.TetsGetInfo()
+	go lotus.Setup()
+	var shutdownCh <-chan struct{}
+	sigCh := make(chan os.Signal, 2)
+	shutdownDone := make(chan struct{})
+	go func() {
+		select {
+		case sig := <-sigCh:
+			fmt.Println("received shutdown", "signal", sig)
+		case <-shutdownCh:
+			fmt.Println("received shutdown")
+		}
 
+		fmt.Println("Shutting down...")
+		close(shutdownDone)
+	}()
+	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 	web.Run()
 }
 
