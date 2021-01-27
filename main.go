@@ -7,9 +7,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"os"
 	"os/signal"
+	"profit-allocation/controllers"
 	"profit-allocation/lotus"
 	"profit-allocation/models"
-	_ "profit-allocation/routers"
+	//_ "profit-allocation/routers"
 	"syscall"
 )
 
@@ -41,6 +42,13 @@ func main() {
 		close(shutdownDone)
 	}()
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+
+	web.NSRouter("/firefly/profit/total_reward_info", &controllers.RewardTmpController{}, "get:GetRewardAndPledge")
+
+	web.NSRouter("/firefly/profit/total_messages_gas_info", &controllers.RewardTmpController{}, "get:GetMessagesGas")
+
+	web.NSRouter("/firefly/profit/total_miner_info", &controllers.RewardTmpController{}, "get:GetMinerInfo")
+
 	web.Run()
 }
 

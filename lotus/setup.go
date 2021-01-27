@@ -55,7 +55,7 @@ func initTmpData() {
 			QualityPower: 5200.78125,
 			Pleage:       pleagef02420,
 			CreateTime:   time.Now(),
-			//UpdateTime:   0,
+			UpdateTime:   time.Now(),
 		}
 		miner2 := models.MinerInfo{
 			MinerId:      "f021695",

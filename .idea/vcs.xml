@@ -2,5 +2,7 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/extern/filecoin-ffi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lotus/filecoin-ffi" vcs="Git" />
   </component>
 </project>
