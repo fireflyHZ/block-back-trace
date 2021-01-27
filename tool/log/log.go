@@ -23,14 +23,7 @@ func Init() error {
 	if err := logging.SetLogLevel("models", "DEBUG"); err != nil {
 		return err
 	}
-	//lotus
-	if err := logging.SetLogLevel("miner-log", "DEBUG"); err != nil {
-		return err
-	}
 	if err := logging.SetLogLevel("lotus-setup", "DEBUG"); err != nil {
-		return err
-	}
-	if err := logging.SetLogLevel("wallet-log", "DEBUG"); err != nil {
 		return err
 	}
 	if err := logging.SetLogLevel("message-log", "DEBUG"); err != nil {
