@@ -62,14 +62,14 @@ func initTmpData() {
 			QualityPower: 199.03125,
 			Pleage:       pleagef021695,
 			CreateTime:   time.Now(),
-			//UpdateTime:   0,
+			UpdateTime:   time.Now(),
 		}
 		miner3 := models.MinerInfo{
 			MinerId:      "f021704",
 			QualityPower: 301.0625,
 			Pleage:       pleagef021704,
 			CreateTime:   time.Now(),
-			//	UpdateTime:   0,
+			UpdateTime:   time.Now(),
 		}
 		minerInfo = append(minerInfo, miner1)
 		minerInfo = append(minerInfo, miner2)

@@ -43,11 +43,11 @@ func main() {
 	}()
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
-	web.NSRouter("/firefly/profit/total_reward_info", &controllers.RewardTmpController{}, "get:GetRewardAndPledge")
+	web.Router("/firefly/profit/total_reward_info", &controllers.RewardController{}, "get:GetRewardAndPledge")
 
-	web.NSRouter("/firefly/profit/total_messages_gas_info", &controllers.RewardTmpController{}, "get:GetMessagesGas")
+	web.Router("/firefly/profit/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas")
 
-	web.NSRouter("/firefly/profit/total_miner_info", &controllers.RewardTmpController{}, "get:GetMinerInfo")
+	web.Router("/firefly/profit/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo")
 
 	web.Run()
 }

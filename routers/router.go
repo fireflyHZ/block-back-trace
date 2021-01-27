@@ -24,9 +24,9 @@ func init() {
 				// /firefly/profit/user_daily_info
 				web.NSRouter("/user_daily_info", &controllers.UserController{}, "get:GetUserDailyInfo"),
 				// /firefly/profit/total_reward_info
-				web.NSRouter("/total_reward_info", &controllers.RewardTmpController{}, "get:GetRewardAndPledge"),
-				web.NSRouter("/total_messages_gas_info", &controllers.RewardTmpController{}, "get:GetMessagesGas"),
-				web.NSRouter("/total_miner_info", &controllers.RewardTmpController{}, "get:GetMinerInfo"),
+				web.NSRouter("/total_reward_info", &controllers.RewardController{}, "get:GetRewardAndPledge"),
+				web.NSRouter("/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas"),
+				web.NSRouter("/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo"),
 			),
 		)
 

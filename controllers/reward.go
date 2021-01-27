@@ -11,11 +11,11 @@ import (
 
 var rewardLog = logging.Logger("reward-ctr-log")
 
-type RewardTmpController struct {
+type RewardController struct {
 	web.Controller
 }
 
-func (c *RewardTmpController) GetRewardAndPledge() {
+func (c *RewardController) GetRewardAndPledge() {
 	var blockNum int
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
@@ -145,7 +145,7 @@ func (c *RewardTmpController) GetRewardAndPledge() {
 	return
 }
 
-func (c *RewardTmpController) GetMessagesGas() {
+func (c *RewardController) GetMessagesGas() {
 	t := c.GetString("time")
 
 	if t == "" {
@@ -188,7 +188,7 @@ func (c *RewardTmpController) GetMessagesGas() {
 	return
 }
 
-func (c *RewardTmpController) GetMinerInfo() {
+func (c *RewardController) GetMinerInfo() {
 	var blockNum int
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
