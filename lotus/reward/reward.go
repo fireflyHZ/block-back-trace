@@ -838,6 +838,8 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 func CreateLotusClient() {
 	var err error
 	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	rewardLog.Debugf("lotus host:%v", models.LotusHost)
 	Client, _, err = lotusClient.NewFullNodeRPC(context.Background(), models.LotusHost, requestHeader)
 	if err != nil {
 		rewardLog.Errorf("create lotus client", err)

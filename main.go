@@ -10,13 +10,19 @@ import (
 	"profit-allocation/controllers"
 	"profit-allocation/lotus"
 	"profit-allocation/models"
+	"profit-allocation/tool/log"
+
 	//_ "profit-allocation/routers"
 	"syscall"
 )
 
 func main() {
-
-	if err := initDatabase(); err != nil {
+	err := log.Init()
+	if err != nil {
+		fmt.Println("init log error:", err)
+		return
+	}
+	if err = initDatabase(); err != nil {
 		fmt.Println("init database error:", err)
 		return
 	}
