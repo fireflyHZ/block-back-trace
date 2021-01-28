@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
-	_ "github.com/go-sql-driver/mysql"
+	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"os"
 	"os/signal"
 	"profit-allocation/controllers"
@@ -61,17 +62,17 @@ func main() {
 //初始化mysql
 func initDatabase() error {
 	// 注册数据库驱动
-	if err := orm.RegisterDriver("mysql", orm.DRMySQL); err != nil {
+	if err := orm.RegisterDriver("postgres", orm.DRPostgres); err != nil {
 		return err
 	}
 
-	url, err := web.AppConfig.String("mysql")
+	url, err := web.AppConfig.String("postgres")
 	if err != nil {
 		return err
 	}
 
 	// 注册数据库
-	if err := orm.RegisterDataBase("default", "mysql", url); err != nil {
+	if err := orm.RegisterDataBase("default", "postgres", url); err != nil {
 		return err
 	}
 
