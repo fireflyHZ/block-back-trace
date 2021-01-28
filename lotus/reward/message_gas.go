@@ -3,7 +3,6 @@ package reward
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -228,11 +227,12 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		return err
 	}
 	if n != 0 {
-		errTx := txOmer.Rollback()
-		if errTx != nil {
-			msgLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
-		}
-		return fmt.Errorf("message is already exist:%+v\n", msgId)
+		//errTx := txOmer.Rollback()
+		//if errTx != nil {
+		//	msgLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
+		//}
+		msgLog.Warnf("message is already exist:%+v\n", msgId)
+		return nil
 	}
 	t := time.Unix(int64(block.Timestamp), 0)
 	epoch := block.Height.String()
