@@ -1325,7 +1325,7 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f021704")
+	minerAddr, _ := address.NewFromString("f044315")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 

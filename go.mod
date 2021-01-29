@@ -18,6 +18,7 @@ require (
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-ipld-cbor v0.0.5
 	github.com/ipfs/go-log/v2 v2.1.2-0.20200626104915-0016c0b4b3e4
+	github.com/lib/pq v1.7.0
 	github.com/prometheus/common v0.10.0
 	github.com/shiena/ansicolor v0.0.0-20200904210342-c7312218db18 // indirect
 	github.com/smartystreets/goconvey v1.6.4
