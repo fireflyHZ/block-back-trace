@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"encoding/json"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
@@ -29,10 +30,10 @@ func (c *OrderController) OrderInfo() {
 		return
 	}
 	//fmt.Printf("-------orders info :%+v\n",ordersInfo)
-
+	o := orm.NewOrm()
 	for _, info := range ordersInfo.Infos {
 		order := new(models.OrderInfo)
-		n, err := models.O.QueryTable("fly_order_info").Filter("order_id", info.OrderId).All(order)
+		n, err := o.QueryTable("fly_order_info").Filter("order_id", info.OrderId).All(order)
 		if err != nil {
 			orderLog.Error("query user :%+v info  err:%+v", info.UserId, err)
 			resp := models.PostResp{
@@ -43,7 +44,7 @@ func (c *OrderController) OrderInfo() {
 			return
 		}
 		if n == 0 {
-			_, err := models.O.Insert(info)
+			_, err := o.Insert(info)
 			if err != nil {
 				orderLog.Error("insert user :%+v info  err:%+v", info.UserId, err)
 				resp := models.PostResp{
@@ -55,7 +56,7 @@ func (c *OrderController) OrderInfo() {
 			}
 		} else {
 			order.Share = info.Share
-			_, err := models.O.Update(order)
+			_, err := o.Update(order)
 			if err != nil {
 				orderLog.Error("update user :%+v info  err:%+v", info.UserId, err)
 				resp := models.PostResp{
@@ -69,7 +70,7 @@ func (c *OrderController) OrderInfo() {
 	}
 	//更新总份额
 	orders := make([]models.OrderInfo, 0)
-	_, err = models.O.QueryTable("fly_order_info").All(&orders)
+	_, err = o.QueryTable("fly_order_info").All(&orders)
 	if err != nil {
 		orderLog.Error("query orders info  err:%+v", err)
 		resp := models.PostResp{
@@ -87,7 +88,7 @@ func (c *OrderController) OrderInfo() {
 
 	//fmt.Println("----total ",total)
 	netRunData := new(models.NetRunDataPro)
-	_, err = models.O.QueryTable("fly_net_run_data_pro").All(netRunData)
+	_, err = o.QueryTable("fly_net_run_data_pro").All(netRunData)
 	if err != nil {
 		orderLog.Error("query net run data info  err:%+v", err)
 		resp := models.PostResp{
@@ -100,7 +101,7 @@ func (c *OrderController) OrderInfo() {
 	}
 	netRunData.AllShare = ordersInfo.AllShare
 	netRunData.TotalShare = total
-	_, err = models.O.Update(netRunData)
+	_, err = o.Update(netRunData)
 	if err != nil {
 		orderLog.Error("update  net run data info  err:%+v", err)
 		resp := models.PostResp{

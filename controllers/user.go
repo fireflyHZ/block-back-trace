@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
@@ -26,9 +27,9 @@ func (c *UserController) GetUserInfo() {
 	}
 
 	userLog.Debug("DEBUG: GetUserInfo() user: %+v", userId)
-
+	o := orm.NewOrm()
 	userInfo := new(models.UserInfo)
-	num, err := models.O.QueryTable("fly_user_info").Filter("user_id", userId).All(userInfo)
+	num, err := o.QueryTable("fly_user_info").Filter("user_id", userId).All(userInfo)
 	//userLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.UserInfoResp{
@@ -82,9 +83,9 @@ func (c *UserController) GetUserDailyInfo() {
 	}
 
 	userLog.Debug("DEBUG: GetUserDailyInfo() user: %+v", userId)
-
+	o := orm.NewOrm()
 	userDailyInfo := make([]models.UserDailyRewardInfo, 0)
-	num, err := models.O.QueryTable("fly_user_daily_reward_info").Filter("user_id", userId).All(&userDailyInfo)
+	num, err := o.QueryTable("fly_user_daily_reward_info").Filter("user_id", userId).All(&userDailyInfo)
 	//userLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil {
 

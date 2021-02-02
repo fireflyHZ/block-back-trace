@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
+	"profit-allocation/tool/log"
+
 	//_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"os"
@@ -11,8 +13,6 @@ import (
 	"profit-allocation/controllers"
 	"profit-allocation/lotus"
 	"profit-allocation/models"
-	"profit-allocation/tool/log"
-
 	//_ "profit-allocation/routers"
 	"syscall"
 )

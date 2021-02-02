@@ -75,8 +75,9 @@ func CollectTotalRerwardAndPledge() {
 }
 
 func queryListenRewardNetStatus() (height int, err error) {
+	o := orm.NewOrm()
 	netRunData := new(models.ListenRewardNetStatus)
-	n, err := models.O.QueryTable("fly_listen_reward_net_status").All(netRunData)
+	n, err := o.QueryTable("fly_listen_reward_net_status").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -90,8 +91,9 @@ func queryListenRewardNetStatus() (height int, err error) {
 }
 
 func updateListenRewardNetStatus(height int) (err error) {
+	o := orm.NewOrm()
 	netRunData := new(models.ListenRewardNetStatus)
-	n, err := models.O.QueryTable("fly_listen_reward_net_status").All(netRunData)
+	n, err := o.QueryTable("fly_listen_reward_net_status").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -99,7 +101,7 @@ func updateListenRewardNetStatus(height int) (err error) {
 		netRunData.ReceiveBlockHeight = height
 		netRunData.CreateTime = time.Now()
 		netRunData.UpdateTime = time.Now()
-		_, err = models.O.Insert(netRunData)
+		_, err = o.Insert(netRunData)
 		if err != nil {
 			return err
 		}
@@ -107,7 +109,7 @@ func updateListenRewardNetStatus(height int) (err error) {
 	} else {
 		netRunData.ReceiveBlockHeight = height
 		netRunData.UpdateTime = time.Now()
-		_, err = models.O.Update(netRunData)
+		_, err = o.Update(netRunData)
 		if err != nil {
 			return err
 		}
@@ -187,8 +189,8 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 	tStr := t.Format("2006-01-02")
 	epoch := int(height)
 	//获取质押
-
-	o, err := models.O.Begin()
+	o := orm.NewOrm()
+	txOrm, err := o.Begin()
 	if err != nil {
 		rewardLog.Debug("DEBUG: collectWalletData orm transation begin error: %+v", err)
 		return err
@@ -198,7 +200,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		available, preCommit, vesting, pleage, err := GetMienrPleage(miner, height)
 		if err != nil {
 			rewardLog.Error("ERROR GetMienrPleage ParseFloat miner:%+v height:%+v err:%+v", miner, height, err)
-			err := o.Rollback()
+			err := txOrm.Rollback()
 			if err != nil {
 				rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 			}
@@ -207,17 +209,17 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		power, err := getMinerPower(miner, tipsetKey)
 		if err != nil {
 			rewardLog.Error("ERROR GetMienrPleage getMinerPower miner:%+v height:%+v err:%+v", miner, height, err)
-			err := o.Rollback()
+			err := txOrm.Rollback()
 			if err != nil {
 				rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 			}
 			return err
 		}
 		//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-		err = putMinerPowerStatus(o, miner, power, available, preCommit, vesting, pleage, tStr)
+		err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, tStr)
 		if err != nil {
 			rewardLog.Error("ERROR GetMienrPleage putMinerPowerStatus miner:%+v height:%+v err:%+v", miner, height, err)
-			err := o.Rollback()
+			err := txOrm.Rollback()
 			if err != nil {
 				rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", err)
 			}
@@ -225,11 +227,11 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		}
 		//收益分配
 		minerInfo := new(models.MinerInfo)
-		n, err := o.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
+		n, err := txOrm.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
 
 		if err != nil {
 			rewardLog.Error("Error  QueryTable minerInfo:%+v err:%+v num:%+v ", miner, err, n)
-			err := o.Rollback()
+			err := txOrm.Rollback()
 			if err != nil {
 				rewardLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
 			}
@@ -248,10 +250,10 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			minerInfo.QualityPower = power
 			minerInfo.UpdateTime = t
 
-			_, err := o.Update(minerInfo)
+			_, err := txOrm.Update(minerInfo)
 			if err != nil {
 				rewardLog.Error("Error  Update minerInfo miner:%+v  err:%+v ", miner, err)
-				err := o.Rollback()
+				err := txOrm.Rollback()
 				if err != nil {
 					rewardLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", err)
 				}
@@ -260,10 +262,10 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		}
 		rewardInfo := new(models.RewardInfo)
 		//入库
-		n, err = o.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
+		n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 		if err != nil {
 			rewardLog.Error("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
-			err := o.Rollback()
+			err := txOrm.Rollback()
 			if err != nil {
 				rewardLog.Debug("DEBUG: calculatePowerAndPledge orm transation rollback error: %+v", err)
 			}
@@ -278,10 +280,10 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			rewardInfo.Epoch = epoch
 			rewardInfo.UpdateTime = t
 
-			_, err = o.Insert(rewardInfo)
+			_, err = txOrm.Insert(rewardInfo)
 			if err != nil {
 				rewardLog.Error("Error  Insert miner:%+v time:%+v err:%+v ", miner, tStr, err)
-				err := o.Rollback()
+				err := txOrm.Rollback()
 				if err != nil {
 					rewardLog.Error("Error: calculatePowerAndPledge orm transation rollback error: %+v", err)
 				}
@@ -296,10 +298,10 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 				//rewardInfo.Value = bit.CalculateReward(rewardInfo.Value, value)
 				rewardInfo.Epoch = epoch
 				rewardInfo.UpdateTime = t
-				_, err := o.Update(rewardInfo)
+				_, err := txOrm.Update(rewardInfo)
 				if err != nil {
 					rewardLog.Error("Error  Update miner:%+v time:%+v err:%+v ", miner, t, err)
-					err := o.Rollback()
+					err := txOrm.Rollback()
 					if err != nil {
 						rewardLog.Debug("DEBUG: calculatePowerAndPledge orm transation rollback error: %+v", err)
 					}
@@ -314,13 +316,13 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 	err = updateListenRewardNetStatus(epoch + 1)
 	if err != nil {
 		rewardLog.Error("Error  Update net run data tmp  err:%+v height:%+v ", err, epoch)
-		err := o.Rollback()
+		err := txOrm.Rollback()
 		if err != nil {
 			rewardLog.Debug("DEBUG: calculatePowerAndPledge orm transation rollback error: %+v", err)
 		}
 		return err
 	}
-	err = o.Commit()
+	err = txOrm.Commit()
 	if err != nil {
 		rewardLog.Debug("DEBUG: calculatePowerAndPledge orm transation commit error: %+v", err)
 		return err
@@ -332,8 +334,9 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid []cid.Cid, tipsetKey types.TipSetKey, blockAfter cid.Cid, messages []api.Message) error {
 	//获取minerid
 	miner := blocks[index].Miner.String()
+	o := orm.NewOrm()
 	//查询数据
-	o, err := models.O.Begin()
+	txOrm, err := o.Begin()
 	if err != nil {
 		rewardLog.Errorf("collectWalletData orm transation begin error: %+v", err)
 		return err
@@ -347,7 +350,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	value, power, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages)
 	//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
 	if err != nil {
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
 		}
@@ -358,7 +361,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	available, preCommit, vesting, pleage, err := GetMienrPleage(miner, blocks[0].Height)
 	if err != nil {
 		rewardLog.Error("ERROR GetMienrPleage ParseFloat err:%+v", err)
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		}
@@ -366,9 +369,9 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	}
 	//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
 	//新增存储当天miner power状态、MinerPowerStatus
-	err = putMinerPowerStatus(o, miner, power, available, preCommit, vesting, pleage, tStr)
+	err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, tStr)
 	if err != nil {
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		}
@@ -376,11 +379,11 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	}
 	//收益分配
 	minerInfo := new(models.MinerInfo)
-	n, err := o.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
+	n, err := txOrm.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
 
 	if err != nil {
 		rewardLog.Error("Error  QueryTable minerInfo:%+v err:%+v num:%+v ", miner, err, n)
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", errTx)
 		}
@@ -399,10 +402,10 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		minerInfo.QualityPower = power
 		minerInfo.UpdateTime = t
 
-		_, err := o.Update(minerInfo)
+		_, err := txOrm.Update(minerInfo)
 		if err != nil {
 			rewardLog.Error("Error  Update minerInfo miner:%+v  err:%+v ", miner, err)
-			errTx := o.Rollback()
+			errTx := txOrm.Rollback()
 			if errTx != nil {
 				rewardLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", errTx)
 			}
@@ -423,10 +426,10 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		//Time:       tStr,
 		CreateTime: t,
 	}
-	_, err = o.Insert(&mineBlock)
+	_, err = txOrm.Insert(&mineBlock)
 	if err != nil {
 		rewardLog.Error("Error  Update minerInfo miner:%+v  err:%+v ", miner, err)
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectMinerData orm transation rollback error: %+v", errTx)
 		}
@@ -435,10 +438,10 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 
 	rewardInfo := new(models.RewardInfo)
 	//入库
-	n, err = o.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
+	n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 	if err != nil {
 		rewardLog.Error("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		}
@@ -456,10 +459,10 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardInfo.WinCounts = winCount
 		rewardInfo.UpdateTime = t
 
-		_, err = o.Insert(rewardInfo)
+		_, err = txOrm.Insert(rewardInfo)
 		if err != nil {
 			rewardLog.Error("Error  Insert miner:%+v time:%+v err:%+v ", miner, t, err)
-			errTx := o.Rollback()
+			errTx := txOrm.Rollback()
 			if errTx != nil {
 				rewardLog.Error("Error: collectWalletData orm transation rollback error: %+v", errTx)
 			}
@@ -477,10 +480,10 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 			rewardInfo.BlockNum += 1
 			rewardInfo.WinCounts += winCount
 			rewardInfo.UpdateTime = t
-			_, err := o.Update(rewardInfo)
+			_, err := txOrm.Update(rewardInfo)
 			if err != nil {
 				rewardLog.Error("Error  Update miner:%+v time:%+v err:%+v ", miner, t, err)
-				errTx := o.Rollback()
+				errTx := txOrm.Rollback()
 				if errTx != nil {
 					rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 				}
@@ -492,13 +495,13 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	err = updateListenRewardNetStatus(epoch + 1)
 	if err != nil {
 		rewardLog.Error("Error  Update net run data tmp  err:%+v height:%+v ", err, epoch)
-		errTx := o.Rollback()
+		errTx := txOrm.Rollback()
 		if errTx != nil {
 			rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
-	err = o.Commit()
+	err = txOrm.Commit()
 	if err != nil {
 		rewardLog.Debug("DEBUG: collectWalletData orm transation commit error: %+v", err)
 		return err
@@ -508,6 +511,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 }
 
 func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message) (string, float64, error) {
+	o := orm.NewOrm()
 	totalGas := abi.NewTokenAmount(0)
 	mineReward := abi.NewTokenAmount(0)
 	totalPenalty := abi.NewTokenAmount(0)
@@ -590,7 +594,7 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 		mineMsg.Epoch = header.Height.String()
 		mineMsg.CreateTime = time.Unix(int64(header.Timestamp), 0)
 
-		_, err := models.O.Insert(mineMsg)
+		_, err := o.Insert(mineMsg)
 		if err != nil {
 			rewardForLog.Error("Error inert msg:%+v err:%+v", msgId, err)
 			continue
@@ -831,7 +835,6 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 		charge = false
 	}
 	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium, charge)
-
 	return
 }
 

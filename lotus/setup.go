@@ -2,6 +2,7 @@ package lotus
 
 import (
 	"fmt"
+	"github.com/beego/beego/v2/client/orm"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
@@ -37,9 +38,9 @@ func loop() {
 }
 
 func initTmpData() {
-
+	o := orm.NewOrm()
 	minerInfo := make([]models.MinerInfo, 0)
-	n, err := models.O.QueryTable("fly_miner_info").All(&minerInfo)
+	n, err := o.QueryTable("fly_miner_info").All(&minerInfo)
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
@@ -75,14 +76,14 @@ func initTmpData() {
 		//minerInfo = append(minerInfo, miner2)
 		//minerInfo = append(minerInfo, miner3)
 		//minerInfo=append(minerInfo,miner1)
-		n, err = models.O.InsertMulti(1, minerInfo)
+		n, err = o.InsertMulti(1, minerInfo)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
 		}
 	}
 
 	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
-	n, err = models.O.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
+	n, err = o.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
@@ -132,7 +133,7 @@ func initTmpData() {
 		//minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation7)
 		//minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation8)
 		//minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation9)
-		n, err = models.O.InsertMulti(2, minerAndWalletRelations)
+		n, err = o.InsertMulti(2, minerAndWalletRelations)
 		if err != nil {
 			fmt.Println("insert minerAndWalletRelations err:", err)
 		}

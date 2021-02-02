@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
@@ -37,8 +38,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	}
 
 	rewardInfo := make([]models.RewardInfo, 0)
-
-	num, err := models.O.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
+	o := orm.NewOrm()
+	num, err := o.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
@@ -71,7 +72,7 @@ func (c *RewardController) GetRewardAndPledge() {
 
 	expendInfo := make([]models.ExpendInfo, 0)
 
-	num, err = models.O.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
+	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
@@ -97,7 +98,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	}
 	//todo totalpower
 	minerPowerStatus := make([]models.MinerPowerStatus, 0)
-	num, err = models.O.QueryTable("fly_miner_power_status").Filter("time", t).All(&minerPowerStatus)
+	num, err = o.QueryTable("fly_miner_power_status").Filter("time", t).All(&minerPowerStatus)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:        "fail",
@@ -159,8 +160,8 @@ func (c *RewardController) GetMessagesGas() {
 	}
 
 	expendInfo := make([]models.ExpendInfo, 0)
-
-	num, err := models.O.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
+	o := orm.NewOrm()
+	num, err := o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num == 0 {
 		resp := models.MessageGasTmp{
@@ -217,8 +218,8 @@ func (c *RewardController) GetMinerInfo() {
 	}
 
 	rewardInfo := new(models.RewardInfo)
-
-	num, err := models.O.QueryTable("fly_reward_info_tmp").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
+	o := orm.NewOrm()
+	num, err := o.QueryTable("fly_reward_info_tmp").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
@@ -243,7 +244,7 @@ func (c *RewardController) GetMinerInfo() {
 		winCount = rewardInfo.WinCounts
 	}
 	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
-	num, err = models.O.QueryTable("fly_miner_and_wallet_relation").Filter("miner_id", miner).All(&minerAndWalletRelations)
+	num, err = o.QueryTable("fly_miner_and_wallet_relation").Filter("miner_id", miner).All(&minerAndWalletRelations)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:        "fail",
@@ -262,7 +263,7 @@ func (c *RewardController) GetMinerInfo() {
 	} else {
 		for _, wallet := range minerAndWalletRelations {
 			expendInfo := new(models.ExpendInfo)
-			num, err = models.O.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
+			num, err = o.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
 			//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 			if err != nil {
 				resp := models.RewardResp{
@@ -288,7 +289,7 @@ func (c *RewardController) GetMinerInfo() {
 	}
 	//todo totalpower
 	minerPowerStatus := new(models.MinerPowerStatus)
-	num, err = models.O.QueryTable("fly_miner_power_status").Filter("miner_id", miner).Filter("time", t).All(minerPowerStatus)
+	num, err = o.QueryTable("fly_miner_power_status").Filter("miner_id", miner).Filter("time", t).All(minerPowerStatus)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:        "fail",

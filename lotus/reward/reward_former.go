@@ -111,8 +111,9 @@ func CollectLotusChainBlockRunData() {
 }
 
 func queryNetRunData() (height int, err error) {
+	o := orm.NewOrm()
 	netRunData := new(models.NetRunDataPro)
-	n, err := models.O.QueryTable("fly_net_run_data_pro").All(netRunData)
+	n, err := o.QueryTable("fly_net_run_data_pro").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -127,8 +128,9 @@ func queryNetRunData() (height int, err error) {
 
 func queryUserInfoFundDate() (string, error) {
 	var date string
+	o := orm.NewOrm()
 	userInfo := new(models.UserInfo)
-	n, err := models.O.QueryTable("fly_user_info").All(userInfo)
+	n, err := o.QueryTable("fly_user_info").All(userInfo)
 	if err != nil {
 		return date, err
 	}
@@ -147,8 +149,9 @@ func queryUserInfoFundDate() (string, error) {
 }
 
 func updateNetRunData(height int) (err error) {
+	o := orm.NewOrm()
 	netRunData := new(models.NetRunDataPro)
-	n, err := models.O.QueryTable("fly_net_run_data_pro").All(netRunData)
+	n, err := o.QueryTable("fly_net_run_data_pro").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -156,7 +159,7 @@ func updateNetRunData(height int) (err error) {
 		netRunData.ReceiveBlockHeight = height
 		netRunData.CreateTime = time.Now().Unix()
 		netRunData.UpdateTime = time.Now().Unix()
-		_, err = models.O.Insert(netRunData)
+		_, err = o.Insert(netRunData)
 		if err != nil {
 			return err
 		}
@@ -165,7 +168,7 @@ func updateNetRunData(height int) (err error) {
 		netRunData.ReceiveBlockHeight = height
 		//netRunData.CreateTime=time.Now().Unix()
 		netRunData.UpdateTime = time.Now().Unix()
-		_, err = models.O.Update(netRunData)
+		_, err = o.Update(netRunData)
 		if err != nil {
 			return err
 		}
@@ -353,8 +356,8 @@ func recordCostMessageInfo(gasout vm.GasOutputs, message api.Message, block type
 
 	//	rewardForLog.Debug("Debug recordCostMessageInfo wallets:%+v", walletId)
 	//查询数据
-
-	o, err := models.O.Begin()
+	O := orm.NewOrm()
+	o, err := O.Begin()
 	if err != nil {
 		rewardForLog.Debug("DEBUG: recordCostMessageInfo orm transation begin error: %+v", err)
 		return err
@@ -515,8 +518,8 @@ func recordRewardMessageInfo(message api.Message, block types.BlockHeader) error
 	msgId := message.Cid.String()
 	//rewardForLog.Debug("Debug collectWalletData minerId:%+v", minerId)
 	//查询数据
-
-	o, err := models.O.Begin()
+	O := orm.NewOrm()
+	o, err := O.Begin()
 	if err != nil {
 		rewardForLog.Debug("DEBUG: collectWalletData orm transation begin error: %+v", err)
 		return err
@@ -621,8 +624,8 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 	miner := blocks[index].Miner.String()
 	//rewardForLog.Debug("Debug collectMinertData miner:%+v", miner)
 	//查询数据
-
-	o, err := models.O.Begin()
+	O := orm.NewOrm()
+	o, err := O.Begin()
 	if err != nil {
 		rewardForLog.Debug("DEBUG: collectWalletData orm transation begin error: %+v", err)
 		return err
@@ -803,6 +806,7 @@ type gasAndPenalty struct {
 }
 
 func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message) (string, string, string, string, float64, error) {
+	o := orm.NewOrm()
 	totalGas := abi.NewTokenAmount(0)
 	mineReward := abi.NewTokenAmount(0)
 	totalPenalty := abi.NewTokenAmount(0)
@@ -885,7 +889,7 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 		//mineMsg.Time = time.Unix(int64(header.Timestamp), 0).Format("2006-01-02")
 		//mineMsg.CreateTime = header.Timestamp
 
-		_, err := models.O.Insert(mineMsg)
+		_, err := o.Insert(mineMsg)
 		if err != nil {
 			rewardForLog.Error("Error inert msg:%+v err:%+v", msgId, err)
 			return "0.0", "0.0", "0.0", "0.0", 0, err
@@ -1298,7 +1302,7 @@ func inMiners(minerId string) bool {
 	return false
 }
 
-func TetsGetInfo() {
+func TetsGetInfo1() {
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
 	LotusHost, err := web.AppConfig.String("lotusHost")
@@ -1325,7 +1329,7 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f0117450")
+	minerAddr, _ := address.NewFromString("f02420")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 
@@ -1362,4 +1366,43 @@ func TetsGetInfo() {
 
 	fmt.Printf("priv:%+v\n", pr)
 	fmt.Printf("priv:%+v\n", len(pr))
+
+}
+
+func TetsGetInfo() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	var h = abi.ChainEpoch(364101)
+	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println("sdfadf1 err:", err)
+	}
+	fmt.Println("tp:", tp.Cids())
+	ms, err := nodeApi.ChainGetParentMessages(ctx, tp.Cids()[0])
+	if err != nil {
+		fmt.Println("sdfadf2 err:", err)
+	}
+	resp, err := nodeApi.ChainGetParentReceipts(ctx, tp.Cids()[0])
+	if err != nil {
+		fmt.Println("sdfadf3 err:", err)
+	}
+	for i, m := range ms {
+		if m.Message.Method == 0 {
+			fmt.Println("msg id:", m.Cid)
+			fmt.Println("gas usde:", resp[i].GasUsed)
+		}
+	}
+
 }

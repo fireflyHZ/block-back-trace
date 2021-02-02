@@ -1,6 +1,7 @@
 package reward
 
 import (
+	"github.com/beego/beego/v2/client/orm"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
 	"time"
@@ -12,8 +13,9 @@ var userLog = logging.Logger("user-log")
 
 func CalculateUserFund(newTimeStamp int64) {
 	//遍历user
+	o := orm.NewOrm()
 	usersInfo := make([]models.UserInfo, 0)
-	_, err := models.O.QueryTable("fly_user_info").All(&usersInfo)
+	_, err := o.QueryTable("fly_user_info").All(&usersInfo)
 	if err != nil {
 		userLog.Error("Error CalculateUserFund QueryTable user info err:%+v", err)
 		return
@@ -74,7 +76,8 @@ func CalculateUserFund(newTimeStamp int64) {
 
 func allocateUsersProfit(usersInfo []models.UserInfo, t string, releaseProportion, vestingProportion float64) error {
 	for _, userInfo := range usersInfo {
-		o, err := models.O.Begin()
+		O := orm.NewOrm()
+		o, err := O.Begin()
 		if err != nil {
 			userLog.Error("Error  orm transation begin err:%+v", err)
 			return err

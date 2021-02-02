@@ -3,6 +3,7 @@ package reward
 import (
 	"bytes"
 	"context"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
@@ -65,9 +66,9 @@ func CalculateMsgGasData() {
 }
 
 func queryMsgGasNetStatus() (height int, err error) {
-
+	o := orm.NewOrm()
 	netRunData := new(models.ListenMsgGasNetStatus)
-	n, err := models.O.QueryTable("fly_listen_msg_gas_net_status").All(netRunData)
+	n, err := o.QueryTable("fly_listen_msg_gas_net_status").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -81,9 +82,9 @@ func queryMsgGasNetStatus() (height int, err error) {
 }
 
 func updateMsgGasNetStatus(height int) (err error) {
-
+	o := orm.NewOrm()
 	netRunData := new(models.ListenMsgGasNetStatus)
-	n, err := models.O.QueryTable("fly_listen_msg_gas_net_status").All(netRunData)
+	n, err := o.QueryTable("fly_listen_msg_gas_net_status").All(netRunData)
 	if err != nil {
 		return
 	}
@@ -91,7 +92,7 @@ func updateMsgGasNetStatus(height int) (err error) {
 		netRunData.ReceiveBlockHeight = height
 		netRunData.CreateTime = time.Now()
 		netRunData.UpdateTime = time.Now()
-		_, err = models.O.Insert(netRunData)
+		_, err = o.Insert(netRunData)
 		if err != nil {
 			return err
 		}
@@ -99,7 +100,7 @@ func updateMsgGasNetStatus(height int) (err error) {
 		netRunData.ReceiveBlockHeight = height
 		//netRunData.CreateTime=time.Now().Unix()
 		netRunData.UpdateTime = time.Now()
-		_, err = models.O.Update(netRunData)
+		_, err = o.Update(netRunData)
 		if err != nil {
 			return err
 		}
@@ -210,8 +211,8 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	to := message.Message.To.String()
 	value := message.Message.Value
 	msgId := message.Cid.String()
-
-	txOmer, err := models.O.Begin()
+	o := orm.NewOrm()
+	txOmer, err := o.Begin()
 	if err != nil {
 		msgLog.Debug("DEBUG: recordCostMessageInfo orm transation begin error: %+v", err)
 		return err

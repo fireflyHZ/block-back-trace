@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
@@ -26,7 +27,8 @@ func (c *WalletController) QueryWalletBalance() {
 	}
 	walletLog.Debug("DEBUG: QueryWalletBalance()  walletId:%+v", walletId)
 	walletInfo := make([]models.WalletBaseinfo, 0)
-	num, err := models.O.QueryTable("wallet_baseinfo").Filter("wallet_id", walletId).All(&walletInfo)
+	o := orm.NewOrm()
+	num, err := o.QueryTable("wallet_baseinfo").Filter("wallet_id", walletId).All(&walletInfo)
 	if err != nil || num == 0 {
 		resp := models.WalletInfoResp{
 			Code:          "faile",
@@ -85,7 +87,8 @@ func (c *WalletController) QueryWalletProfit() {
 
 	walletLog.Debug("DEBUG: QueryWalletProfit() walletId: %+v -- date: %+v -- type: %+v", walletId, date, typ)
 	walletProfitInfo := make([]models.WalletProfitInfo, 0)
-	q := models.O.QueryTable("fly_wallet_profit_info").Filter("wallet_id", walletId)
+	o := orm.NewOrm()
+	q := o.QueryTable("fly_wallet_profit_info").Filter("wallet_id", walletId)
 	num, err := q.Filter("settlement_date", date).Filter("settlement_type", typ).All(&walletProfitInfo)
 
 	if err != nil || num == 0 {
