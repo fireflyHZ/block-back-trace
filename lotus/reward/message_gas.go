@@ -201,7 +201,14 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 		}
 
 	}
-
+	h, err := strconv.ParseInt(block.Height.String(), 10, 64)
+	if err != nil {
+		msgLog.Errorf("parse hight:%+v err:%+v", block.Height.String(), err)
+	}
+	err = updateMsgGasNetStatus(int(h))
+	if err != nil {
+		msgLog.Errorf("update hight:%+v err:%+v", h, err)
+	}
 	return nil
 }
 
@@ -233,6 +240,11 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		//	msgLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		//}
 		msgLog.Warnf("message is already exist:%+v\n", msgId)
+		err = txOmer.Commit()
+		if err != nil {
+			msgLog.Debug("DEBUG: recordCostMessageInfo orm transation Commit error: %+v", err)
+			return err
+		}
 		return nil
 	}
 	t := time.Unix(int64(block.Timestamp), 0)
