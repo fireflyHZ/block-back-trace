@@ -219,7 +219,7 @@ func (c *RewardController) GetMinerInfo() {
 	rewardLog.Infof("new request miner:%+v time:%+v", miner, t)
 	rewardInfo := new(models.RewardInfo)
 	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_reward_info_tmp").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
+	num, err := o.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
