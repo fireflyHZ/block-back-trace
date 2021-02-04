@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-var CostFromHeight = 442170
+var CostFromHeight = 442165
 var msgLog = logging.Logger("message-log")
 
 func CalculateMsgGasData() {
@@ -73,7 +73,7 @@ func queryMsgGasNetStatus() (height int, err error) {
 		return
 	}
 	if n == 0 {
-		height = 442170
+		height = 442165
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
