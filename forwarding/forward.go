@@ -82,8 +82,14 @@ func totalRewardInfo(writer http.ResponseWriter, request *http.Request) {
 		rsp, _ := http.DefaultClient.Do(r)
 		rspData, _ := ioutil.ReadAll(rsp.Body)
 		writer.Write(rspData)
-	case "f0148452":
+	case "f0144530":
 		url := fmt.Sprintf("http://172.16.0.7:50011/firefly/profit/total_reward_info?time=%s", t)
+		r, _ := http.NewRequest("GET", url, bytes.NewReader([]byte{}))
+		rsp, _ := http.DefaultClient.Do(r)
+		rspData, _ := ioutil.ReadAll(rsp.Body)
+		writer.Write(rspData)
+	case "f0148452":
+		url := fmt.Sprintf("http://172.16.0.7:50012/firefly/profit/total_reward_info?time=%s", t)
 		r, _ := http.NewRequest("GET", url, bytes.NewReader([]byte{}))
 		rsp, _ := http.DefaultClient.Do(r)
 		rspData, _ := ioutil.ReadAll(rsp.Body)
@@ -160,8 +166,14 @@ func totalMinerInfo(writer http.ResponseWriter, request *http.Request) {
 		rsp, _ := http.DefaultClient.Do(r)
 		rspData, _ := ioutil.ReadAll(rsp.Body)
 		writer.Write(rspData)
-	case "f0148452":
+	case "f0144530":
 		url := fmt.Sprintf("http://172.16.0.7:50011/firefly/profit/total_miner_info?time=%s&miner=%s", t, miner)
+		r, _ := http.NewRequest("GET", url, bytes.NewReader([]byte{}))
+		rsp, _ := http.DefaultClient.Do(r)
+		rspData, _ := ioutil.ReadAll(rsp.Body)
+		writer.Write(rspData)
+	case "f0148452":
+		url := fmt.Sprintf("http://172.16.0.7:50012/firefly/profit/total_miner_info?time=%s&miner=%s", t, miner)
 		r, _ := http.NewRequest("GET", url, bytes.NewReader([]byte{}))
 		rsp, _ := http.DefaultClient.Do(r)
 		rspData, _ := ioutil.ReadAll(rsp.Body)
