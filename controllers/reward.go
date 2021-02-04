@@ -36,7 +36,7 @@ func (c *RewardController) GetRewardAndPledge() {
 		c.ServeJSON()
 		return
 	}
-
+	rewardLog.Infof("new request time:%+v", t)
 	rewardInfo := make([]models.RewardInfo, 0)
 	o := orm.NewOrm()
 	num, err := o.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
@@ -216,7 +216,7 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	}
-
+	rewardLog.Infof("new request miner:%+v time:%+v", miner, t)
 	rewardInfo := new(models.RewardInfo)
 	o := orm.NewOrm()
 	num, err := o.QueryTable("fly_reward_info_tmp").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
