@@ -44,7 +44,7 @@ func initTmpData() {
 	if err != nil {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}
-	pleagef055446, err := strconv.ParseFloat("0.0", 64)
+	pleagef055446, err := strconv.ParseFloat("2009.80584793820612", 64)
 	//pleagef021695, err := strconv.ParseFloat("1752.1556517147642", 64)
 	//pleagef021704, err := strconv.ParseFloat("1979.057228561", 64)
 	if err != nil {
@@ -52,8 +52,8 @@ func initTmpData() {
 	}
 	if n == 0 {
 		miner1 := models.MinerInfo{
-			MinerId:      "f088290",
-			QualityPower: 0.0,
+			MinerId:      "f055446",
+			QualityPower: 294.46875,
 			Pleage:       pleagef055446,
 			CreateTime:   time.Now(),
 			UpdateTime:   time.Now(),
@@ -89,16 +89,16 @@ func initTmpData() {
 	}
 	if n == 0 {
 		minerAndWalletRelation1 := models.MinerAndWalletRelation{
-			MinerId:  "f088290",
-			WalletId: "f3ssrkr5hzsam23xa3f7y7ck6uvvfrosdmf3zqb4lmwfh4wakwstzwpuvy23fj7z274kd6ywqisltway3oklmq",
+			MinerId:  "f055446",
+			WalletId: "f3wih6tpcyk6mfg6o55sdgfw5efvbbuzvd4p7mfjl67dwaeoef6wnlaqzejdnisa4wzdajviasyv6ipufrttmq",
 		}
 		minerAndWalletRelation2 := models.MinerAndWalletRelation{
-			MinerId:  "f088290",
-			WalletId: "f3sapm3ztthk5kucytirqxvou6hfaczz6hulymfrslym3co42u73d3sq6xszhfdubrtrkxxg4liyorsk5deloq",
+			MinerId:  "f055446",
+			WalletId: "f3rrrwlcgctgosfpfztex2kvbsyxyho3k2wiikxds3vxmpuhiy7odnom25ou4tl3dvq7ta7uoi6blsfx25w73q",
 		}
 		minerAndWalletRelation3 := models.MinerAndWalletRelation{
-			MinerId:  "f088290",
-			WalletId: "f3vif2ni6y27lo34666olsz7qi6i64h2nviacv7z4x75k6ud3g6lvox5k7lz2h7bydsexjvueeismmd43vtq6q",
+			MinerId:  "f055446",
+			WalletId: "f3wc24qesjodezvjnt3luoh2xjaej7q3b3iryzxizphsh2ofqleduccqzlyqjhvgmudeyw3hx2hsvw4x4r3qqq",
 		}
 		//minerAndWalletRelation4 := models.MinerAndWalletRelation{
 		//	MinerId:  "f02420",

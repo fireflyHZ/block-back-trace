@@ -1302,7 +1302,7 @@ func inMiners(minerId string) bool {
 	return false
 }
 
-func TetsGetInfo1() {
+func TetsGetInfo() {
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
 	LotusHost, err := web.AppConfig.String("lotusHost")
@@ -1317,7 +1317,7 @@ func TetsGetInfo1() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(343199)
+	var epoch = abi.ChainEpoch(343200)
 	tipset, _ := nodeApi.ChainHead(context.Background())
 	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
@@ -1329,7 +1329,7 @@ func TetsGetInfo1() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f02420")
+	minerAddr, _ := address.NewFromString("f055446")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 
@@ -1369,7 +1369,7 @@ func TetsGetInfo1() {
 
 }
 
-func TetsGetInfo() {
+func TetsGetInfo1() {
 	ctx := context.Background()
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
@@ -1384,7 +1384,7 @@ func TetsGetInfo() {
 		return
 	}
 	defer closer()
-	var h = abi.ChainEpoch(364101)
+	var h = abi.ChainEpoch(343200)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println("sdfadf1 err:", err)
