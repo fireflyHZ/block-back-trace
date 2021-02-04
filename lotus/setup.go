@@ -52,7 +52,7 @@ func initTmpData() {
 	}
 	if n == 0 {
 		miner1 := models.MinerInfo{
-			MinerId:      "f0122533",
+			MinerId:      "f0117450",
 			QualityPower: 0.0,
 			Pleage:       pleagef055446,
 			CreateTime:   time.Now(),
@@ -89,16 +89,16 @@ func initTmpData() {
 	}
 	if n == 0 {
 		minerAndWalletRelation1 := models.MinerAndWalletRelation{
-			MinerId:  "f0122533",
-			WalletId: "f3uvwmuwlaz4qr7i4xlxucg25wgy6vc2afgj5idabyoh6umpj25ugdt3bbmmcg3nprtzq7okhdziljnoa7pj7q",
+			MinerId:  "f0117450",
+			WalletId: "f3ufsnk2uu6naqhe6ssbtjzdsclgpqstbr4gtlofm5uu32vj7sbjmtef35ynxpebm6yutbuwxjafh7jyrzpaqq",
 		}
 		minerAndWalletRelation2 := models.MinerAndWalletRelation{
-			MinerId:  "f0122533",
-			WalletId: "f3q5g4miz74mjmjk5stin344rvhiay7eeei3drdin4kzmnbli4dmsmuirxlyxk6v4luot67fxzqf5vg5gdlxhq",
+			MinerId:  "f0117450",
+			WalletId: "f3rrrr2vmhrkdpb4aqyozgnja47ewki3bbl2sv4mfenapjod3volvtk74zjshgi4txehbbw6bkginwxiuthkca",
 		}
 		minerAndWalletRelation3 := models.MinerAndWalletRelation{
-			MinerId:  "f0122533",
-			WalletId: "f3s3urn3k2mk3y3utllw327r5fgbmq5xipizmrjpxqjlohv2eklua7pmt3kz3zv6dd73sxe2v4olgloi4vfvqq",
+			MinerId:  "f0117450",
+			WalletId: "f3xbh3oswkxw6bglnkyljvgktiv2iiqk5zco6ektg2wwyvrtopiym52zoxrxn7cz2p7ye7m2254qwqsjrikfla",
 		}
 		//minerAndWalletRelation4 := models.MinerAndWalletRelation{
 		//	MinerId:  "f02420",
