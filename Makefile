@@ -5,4 +5,4 @@ profit:
 	go build -o $(miner) main.go
 .PHONY: forward
 forward:
-	go build -o forward ./forwarding/forward.go
+	go build -o forward ./forwarding/forward.go ./forwarding/log.go
