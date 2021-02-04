@@ -20,7 +20,7 @@ func Setup() {
 	defer collectTime.Stop()
 
 	//完成数据初始化
-	initTmpData()
+	//initTmpData()
 	for {
 		select {
 		case <-collectTime.C:
