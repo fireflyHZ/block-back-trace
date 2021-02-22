@@ -132,7 +132,7 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 		}
 		blocks := chainHeightHandle.Blocks()
 		//计算支出
-		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key())
+		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key(), i)
 		if err != nil {
 			return i, err
 		}
@@ -142,7 +142,7 @@ func handleMsgGasInfo(dealBlcokHeight int, end int) (int, error) {
 	return dh, nil
 }
 
-func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, tipsetKey types.TipSetKey) error {
+func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, tipsetKey types.TipSetKey, height int) error {
 	messagesCostMap := make(map[string]bool)
 	consensusFaultMap := make(map[string]bool)
 	for i, message := range messages {
@@ -151,7 +151,7 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			if messagesCostMap[message.Cid.String()] {
 				continue
 			}
-			gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+			gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
 			if err != nil {
 				return err
 			}

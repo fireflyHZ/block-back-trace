@@ -347,7 +347,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	epoch := int(blocks[0].Height)
 	//rewardLog.Debug("Debug collectMinertData height:%+v", epoch)
 	winCount := blocks[index].ElectionProof.WinCount
-	value, power, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages)
+	value, power, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages, epoch)
 	//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
 	if err != nil {
 		errTx := txOrm.Rollback()
@@ -510,7 +510,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	return nil
 }
 
-func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message) (string, float64, error) {
+func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message, height int) (string, float64, error) {
 	o := orm.NewOrm()
 	totalGas := abi.NewTokenAmount(0)
 	mineReward := abi.NewTokenAmount(0)
@@ -560,7 +560,7 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 
 	for i, message := range msgs {
 		//rewardLog.Debug("======i:%+v msgID:%+v len:%+v", i, message.Cid.String(), len(msgs))
-		gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+		gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
 		if err != nil {
 			return "0.0", 0, err
 		}
@@ -716,7 +716,7 @@ func calculateRewardAndPledgeTest(index int, blocks []*types.BlockHeader, blockC
 	epoch := int(blocks[0].Height)
 	//rewardLog.Debug("Debug collectMinertData height:%+v", epoch)
 	winCount := blocks[index].ElectionProof.WinCount
-	value, _, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages)
+	value, _, err := calculateReward(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages, epoch)
 	if err != nil {
 		return "0.0", err
 	}
@@ -813,7 +813,7 @@ func getParentsBlockMessage(cid cid.Cid) (messages []api.Message, err error) {
 	return
 }
 
-func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmount, i int) (gasout vm.GasOutputs, err error) {
+func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmount, i int, height int) (gasout vm.GasOutputs, err error) {
 	charge := true
 	//requestHeader := http.Header{}
 	ctx := context.Background()
@@ -831,7 +831,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 		rewardForLog.Error("getGasout  ChainGetParentReceipts err:%+v", err)
 		return
 	}
-	if messages.Method == 5 {
+	if messages.Method == 5 && height > 343200 {
 		charge = false
 	}
 	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium, charge)

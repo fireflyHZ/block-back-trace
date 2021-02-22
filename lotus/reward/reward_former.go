@@ -224,7 +224,7 @@ func handleRequestInfo(dealBlcokHeight int, end int) (int, error) {
 		}
 
 		//计算支出
-		err = calculateWalletCostAndMinerReward(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0])
+		err = calculateWalletCostAndMinerReward(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], i)
 		if err != nil {
 			return end, err
 		}
@@ -299,7 +299,7 @@ func getBlockByTipsetKey(tipsetKey types.TipSetKey) (tipset *types.TipSet, err e
 	return
 }
 
-func calculateWalletCostAndMinerReward(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid) error {
+func calculateWalletCostAndMinerReward(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, height int) error {
 
 	messagesCostMap := make(map[string]bool)
 	messagesRewardMap := make(map[string]bool)
@@ -320,7 +320,7 @@ func calculateWalletCostAndMinerReward(block types.BlockHeader, messages []api.M
 			}
 			//		rewardForLog.Debug("======i:%+v msgID:%+v len:%+v", i, message.Cid.String(), len(messages))
 
-			gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+			gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
 			if err != nil {
 				return err
 			}
@@ -635,7 +635,7 @@ func calculateMineReward(index int, blocks []*types.BlockHeader, blockCid []cid.
 	epoch := int(blocks[0].Height)
 	//rewardForLog.Debug("Debug collectMinertData height:%+v", epoch)
 	winCount := blocks[index].ElectionProof.WinCount
-	gas, mine, penalty, value, power, err := getRewardInfo(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages)
+	gas, mine, penalty, value, power, err := getRewardInfo(index, blocks[index].Miner, blockCid, tipsetKey, blocks[index].ParentBaseFee, winCount, blocks[index], blockAfter, messages, epoch)
 	//	rewardForLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
 
 	if err != nil {
@@ -805,7 +805,7 @@ type gasAndPenalty struct {
 	penalty abi.TokenAmount
 }
 
-func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message) (string, string, string, string, float64, error) {
+func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetKey types.TipSetKey, basefee abi.TokenAmount, winCount int64, header *types.BlockHeader, blockAfter cid.Cid, msgs []api.Message, height int) (string, string, string, string, float64, error) {
 	o := orm.NewOrm()
 	totalGas := abi.NewTokenAmount(0)
 	mineReward := abi.NewTokenAmount(0)
@@ -857,7 +857,7 @@ func getRewardInfo(index int, miner address.Address, blockCid []cid.Cid, tipsetK
 
 	for i, message := range msgs {
 		//rewardForLog.Debug("======i:%+v msgID:%+v len:%+v", i, message.Cid.String(), len(msgs))
-		gasout, err := getGasout(blockAfter, message.Message, basefee, i)
+		gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
 		if err != nil {
 			return "0.0", "0.0", "0.0", "0.0", 0, err
 		}
@@ -1317,7 +1317,7 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(343200)
+	var epoch = abi.ChainEpoch(514800)
 	tipset, _ := nodeApi.ChainHead(context.Background())
 	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
@@ -1329,7 +1329,7 @@ func TetsGetInfo() {
 		fmt.Printf("Error get chain head err:%+v\n", err)
 		return
 	}
-	minerAddr, _ := address.NewFromString("f055446")
+	minerAddr, _ := address.NewFromString("f0144528")
 	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
 	fmt.Printf("==========%+v\n", p)
 
