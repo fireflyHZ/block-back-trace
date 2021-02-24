@@ -82,7 +82,7 @@ func queryListenRewardNetStatus() (height int, err error) {
 		return
 	}
 	if n == 0 {
-		height = 485470
+		height = 410150
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
