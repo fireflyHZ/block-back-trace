@@ -5,21 +5,21 @@ import (
 )
 
 func Init() error {
-	logging.SetupLogging(logging.Config{File: "profit.log"})
-	//controller
-	if err := logging.SetLogLevel("order-ctr-log", "DEBUG"); err != nil {
-		return err
-	}
-	if err := logging.SetLogLevel("reward-ctr-log", "DEBUG"); err != nil {
-		return err
-	}
-	if err := logging.SetLogLevel("user-ctr-log", "DEBUG"); err != nil {
-		return err
-	}
 
-	if err := logging.SetLogLevel("wallet-ctr-log", "DEBUG"); err != nil {
-		return err
-	}
+	//controller
+	//if err := logging.SetLogLevel("order-ctr-log", "DEBUG"); err != nil {
+	//	return err
+	//}
+	//if err := logging.SetLogLevel("reward-ctr-log", "DEBUG"); err != nil {
+	//	return err
+	//}
+	//if err := logging.SetLogLevel("user-ctr-log", "DEBUG"); err != nil {
+	//	return err
+	//}
+	//
+	//if err := logging.SetLogLevel("wallet-ctr-log", "DEBUG"); err != nil {
+	//	return err
+	//}
 	//models
 	if err := logging.SetLogLevel("models", "DEBUG"); err != nil {
 		return err
@@ -39,5 +39,6 @@ func Init() error {
 	if err := logging.SetLogLevel("reward-log", "DEBUG"); err != nil {
 		return err
 	}
+	logging.SetupLogging(logging.Config{File: "profit.log"})
 	return nil
 }

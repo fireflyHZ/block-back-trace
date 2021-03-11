@@ -19,8 +19,6 @@ func Setup() {
 
 	defer collectTime.Stop()
 
-	//完成数据初始化
-	initTmpData()
 	for {
 		select {
 		case <-collectTime.C:
@@ -37,7 +35,7 @@ func loop() {
 	sync.Wg.Wait()
 }
 
-func initTmpData() {
+func InitMinerData() {
 	o := orm.NewOrm()
 	minerInfo := make([]models.MinerInfo, 0)
 	n, err := o.QueryTable("fly_miner_info").All(&minerInfo)

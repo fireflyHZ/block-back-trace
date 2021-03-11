@@ -91,6 +91,6 @@ func initDatabase() error {
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		return err
 	}
-
+	lotus.InitMinerData()
 	return nil
 }
