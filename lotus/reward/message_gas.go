@@ -301,7 +301,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	}
 	//入库
 	expendInfos := make([]models.ExpendInfo, 0)
-	n, err = o.Raw("select * from fly_expend_info where miner_id=? update_time::date=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&expendInfos)
+	n, err = o.Raw("select * from fly_expend_info where wallet_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", walletId, t.Format("2006-01-02")).QueryRows(&expendInfos)
 	//n, err = txOmer.QueryTable("fly_expend_info").Filter("wallet_id", walletId).Filter("time", t.Format("2006-01-02")).All(expendInfo)
 	if err != nil {
 		msgLog.Errorf("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", walletId, err, n, t.Format("2006-01-02"))
@@ -356,7 +356,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	}
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	//入库
-	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner=? and update_time::date=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
+	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
 	//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 	if err != nil {
 		rewardLog.Errorf("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", err, n, t.Format("2006-01-02"))
