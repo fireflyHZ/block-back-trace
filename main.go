@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
+	"profit-allocation/lotus"
 	"profit-allocation/tool/log"
 
 	//_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"os"
 	"os/signal"
-	"profit-allocation/controllers"
-	"profit-allocation/lotus"
 	"profit-allocation/models"
 	//_ "profit-allocation/routers"
 	"syscall"
@@ -23,7 +22,7 @@ func main() {
 		fmt.Println("init log error:", err)
 		return
 	}
-	if err = initDatabase(); err != nil {
+	if err := initDatabase(); err != nil {
 		fmt.Println("init database error:", err)
 		return
 	}
@@ -32,7 +31,7 @@ func main() {
 		return
 	}
 
-	//reward.TetsGetInfo()
+	//reward.TestTimefind()
 	go lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)
@@ -50,11 +49,11 @@ func main() {
 	}()
 	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
-	web.Router("/firefly/profit/total_reward_info", &controllers.RewardController{}, "get:GetRewardAndPledge")
-
-	web.Router("/firefly/profit/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas")
-
-	web.Router("/firefly/profit/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo")
+	//web.Router("/firefly/profit/total_reward_info", &controllers.RewardController{}, "get:GetRewardAndPledge")
+	//
+	//web.Router("/firefly/profit/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas")
+	//
+	//web.Router("/firefly/profit/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo")
 
 	web.Run()
 }
@@ -80,13 +79,13 @@ func initDatabase() error {
 	orm.RegisterModelWithPrefix("fly_",
 		new(models.ListenMsgGasNetStatus),
 		new(models.ListenRewardNetStatus),
-		new(models.RewardInfo),
 		new(models.ExpendInfo),
 		new(models.MinerInfo),
 		new(models.ExpendMessages),
+		new(models.PreAndProveMessages),
 		new(models.MineBlocks),
 		new(models.MineMessages),
-		new(models.MinerPowerStatus),
+		new(models.MinerStatusAndDailyChange),
 		new(models.MinerAndWalletRelation),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {

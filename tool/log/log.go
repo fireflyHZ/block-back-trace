@@ -16,6 +16,7 @@ func Init() error {
 	if err := logging.SetLogLevel("user-ctr-log", "DEBUG"); err != nil {
 		return err
 	}
+
 	if err := logging.SetLogLevel("wallet-ctr-log", "DEBUG"); err != nil {
 		return err
 	}

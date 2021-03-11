@@ -1,9 +1,10 @@
 package models
 
 import (
+	"errors"
+	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
-	"strings"
 )
 
 var (
@@ -15,18 +16,22 @@ var (
 var log = logging.Logger("models")
 
 func InitData() error {
-	minersStr, err := web.AppConfig.String("miners")
+	minerAndWalletRelations := make([]MinerAndWalletRelation, 0)
+	o := orm.NewOrm()
+	num, err := o.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
 	if err != nil {
-		log.Errorf("get miners  err:%+v\n", err)
+		log.Errorf("get miner and wallet relation info err:%+v\n", err)
 		return err
 	}
-	Miners = strings.Split(minersStr, ",")
-	walletsStr, err := web.AppConfig.String("wallets")
-	if err != nil {
-		log.Errorf("get wallets  err:%+v\n", err)
-		return err
+	if num == 0 {
+		log.Error("get miner and wallet relation info's number is 0")
+		return errors.New("get miner and wallet relation info's number is 0")
 	}
-	Wallets = strings.Split(walletsStr, ",")
+	for _, info := range minerAndWalletRelations {
+		Miners = append(Miners, info.MinerId)
+		Wallets = append(Wallets, info.WalletId)
+	}
+
 	LotusHost, err = web.AppConfig.String("lotusHost")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)

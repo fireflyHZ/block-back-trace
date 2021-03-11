@@ -59,7 +59,7 @@ type RewardResp struct {
 	Reward         float64
 	Pledge         float64
 	Power          float64
-	Gas            string
+	Gas            float64
 	BlockNumber    int
 	WinCount       int64
 	TotalPower     float64
@@ -73,7 +73,7 @@ type RewardResp struct {
 type MessageGasTmp struct {
 	Code string
 	Msg  string
-	Gas  string
+	Gas  float64
 }
 
 //-----------------------------

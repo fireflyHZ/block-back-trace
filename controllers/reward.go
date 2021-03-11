@@ -1,12 +1,11 @@
 package controllers
 
+/*
 import (
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/models"
-	"profit-allocation/tool/bit"
-	"strconv"
 	"time"
 )
 
@@ -21,7 +20,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
 	var timeStamp time.Time
-	gas := "0.0"
+	var gas float64
 
 	t := c.GetString("time")
 
@@ -55,19 +54,16 @@ func (c *RewardController) GetRewardAndPledge() {
 		c.ServeJSON()
 		return
 	} else {
-
 		for _, info := range rewardInfo {
 			if timeStamp.Before(info.UpdateTime) {
 				timeStamp = info.UpdateTime
 			}
-			r, _ := strconv.ParseFloat(info.Value, 64)
-			reward += r
+			reward += info.Value
 			pledge += info.Pledge
 			power += info.Power
 			blockNum += info.BlockNum
 			winCount += info.WinCounts
 		}
-
 	}
 
 	expendInfo := make([]models.ExpendInfo, 0)
@@ -91,9 +87,9 @@ func (c *RewardController) GetRewardAndPledge() {
 		return
 	} else {
 		for _, info := range expendInfo {
-			gas = bit.CalculateReward(gas, info.Gas)
-			gas = bit.CalculateReward(gas, info.BaseBurnFee)
-			gas = bit.CalculateReward(gas, info.OverEstimationBurn)
+			gas += info.Gas
+			gas +=  info.BaseBurnFee
+			gas +=  info.OverEstimationBurn
 		}
 	}
 	//todo totalpower
@@ -172,11 +168,11 @@ func (c *RewardController) GetMessagesGas() {
 		c.ServeJSON()
 		return
 	} else {
-		gas := "0.0"
+		var gas float64
 		for _, info := range expendInfo {
-			gas = bit.CalculateReward(gas, info.Gas)
-			gas = bit.CalculateReward(gas, info.BaseBurnFee)
-			gas = bit.CalculateReward(gas, info.OverEstimationBurn)
+			gas += info.Gas
+			gas += info.BaseBurnFee
+			gas += info.OverEstimationBurn
 		}
 		resp := models.MessageGasTmp{
 			Code: "ok",
@@ -194,7 +190,7 @@ func (c *RewardController) GetMinerInfo() {
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
 	var timeStamp time.Time
-	gas := "0.0"
+	var gas float64
 
 	miner := c.GetString("miner")
 	t := c.GetString("time")
@@ -236,8 +232,7 @@ func (c *RewardController) GetMinerInfo() {
 		return
 	} else {
 		timeStamp = rewardInfo.UpdateTime
-		r, _ := strconv.ParseFloat(rewardInfo.Value, 64)
-		reward = r
+		reward = rewardInfo.Value
 		pledge = rewardInfo.Pledge
 		power = rewardInfo.Power
 		blockNum = rewardInfo.BlockNum
@@ -281,9 +276,9 @@ func (c *RewardController) GetMinerInfo() {
 				c.ServeJSON()
 				return
 			} else if num != 0 {
-				gas = bit.CalculateReward(gas, expendInfo.Gas)
-				gas = bit.CalculateReward(gas, expendInfo.BaseBurnFee)
-				gas = bit.CalculateReward(gas, expendInfo.OverEstimationBurn)
+				gas += expendInfo.Gas
+				gas += expendInfo.BaseBurnFee
+				gas += expendInfo.OverEstimationBurn
 			}
 		}
 	}
@@ -333,3 +328,4 @@ func (c *RewardController) GetMinerInfo() {
 	c.ServeJSON()
 	return
 }
+*/
