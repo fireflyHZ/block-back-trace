@@ -76,7 +76,6 @@ func unmarshalState(r io.Reader) *reward.State {
 	{
 		maj, extra, err := cbg.CborReadHeaderBuf(br, scratch)
 		var extraI int64
-		fmt.Println("maj", maj, "extar", extra)
 		if err != nil {
 			rewardForLog.Error("CborReadHeaderBuf err : %+v", err)
 		}

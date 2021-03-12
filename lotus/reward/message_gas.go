@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/vm"
@@ -13,8 +14,8 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin/miner"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
-	"math"
 	"profit-allocation/models"
+	"profit-allocation/tool/bit"
 	"profit-allocation/tool/sync"
 	"strconv"
 	"time"
@@ -272,11 +273,8 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	}
 	t := time.Unix(int64(block.Timestamp), 0)
 	epoch := int64(block.Height)
-	gas := float64(gasout.MinerTip.Int64()) / math.Pow(10, 18)
-	burnFee := float64(gasout.BaseFeeBurn.Int64()) / math.Pow(10, 18)
-	overBurn := float64(gasout.OverEstimationBurn.Int64()) / math.Pow(10, 18)
-	valueFloat := float64(value.Int64()) / math.Pow(10, 18)
-	penalty := float64(gasout.MinerPenalty.Int64()) / math.Pow(10, 18)
+	gas, burnFee, overBurn, valueFloat, penalty, err := parseGasoutToFloat(gasout, value.String())
+
 	expendMsg.MessageId = msgId
 	expendMsg.MinerId = minerId
 	expendMsg.WalletId = walletId
@@ -412,65 +410,6 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		msgLog.Errorf("DEBUG: recordCostMessageInfo orm transation Commit error: %+v", err)
 		return err
 	}
-	return nil
-}
-
-func TestMsg() {
-	CreateLotusClient()
-	chainHeightHandle, err := getChainHeadByHeight(460080)
-	if err != nil {
-		fmt.Printf("ERROR: handleRequestInfo() getChainHeadByHeight err=%+v \n", err)
-		return
-	}
-	chainHeightAfter, err := getChainHeadByHeight(460081)
-	if err != nil {
-		fmt.Printf("ERROR: handleRequestInfo() getChainHeadByHeight  err=%+v \n", err)
-		return
-	}
-
-	//chainHeightHandle, err := getChainHeadByHeight(i)
-	//if err != nil {
-	//	msgLog.Errorf("ERROR: handleRequestInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight-1, err)
-	//	return end, err
-	//}
-	fmt.Println(chainHeightAfter)
-	blockMessageResp, err := getParentsBlockMessage(chainHeightAfter.Cids()[0])
-	if err != nil {
-		fmt.Printf("ERROR: handleRequestInfo() getParentsBlockMessage   err=%v\n", err)
-		return
-	}
-	for _, message := range blockMessageResp {
-
-		if message.Message.Method == 16 && inMiners(message.Message.To.String()) {
-			//withdrawMsg(message)
-		}
-
-	}
-
-	fmt.Println(len(blockMessageResp))
-	err = calculateWalletCostTest(chainHeightHandle.Key(), blockMessageResp)
-	if err != nil {
-		fmt.Printf("ERROR: handleRequestInfo() calculateWalletCost   err=%v\n", err)
-		return
-	}
-
-}
-
-func calculateWalletCostTest(tipsetKey types.TipSetKey, messages []api.Message) error {
-
-	for _, message := range messages {
-
-		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
-			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
-			if err != nil {
-				return err
-			}
-			//	err = recordCostMessage(gasout, message, block)
-			fmt.Printf("Debug method == 15  burn:%+v value:%+v \n", burn, value)
-		}
-
-	}
-	fmt.Println(6)
 	return nil
 }
 
@@ -612,4 +551,89 @@ func getMinerByWallte(walletId string) (string, error) {
 		return "", fmt.Errorf("can not found miner by wallte :%+v", walletId)
 	}
 	return minerAndWalletRelations.MinerId, nil
+}
+
+func parseGasoutToFloat(gasout vm.GasOutputs, valueStr string) (float64, float64, float64, float64, float64, error) {
+	gas, err := strconv.ParseFloat(bit.TransFilToFIL(gasout.MinerTip.String()), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse gas to float err:%+v", err)
+		return 0, 0, 0, 0, 0, err
+	}
+	baseBurn, err := strconv.ParseFloat(bit.TransFilToFIL(gasout.BaseFeeBurn.String()), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse base burn to float err:%+v", err)
+		return 0, 0, 0, 0, 0, err
+	}
+	overBurn, err := strconv.ParseFloat(bit.TransFilToFIL(gasout.OverEstimationBurn.String()), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse over burn to float err:%+v", err)
+		return 0, 0, 0, 0, 0, err
+	}
+	value, err := strconv.ParseFloat(bit.TransFilToFIL(valueStr), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse value to float err:%+v", err)
+		return 0, 0, 0, 0, 0, err
+	}
+	penalty, err := strconv.ParseFloat(bit.TransFilToFIL(gasout.MinerPenalty.String()), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse penalty to float err:%+v", err)
+		return 0, 0, 0, 0, 0, err
+	}
+	return gas, baseBurn, overBurn, value, penalty, nil
+}
+
+func TestMsg() {
+	CreateLotusClient()
+	totalGas := abi.NewTokenAmount(0)
+	for i := 488709; i < 574348; i++ {
+		chainHeightHandle, err := getChainHeadByHeight(int64(i))
+		if err != nil {
+			fmt.Printf("ERROR: handleRequestInfo() getChainHeadByHeight err=%+v \n", err)
+			return
+		}
+		chainHeightAfter, err := getChainHeadByHeight(int64(i + 1))
+		if err != nil {
+			fmt.Printf("ERROR: handleRequestInfo() getChainHeadByHeight  err=%+v \n", err)
+			return
+		}
+		blockMessageResp, err := getParentsBlockMessage(chainHeightAfter.Cids()[0])
+		if err != nil {
+			fmt.Printf("ERROR: handleRequestInfo() getParentsBlockMessage   err=%v\n", err)
+			return
+		}
+		for j, message := range blockMessageResp {
+
+			if message.Message.To.String() == "f1plwi3jw2i75opgfnyrqwcwgsk5w2gnwxkyaz2sq" || message.Message.From.String() == "f1plwi3jw2i75opgfnyrqwcwgsk5w2gnwxkyaz2sq" {
+				//withdrawMsg(message)
+				gasout, _ := getGasout(chainHeightAfter.Cids()[0], message.Message, chainHeightHandle.Blocks()[0].ParentBaseFee, j, int64(i))
+				totalGas = big.Add(big.Add(gasout.MinerTip, gasout.BaseFeeBurn), gasout.OverEstimationBurn)
+			}
+
+		}
+	}
+
+	//chainHeightHandle, err := getChainHeadByHeight(i)
+	//if err != nil {
+	//	msgLog.Errorf("ERROR: handleRequestInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight-1, err)
+	//	return end, err
+	//}
+	fmt.Printf("gas :%+v\n", totalGas)
+}
+
+func calculateWalletCostTest(tipsetKey types.TipSetKey, messages []api.Message) error {
+
+	for _, message := range messages {
+
+		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
+			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
+			if err != nil {
+				return err
+			}
+			//	err = recordCostMessage(gasout, message, block)
+			fmt.Printf("Debug method == 15  burn:%+v value:%+v \n", burn, value)
+		}
+
+	}
+	fmt.Println(6)
+	return nil
 }

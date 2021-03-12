@@ -1,6 +1,5 @@
 package controllers
 
-/*
 import (
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
@@ -15,6 +14,7 @@ type RewardController struct {
 	web.Controller
 }
 
+//获取矿池信息
 func (c *RewardController) GetRewardAndPledge() {
 	var blockNum int
 	var winCount int64
@@ -23,6 +23,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	var gas float64
 
 	t := c.GetString("time")
+	mp := c.GetString("mp")
 
 	if t == "" {
 		resp := models.RewardResp{
@@ -36,9 +37,17 @@ func (c *RewardController) GetRewardAndPledge() {
 		return
 	}
 	rewardLog.Infof("new request time:%+v", t)
-	rewardInfo := make([]models.RewardInfo, 0)
+	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
+	var num int64
+	var err error
+	if mp == "f02420" {
+		num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&rewardInfos)
+	} else {
+		num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&rewardInfos)
+	}
+
+	//num, err := o.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
@@ -54,21 +63,31 @@ func (c *RewardController) GetRewardAndPledge() {
 		c.ServeJSON()
 		return
 	} else {
-		for _, info := range rewardInfo {
+		for _, info := range rewardInfos {
 			if timeStamp.Before(info.UpdateTime) {
 				timeStamp = info.UpdateTime
 			}
-			reward += info.Value
+			reward += info.Reward
 			pledge += info.Pledge
 			power += info.Power
 			blockNum += info.BlockNum
 			winCount += info.WinCounts
+			//当天状态
+			totalPower += info.TotalPower
+			totalAvailable += info.TotalAvailable
+			totalPreCommit += info.TotalPreCommit
+			totalPleage += info.TotalPledge
+			totalVesting += info.TotalVesting
 		}
 	}
 
 	expendInfo := make([]models.ExpendInfo, 0)
-
-	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
+	if mp == "f02420" {
+		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
+	} else {
+		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
+	}
+	//	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
@@ -88,37 +107,9 @@ func (c *RewardController) GetRewardAndPledge() {
 	} else {
 		for _, info := range expendInfo {
 			gas += info.Gas
-			gas +=  info.BaseBurnFee
-			gas +=  info.OverEstimationBurn
+			gas += info.BaseBurnFee
+			gas += info.OverEstimationBurn
 		}
-	}
-	//todo totalpower
-	minerPowerStatus := make([]models.MinerPowerStatus, 0)
-	num, err = o.QueryTable("fly_miner_power_status").Filter("time", t).All(&minerPowerStatus)
-	if err != nil || num == 0 {
-		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get miner power info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
-		}
-		c.Data["json"] = &resp
-		c.ServeJSON()
-		return
-	} else {
-		for _, minerPower := range minerPowerStatus {
-			totalPower += minerPower.Power
-			totalAvailable += minerPower.Available
-			totalPreCommit += minerPower.PreCommit
-			totalPleage += minerPower.Pleage
-			totalVesting += minerPower.Vesting
-		}
-
 	}
 
 	resp := models.RewardResp{
@@ -213,10 +204,9 @@ func (c *RewardController) GetMinerInfo() {
 		return
 	}
 	rewardLog.Infof("new request miner:%+v time:%+v", miner, t)
-	rewardInfo := new(models.RewardInfo)
+	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", t).All(rewardInfo)
-	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
+	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&rewardInfos)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:       "fail",
@@ -231,19 +221,29 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	} else {
+		rewardInfo := rewardInfos[0]
 		timeStamp = rewardInfo.UpdateTime
-		reward = rewardInfo.Value
+		reward = rewardInfo.Reward
 		pledge = rewardInfo.Pledge
 		power = rewardInfo.Power
 		blockNum = rewardInfo.BlockNum
 		winCount = rewardInfo.WinCounts
+		//
+		totalPower = rewardInfo.TotalPower
+		totalAvailable = rewardInfo.TotalAvailable
+		totalPreCommit = rewardInfo.TotalPreCommit
+		totalPleage = rewardInfo.TotalPledge
+		totalVesting = rewardInfo.TotalVesting
 	}
-	minerAndWalletRelations := make([]models.MinerAndWalletRelation, 0)
-	num, err = o.QueryTable("fly_miner_and_wallet_relation").Filter("miner_id", miner).All(&minerAndWalletRelations)
-	if err != nil || num == 0 {
+
+	expendInfos := make([]models.ExpendInfo, 0)
+	//num, err = o.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
+	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
+	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
+	if err != nil {
 		resp := models.RewardResp{
 			Code:        "fail",
-			Msg:         "get wallet info fail",
+			Msg:         "get expend info fail",
 			Reward:      reward,
 			Pledge:      pledge,
 			Power:       power,
@@ -255,57 +255,12 @@ func (c *RewardController) GetMinerInfo() {
 		c.Data["json"] = &resp
 		c.ServeJSON()
 		return
-	} else {
-		for _, wallet := range minerAndWalletRelations {
-			expendInfo := new(models.ExpendInfo)
-			num, err = o.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
-			//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
-			if err != nil {
-				resp := models.RewardResp{
-					Code:        "fail",
-					Msg:         "get expend info fail",
-					Reward:      reward,
-					Pledge:      pledge,
-					Power:       power,
-					Gas:         gas,
-					BlockNumber: blockNum,
-					WinCount:    winCount,
-					TotalPower:  totalPower,
-				}
-				c.Data["json"] = &resp
-				c.ServeJSON()
-				return
-			} else if num != 0 {
-				gas += expendInfo.Gas
-				gas += expendInfo.BaseBurnFee
-				gas += expendInfo.OverEstimationBurn
-			}
+	} else if num != 0 {
+		for _, expendInfo := range expendInfos {
+			gas += expendInfo.Gas
+			gas += expendInfo.BaseBurnFee
+			gas += expendInfo.OverEstimationBurn
 		}
-	}
-	//todo totalpower
-	minerPowerStatus := new(models.MinerPowerStatus)
-	num, err = o.QueryTable("fly_miner_power_status").Filter("miner_id", miner).Filter("time", t).All(minerPowerStatus)
-	if err != nil || num == 0 {
-		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get miner power info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
-		}
-		c.Data["json"] = &resp
-		c.ServeJSON()
-		return
-	} else {
-		totalPower = minerPowerStatus.Power
-		totalAvailable = minerPowerStatus.Available
-		totalPreCommit = minerPowerStatus.PreCommit
-		totalPleage = minerPowerStatus.Pleage
-		totalVesting = minerPowerStatus.Vesting
 	}
 
 	resp := models.RewardResp{
@@ -328,4 +283,3 @@ func (c *RewardController) GetMinerInfo() {
 	c.ServeJSON()
 	return
 }
-*/
