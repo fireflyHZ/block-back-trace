@@ -215,6 +215,7 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 
 func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.BlockHeader) error {
 	var err error
+	var minerId string
 	//获取minerid
 	walletId := message.Message.From.String()
 	to := message.Message.To.String()
@@ -227,11 +228,18 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		}
 	}
 	//获取wallet对应的miner
-	minerId, err := getMinerByWallte(walletId)
-	if err != nil {
-		msgLog.Errorf("get miner by wallte :%+v err:%+v", walletId, err)
-		return err
+	if message.Message.Method == 15 {
+		minerId = message.Message.To.String()
+		to = message.Message.From.String()
+		//walletId=""
+	} else {
+		minerId, err = getMinerByWallte(walletId)
+		if err != nil {
+			msgLog.Errorf("get miner by wallte :%+v err:%+v", walletId, err)
+			return err
+		}
 	}
+
 	msgId := message.Cid.String()
 	o := orm.NewOrm()
 	txOmer, err := o.Begin()
