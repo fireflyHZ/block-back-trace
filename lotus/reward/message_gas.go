@@ -30,7 +30,7 @@ func CalculateMsgGasData() {
 		msgLog.Errorf("ERROR: collectLotusChainBlockRunData(), err=%v", err)
 		return
 	}
-	msgLog.Debugf("DEBUG: CalculateMsgGasData(),  CostFromHeight:%v ", CostFromHeight)
+	msgLog.Infof(" CalculateMsgGasData(),  CostFromHeight:%v ", CostFromHeight)
 
 	chainHeadResp, err := collectLotusChainHeadBlock()
 	if err != nil {
@@ -42,17 +42,17 @@ func CalculateMsgGasData() {
 		return
 	}
 
-	if blockHeight-CostFromHeight > 50 {
-		h, err := handleMsgGasInfo(CostFromHeight+50, CostFromHeight)
+	if blockHeight-CostFromHeight > 200 {
+		h, err := handleMsgGasInfo(CostFromHeight+200, CostFromHeight)
 		if err != nil {
-			msgLog.Errorf("ERROR: CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
+			msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
 			return
 		}
 		CostFromHeight = h
 	} else {
 		h, err := handleMsgGasInfo(blockHeight, CostFromHeight)
 		if err != nil {
-			msgLog.Errorf("ERROR: CalculateMsgGasData() handleRequestInfo <=50 err:%+v", err)
+			msgLog.Errorf("CalculateMsgGasData() handleRequestInfo <=50 err:%+v", err)
 			return
 		}
 		CostFromHeight = h
@@ -167,22 +167,13 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			}
 			//计算
 
-			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
-			if err != nil {
-				return err
-			}
-
-			burnInt, err := strconv.ParseInt(burn, 0, 64)
-			if err != nil {
-				return err
-			}
-			valueInt, err := strconv.ParseInt(value, 0, 64)
+			burn, err := reportConsensusFaultPenalty(tipsetKey, message)
 			if err != nil {
 				return err
 			}
 			zeroTokenAmount := abi.NewTokenAmount(0)
-			burnTokenAmount := abi.NewTokenAmount(burnInt)
-			valueTokenAmount := abi.NewTokenAmount(valueInt)
+			burnTokenAmount := burn
+			valueTokenAmount := abi.NewTokenAmount(0)
 			gas := vm.GasOutputs{
 				BaseFeeBurn:        burnTokenAmount,
 				OverEstimationBurn: zeroTokenAmount,
@@ -274,6 +265,10 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	t := time.Unix(int64(block.Timestamp), 0)
 	epoch := int64(block.Height)
 	gas, burnFee, overBurn, valueFloat, penalty, err := parseGasoutToFloat(gasout, value.String())
+	if err != nil {
+		msgLog.Errorf("parse gasout to float orm error: %+v", err)
+		return err
+	}
 
 	expendMsg.MessageId = msgId
 	expendMsg.MinerId = minerId
@@ -413,19 +408,20 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	return nil
 }
 
-func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (string, string, error) {
+func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (abi.TokenAmount, error) {
 	ctx := context.Background()
+	penaltyFee := abi.NewTokenAmount(0)
 	rewardActor, err := Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
 	if err != nil {
 		//fmt.Println("111 err",err)
 		msgLog.Errorf("StateGetActor err:%+v", err)
-		return "0", "0", err
+		return penaltyFee, err
 	}
 
 	rewardStateRaw, err := Client.ChainReadObj(ctx, rewardActor.Head)
 	if err != nil {
 		msgLog.Errorf("ChainReadObj err:%+v", err)
-		return "0", "0", err
+		return penaltyFee, err
 	}
 
 	//mas.VestedFunds()
@@ -433,7 +429,7 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (st
 	rewardActorState := unmarshalState(r)
 
 	//fmt.Printf("%+v\n", rewardActorState.ThisEpochRewardSmoothed.Estimate())
-	penaltyFee := miner.ConsensusFaultPenalty(rewardActorState.ThisEpochRewardSmoothed.Estimate())
+	penaltyFee = miner.ConsensusFaultPenalty(rewardActorState.ThisEpochRewardSmoothed.Estimate())
 	//fmt.Printf("%+v\n", penaltyFee)
 	//rcfp := new(miner.ReportConsensusFaultParams)
 	//b := new(bytes.Buffer)
@@ -464,7 +460,7 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (st
 	//}
 	//return burnFeeStr, slasherRewardStr, nil
 
-	return penaltyFee.String(), "0", nil
+	return penaltyFee, nil
 }
 
 func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, method abi.MethodNum) error {
@@ -610,6 +606,7 @@ func TestMsg() {
 			}
 
 		}
+		fmt.Printf("gas :%+v\n", totalGas)
 	}
 
 	//chainHeightHandle, err := getChainHeadByHeight(i)
@@ -625,12 +622,12 @@ func calculateWalletCostTest(tipsetKey types.TipSetKey, messages []api.Message) 
 	for _, message := range messages {
 
 		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
-			burn, value, err := reportConsensusFaultPenalty(tipsetKey, message)
+			burn, err := reportConsensusFaultPenalty(tipsetKey, message)
 			if err != nil {
 				return err
 			}
 			//	err = recordCostMessage(gasout, message, block)
-			fmt.Printf("Debug method == 15  burn:%+v value:%+v \n", burn, value)
+			fmt.Printf("Debug method == 15  burn:%+v value:%+v \n", burn)
 		}
 
 	}
