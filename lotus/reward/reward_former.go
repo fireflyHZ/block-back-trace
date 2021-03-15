@@ -13,6 +13,7 @@ import (
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/chain/actors/adt"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
+	"github.com/filecoin-project/lotus/chain/gen"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/lib/blockstore"
 	"github.com/filecoin-project/lotus/lib/bufbstore"
@@ -341,4 +342,55 @@ func TestTimefind() {
 		}
 
 	}
+}
+
+func TestMine() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	minerAddr, err := address.NewFromString("f02420")
+	if err != nil {
+		fmt.Println("NewFromString err:", err)
+		return
+	}
+	for i := 581000; i < 582440; i++ {
+		var h = abi.ChainEpoch(i)
+		round := h + 1
+		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+		if err != nil {
+			fmt.Println("ChainGetTipSetByHeight err:", err)
+			return
+		}
+
+		mbi, err := nodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
+		if err != nil {
+			fmt.Println("MinerGetBaseInfo err:", err)
+			return
+		}
+		fmt.Printf("Eligible For Mining:%+v\n", mbi.EligibleForMining)
+		rebase := mbi.PrevBeaconEntry
+		fmt.Printf("len of BeaconEntries :%+v\n", len(mbi.BeaconEntries))
+		if len(mbi.BeaconEntries) > 0 {
+			rebase = mbi.BeaconEntries[len(mbi.BeaconEntries)-1]
+		}
+
+		p, err := gen.IsRoundWinner(ctx, tp, h, minerAddr, rebase, mbi, nodeApi)
+		if err != nil {
+			fmt.Println("IsRoundWinner err:", err)
+			return
+		}
+		fmt.Printf("ppp:%+v\n", p)
+	}
+
 }
