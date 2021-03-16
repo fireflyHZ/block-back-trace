@@ -321,26 +321,16 @@ func TestTimefind() {
 	o := orm.NewOrm()
 	for {
 		time.Sleep(5 * time.Second)
-		tt := make([]Ttttime, 0)
-		n, err := o.Raw("select * from fly_ttttime where time::date=to_date(?,'YYYY-MM-DD')", time.Now().Format("2006-01-02")).QueryRows(&tt)
+		tt := make([]models.MinerStatusAndDailyChange, 0)
+		n, err := o.Raw("select update_time from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", time.Now().Format("2006-01-02")).QueryRows(&tt)
 
 		//		n,err:=o.QueryTable("fly_ttttime").Filter("time",time.Now().Format("2006-01-02")).All(tt)
 		if err != nil {
 			fmt.Println(err)
 			continue
 		}
-		ooo := new(Ttttime)
-		if n == 0 {
-			ooo.Count = 1
-			ooo.Time = time.Now()
-			o.Insert(ooo)
-		} else {
-			ooo = &tt[0]
-			ooo.Count += 1
-			ooo.Time = time.Now()
-			o.Update(ooo)
-		}
-
+		fmt.Println("nnnnnn:", n)
+		fmt.Printf("asdfsadfsdafsdfasdf:%+v\n", tt[0])
 	}
 }
 
@@ -359,12 +349,12 @@ func TestMine() {
 		return
 	}
 	defer closer()
-	minerAddr, err := address.NewFromString("f02420")
+	minerAddr, err := address.NewFromString("f088290")
 	if err != nil {
 		fmt.Println("NewFromString err:", err)
 		return
 	}
-	for i := 581000; i < 582440; i++ {
+	for i := 573060; i < 574261; i++ {
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
@@ -378,19 +368,34 @@ func TestMine() {
 			fmt.Println("MinerGetBaseInfo err:", err)
 			return
 		}
-		fmt.Printf("Eligible For Mining:%+v\n", mbi.EligibleForMining)
-		rebase := mbi.PrevBeaconEntry
-		fmt.Printf("len of BeaconEntries :%+v\n", len(mbi.BeaconEntries))
-		if len(mbi.BeaconEntries) > 0 {
-			rebase = mbi.BeaconEntries[len(mbi.BeaconEntries)-1]
+
+		if mbi == nil {
+
+			return
+		}
+		if !mbi.EligibleForMining {
+			// slashed or just have no power yet
+			return
 		}
 
-		p, err := gen.IsRoundWinner(ctx, tp, h, minerAddr, rebase, mbi, nodeApi)
+		beaconPrev := mbi.PrevBeaconEntry
+		bvals := mbi.BeaconEntries
+
+		rbase := beaconPrev
+		if len(bvals) > 0 {
+			rbase = bvals[len(bvals)-1]
+		}
+
+		p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, nodeApi)
 		if err != nil {
 			fmt.Println("IsRoundWinner err:", err)
 			return
 		}
-		fmt.Printf("ppp:%+v\n", p)
+
+		if p != nil {
+			fmt.Printf("height:%+v\n", round)
+			fmt.Printf("ppp:%+v\n", p)
+		}
 	}
 
 }

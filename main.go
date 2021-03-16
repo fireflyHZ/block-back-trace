@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	//reward.TestMsg()
+	//reward.TestTimefind()
 	go lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)
@@ -55,6 +55,7 @@ func main() {
 	web.Router("/firefly/profit/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas")
 
 	web.Router("/firefly/profit/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo")
+	web.Router("/firefly/profit/block", &controllers.BlockController{}, "get:GetMinerMineBlockPercentage")
 
 	web.Run()
 }

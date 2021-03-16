@@ -270,7 +270,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		}
 		rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 		//入库
-		n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
+		n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
 		//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("update_time", tStr).All(rewardInfo)
 		if err != nil {
 			rewardLog.Errorf("QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
@@ -289,6 +289,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			rewardInfo.Vesting = vesting - oldVesting
 			rewardInfo.Reward = 0
 			rewardInfo.Epoch = epoch
+			rewardInfo.Time = t
 			rewardInfo.UpdateTime = t
 
 			_, err = txOrm.Insert(rewardInfo)
@@ -463,7 +464,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	//入库
-	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
+	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? time=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
 	//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 	if err != nil {
 		rewardLog.Errorf("QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
@@ -488,6 +489,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardInfo.TotalBlockNum += 1
 		rewardInfo.WinCounts = winCount
 		rewardInfo.TotalWinCounts += winCount
+		rewardInfo.Time = t
 		rewardInfo.UpdateTime = t
 
 		_, err = txOrm.Insert(rewardInfo)
@@ -759,7 +761,7 @@ func calculateRewardAndPledgeTest(index int, blocks []*types.BlockHeader, blockC
 
 func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommit, vesting, pleage, powerPercentage float64, sectorCounts *api.MinerSectors, epoch int64, t time.Time) error {
 	minerPowerStatuss := make([]models.MinerStatusAndDailyChange, 0)
-	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t.Format("2006-01-02")).QueryRows(&minerPowerStatuss)
+	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", miner, t.Format("2006-01-02")).QueryRows(&minerPowerStatuss)
 
 	//num, err := o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", miner).Filter("time", t).All(minerPowerStatus)
 	if err != nil {
@@ -778,6 +780,7 @@ func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommi
 		minerPowerStatus.TotalPledge = pleage
 		minerPowerStatus.TotalPreCommit = preCommit
 		minerPowerStatus.TotalVesting = vesting
+		minerPowerStatus.Time = t
 		minerPowerStatus.UpdateTime = t
 		minerPowerStatus.MinerId = miner
 		minerPowerStatus.LiveSectorsNumber = sectorCounts.Live
@@ -805,6 +808,7 @@ func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommi
 		minerPowerStatus.ActiveSectorsNumber = sectorCounts.Active
 		minerPowerStatus.FaultySectorsNumber = sectorCounts.Faulty
 		minerPowerStatus.PowerPercentage = powerPercentage
+		minerPowerStatus.UpdateTime = t
 		_, err = o.Update(minerPowerStatus)
 		if err != nil {
 			rewardLog.Errorf("UpdateTable miner power status :%+v err:%+v ", miner, err)

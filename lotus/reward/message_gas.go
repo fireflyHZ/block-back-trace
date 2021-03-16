@@ -357,7 +357,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	}
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	//入库
-	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
+	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
 	//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 	if err != nil {
 		rewardLog.Errorf("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", err, n, t.Format("2006-01-02"))
@@ -375,6 +375,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		rewardInfo.Gas = gas
 		rewardInfo.TotalGas += gas
 		rewardInfo.Epoch = epoch
+		rewardInfo.Time = t
 		rewardInfo.UpdateTime = t
 
 		_, err = txOmer.Insert(rewardInfo)
@@ -611,6 +612,7 @@ func TestMsg() {
 				//withdrawMsg(message)
 				gasout, _ := getGasout(chainHeightAfter.Cids()[0], message.Message, chainHeightHandle.Blocks()[0].ParentBaseFee, j, int64(i))
 				totalGas = big.Add(big.Add(gasout.MinerTip, gasout.BaseFeeBurn), gasout.OverEstimationBurn)
+				fmt.Printf("gas :%+v\n", totalGas)
 			}
 
 		}

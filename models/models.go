@@ -86,6 +86,7 @@ type MinerStatusAndDailyChange struct {
 	Gas        float64
 	BlockNum   int
 	WinCounts  int64
+	Time       time.Time `orm:"type(date)"`
 	UpdateTime time.Time
 }
 
