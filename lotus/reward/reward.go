@@ -464,7 +464,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	//入库
-	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? time=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
+	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", miner, tStr).QueryRows(&rewardInfos)
 	//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
 	if err != nil {
 		rewardLog.Errorf("QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
