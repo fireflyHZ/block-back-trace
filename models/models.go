@@ -73,6 +73,7 @@ type MinerStatusAndDailyChange struct {
 	ActiveSectorsNumber uint64
 	FaultySectorsNumber uint64
 	PowerPercentage     float64
+	MinedPercentage     float64
 	TotalReward         float64
 	TotalGas            float64
 	TotalBlockNum       int
@@ -98,6 +99,7 @@ type PreAndProveMessages struct {
 	Epoch        int64
 	Method       uint64
 	SectorNumber int64
+	Status       int
 	CreateTime   time.Time
 }
 
@@ -126,6 +128,25 @@ type MineMessages struct {
 	Gas        float64
 	Penalty    float64
 	CreateTime time.Time
+}
+
+//全网出块表
+type NetMinerAndBlock struct {
+	Id      int    `orm:"pk;auto"`
+	MinerId string `orm:"index"`
+	Epoch   int64  `orm:"index"`
+}
+
+//miner出块权记录表
+type MineBlockRight struct {
+	Id         int    `orm:"pk;auto"`
+	MinerId    string `orm:"index"`
+	Epoch      int64  `orm:"index"`
+	Missed     bool
+	Reward     float64
+	WinCount   int64
+	Time       time.Time `orm:"type(date)"`
+	UpdateTime time.Time
 }
 
 type MessageRewardInfo struct {

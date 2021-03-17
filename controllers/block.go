@@ -5,6 +5,7 @@ import (
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/lotus/block"
+	"profit-allocation/models"
 )
 
 var blockLog = logging.Logger("block-ctr-log")
@@ -17,12 +18,22 @@ func (c *BlockController) GetMinerMineBlockPercentage() {
 	start := c.GetString("start")
 	end := c.GetString("end")
 	miner := c.GetString("miner")
-	fmt.Println(start, end, miner)
-	percentage, err := block.GetMinerMineBlockPercentage(start, end, miner)
+
+	resp := new(models.GetBlockPercentageResp)
+	percentage, missed, mined, err := block.GetMinerMineBlockPercentage(end, start, miner)
 	if err != nil {
-		c.Ctx.WriteString(fmt.Sprintf("%+v", err))
+		resp.Code = "failed"
+		resp.Msg = fmt.Sprintf("Get miner mine block percentage error : %+v", err)
+		c.Data["json"] = &resp
+		c.ServeJSON()
 		return
 	}
-	c.Ctx.WriteString(fmt.Sprintf("%.2f", percentage))
+	resp.Code = "success"
+	resp.Msg = "Get miner mine block percentage success"
+	resp.MinedPercentage = fmt.Sprintf("%.2f%%", percentage*100)
+	resp.Mined = mined
+	resp.Missed = missed
+	c.Data["json"] = &resp
+	c.ServeJSON()
 	return
 }

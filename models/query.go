@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"github.com/filecoin-project/go-state-types/abi"
+	"time"
+)
 
 type WalletInfoResp struct {
 	Code          string
@@ -77,3 +80,15 @@ type MessageGasTmp struct {
 }
 
 //-----------------------------
+type GetBlockPercentageResp struct {
+	Code            string
+	Msg             string
+	MinedPercentage string
+	Mined           []BlockInfo
+	Missed          []BlockInfo
+}
+
+type BlockInfo struct {
+	Epoch abi.ChainEpoch
+	Time  string
+}

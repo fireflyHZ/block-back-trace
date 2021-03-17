@@ -473,6 +473,11 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (ab
 }
 
 func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, method abi.MethodNum) error {
+	msgLookup, err := Client.StateSearchMsg(context.Background(), msg.Cid)
+	if err != nil {
+		msgLog.Errorf("statr search msg err:%+v", err)
+		return err
+	}
 	m := new(models.PreAndProveMessages)
 	if method == 6 {
 		params := new(miner.PreCommitSectorParams)
@@ -520,7 +525,8 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, 
 	m.MessageId = msg.Cid.String()
 	m.From = msg.Message.From.String()
 	m.To = msg.Message.To.String()
-	m.Epoch = int64(epoch)
+	m.Epoch = epoch
+	m.Status = int(msgLookup.Receipt.ExitCode)
 	m.CreateTime = time.Unix(int64(timeStamp), 0)
 	return m.Insert()
 }
