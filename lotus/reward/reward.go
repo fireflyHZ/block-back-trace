@@ -10,14 +10,13 @@ import (
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
-	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/chain/gen"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/vm"
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
-	"net/http"
+	"profit-allocation/lotus/client"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
 	"profit-allocation/tool/sync"
@@ -26,7 +25,6 @@ import (
 )
 
 var rewardLog = logging.Logger("reward-log")
-var Client api.FullNode
 
 func CollectTotalRerwardAndPledge() {
 	defer sync.Wg.Done()
@@ -81,7 +79,7 @@ func queryListenRewardNetStatus() (height int64, err error) {
 		return
 	}
 	if n == 0 {
-		height = 460080
+		height = 580000
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
@@ -604,7 +602,7 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 
 	for i := index; i >= 0; i-- {
 		if i == index {
-			messages, err := Client.ChainGetBlockMessages(context.Background(), blockCid[i])
+			messages, err := client.Client.ChainGetBlockMessages(context.Background(), blockCid[i])
 			if err != nil {
 				rewardLog.Errorf("getRewardInfo ChainGetBlockMessages err:%+v", err)
 				return 0, 0, 0, err
@@ -613,7 +611,7 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 				rewardMap[message.Cid().String()] = base
 			}
 		} else {
-			messages, err := Client.ChainGetBlockMessages(context.Background(), blockCid[i])
+			messages, err := client.Client.ChainGetBlockMessages(context.Background(), blockCid[i])
 			if err != nil {
 				rewardLog.Errorf("getRewardInfo ChainGetBlockMessages err:%+v", err)
 				return 0, 0, 0, err
@@ -681,7 +679,7 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 		}
 	}
 
-	power, err := Client.StateMinerPower(ctx, miner, tipsetKey)
+	power, err := client.Client.StateMinerPower(ctx, miner, tipsetKey)
 	if err != nil {
 		rewardLog.Errorf("StateMinerPower err:%+v", err)
 		return 0, 0, 0, err
@@ -689,13 +687,13 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 	var f float64 = 1024
 	minerPower := float64(power.MinerPower.QualityAdjPower.Int64()) / f / f / f / f
 	percentage := float64(power.MinerPower.QualityAdjPower.Int64()) / float64(power.TotalPower.QualityAdjPower.Int64())
-	rewardActor, err := Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
+	rewardActor, err := client.Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
 	if err != nil {
 		rewardLog.Errorf("StateGetActor err:%+v", err)
 		return 0, 0, 0, err
 	}
 
-	rewardStateRaw, err := Client.ChainReadObj(ctx, rewardActor.Head)
+	rewardStateRaw, err := client.Client.ChainReadObj(ctx, rewardActor.Head)
 	if err != nil {
 		rewardLog.Errorf("ChainReadObj err:%+v", err)
 		return 0, 0, 0, err
@@ -730,7 +728,7 @@ func getMinerPower(minerStr string, tipsetKey types.TipSetKey) (float64, float64
 		return 0, 0, err
 	}
 
-	power, err := Client.StateMinerPower(ctx, miner, tipsetKey)
+	power, err := client.Client.StateMinerPower(ctx, miner, tipsetKey)
 	if err != nil {
 		rewardLog.Errorf("StateMinerPower err:%+v", err)
 		return 0, 0, err
@@ -865,25 +863,25 @@ func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommi
 func getChainHeadByHeight(height int64) (tipset *types.TipSet, err error) {
 	epoch := abi.ChainEpoch(height)
 	tipsetKey := types.NewTipSetKey()
-	tipset, err = Client.ChainGetTipSetByHeight(context.Background(), epoch, tipsetKey)
+	tipset, err = client.Client.ChainGetTipSetByHeight(context.Background(), epoch, tipsetKey)
 
 	return
 }
 
 func collectLotusChainHeadBlock() (tipset *types.TipSet, err error) {
-	tipset, err = Client.ChainHead(context.Background())
+	tipset, err = client.Client.ChainHead(context.Background())
 	return
 }
 
 func getParentsBlockMessage(cid cid.Cid) (messages []api.Message, err error) {
-	messages, err = Client.ChainGetParentMessages(context.Background(), cid)
+	messages, err = client.Client.ChainGetParentMessages(context.Background(), cid)
 	return
 }
 
 func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmount, i int, height int64) (gasout vm.GasOutputs, err error) {
 	charge := true
 	ctx := context.Background()
-	resp, err := Client.ChainGetParentReceipts(ctx, blockCid)
+	resp, err := client.Client.ChainGetParentReceipts(ctx, blockCid)
 
 	if err != nil {
 		rewardForLog.Errorf("getGasout  ChainGetParentReceipts err:%+v", err)
@@ -894,17 +892,6 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 	}
 	gasout = vm.ComputeGasOutputs(resp[i].GasUsed, messages.GasLimit, basefee, messages.GasFeeCap, messages.GasPremium, charge)
 	return
-}
-
-func CreateLotusClient() {
-	var err error
-	requestHeader := http.Header{}
-	requestHeader.Add("Content-Type", "application/json")
-	Client, _, err = lotusClient.NewFullNodeRPC(context.Background(), models.LotusHost, requestHeader)
-	if err != nil {
-		rewardLog.Errorf("create lotus client%+v,host:%+v", err, models.LotusHost)
-		return
-	}
 }
 
 func recordNetMinerAndBlock(tipset *types.TipSet) error {
@@ -944,13 +931,13 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 	ctx := context.Background()
 	round := h + 1
-	tp, err := Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+	tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		rewardLog.Warnf("ChainGetTipSetByHeight err:%+v", err)
 		return false
 	}
 
-	mbi, err := Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
+	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
 		rewardLog.Warnf("MinerGetBaseInfo err:%+v", err)
 		return false
@@ -973,7 +960,7 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 		rbase = bvals[len(bvals)-1]
 	}
 
-	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, Client)
+	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
 	if err != nil {
 		rewardLog.Warnf("IsRoundWinner miner%+v err:%+v", miner, err)
 		return false

@@ -14,6 +14,7 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin/miner"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
+	"profit-allocation/lotus/client"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
 	"profit-allocation/tool/sync"
@@ -72,7 +73,7 @@ func queryMsgGasNetStatus() (height int64, err error) {
 		return
 	}
 	if n == 0 {
-		height = 460080
+		height = 580000
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
@@ -420,14 +421,14 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (abi.TokenAmount, error) {
 	ctx := context.Background()
 	penaltyFee := abi.NewTokenAmount(0)
-	rewardActor, err := Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
+	rewardActor, err := client.Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
 	if err != nil {
 		//fmt.Println("111 err",err)
 		msgLog.Errorf("StateGetActor err:%+v", err)
 		return penaltyFee, err
 	}
 
-	rewardStateRaw, err := Client.ChainReadObj(ctx, rewardActor.Head)
+	rewardStateRaw, err := client.Client.ChainReadObj(ctx, rewardActor.Head)
 	if err != nil {
 		msgLog.Errorf("ChainReadObj err:%+v", err)
 		return penaltyFee, err
@@ -473,7 +474,7 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (ab
 }
 
 func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, method abi.MethodNum) error {
-	msgLookup, err := Client.StateSearchMsg(context.Background(), msg.Cid)
+	msgLookup, err := client.Client.StateSearchMsg(context.Background(), msg.Cid)
 	if err != nil {
 		msgLog.Errorf("statr search msg err:%+v", err)
 		return err
@@ -594,7 +595,7 @@ func parseGasoutToFloat(gasout vm.GasOutputs, valueStr string) (float64, float64
 }
 
 func TestMsg() {
-	CreateLotusClient()
+	client.CreateLotusClient()
 	totalGas := abi.NewTokenAmount(0)
 	for i := 488709; i < 574348; i++ {
 		chainHeightHandle, err := getChainHeadByHeight(int64(i))

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	logging "github.com/ipfs/go-log/v2"
+	"profit-allocation/lotus/client"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
 	"profit-allocation/tool/sync"
@@ -14,7 +15,14 @@ import (
 var setupLog = logging.Logger("lotus-setup")
 
 func Setup() {
-	reward.CreateLotusClient()
+	err := client.CreateLotusClient()
+	if err != nil {
+		return
+	}
+	err = client.CreateLotusSignClient()
+	if err != nil {
+		return
+	}
 	collectTime := time.NewTicker(time.Second * time.Duration(30))
 
 	defer collectTime.Stop()
@@ -58,6 +66,7 @@ func InitMinerData() {
 	pleagef0144530, err := strconv.ParseFloat("934.4305342858444", 64)
 	pleagef0148452, err := strconv.ParseFloat("0.0", 64)
 	pleagef0161819, err := strconv.ParseFloat("0.0", 64)
+	pleagef0402822, err := strconv.ParseFloat("0.0", 64)
 
 	if err != nil {
 		setupLog.Error("ParseFloat err:%+v", err)
@@ -175,6 +184,13 @@ func InitMinerData() {
 			CreateTime:   time.Now(),
 			UpdateTime:   time.Now(),
 		}
+		miner17 := models.MinerInfo{
+			MinerId:      "f0402822",
+			QualityPower: 0.0,
+			Pleage:       pleagef0402822,
+			CreateTime:   time.Now(),
+			UpdateTime:   time.Now(),
+		}
 		minerInfo = append(minerInfo, miner1)
 		minerInfo = append(minerInfo, miner2)
 		minerInfo = append(minerInfo, miner3)
@@ -191,9 +207,10 @@ func InitMinerData() {
 		minerInfo = append(minerInfo, miner14)
 		minerInfo = append(minerInfo, miner15)
 		minerInfo = append(minerInfo, miner16)
+		minerInfo = append(minerInfo, miner17)
 
 		//minerInfo=append(minerInfo,miner1)
-		n, err = o.InsertMulti(16, minerInfo)
+		n, err = o.InsertMulti(17, minerInfo)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
 		}
@@ -393,6 +410,18 @@ func InitMinerData() {
 			MinerId:  "f0161819",
 			WalletId: "f3wrfovianak3onbbbx3ob5iyvqdzqmymv5iax7v5ccdqmpudv2kh4bjt3ir5eukvwyibhremmxozv5edjvuka",
 		}
+		minerAndWalletRelation48 := models.MinerAndWalletRelation{
+			MinerId:  "f0402822",
+			WalletId: "f3ux2jwndggkuphix2y22eulkwzycld2ap6lnsa4mev2ws5n7g6xxybwenebdju6jbodlw2w3oidiwhkffiviq",
+		}
+		minerAndWalletRelation49 := models.MinerAndWalletRelation{
+			MinerId:  "f0402822",
+			WalletId: "f3qmtxx4hxxwfmo3egvu373vbvz6pls3yc25d6b727u4jajnl2w566pmyumehg3iwygwo5qstdxth45zhyaktq",
+		}
+		minerAndWalletRelation50 := models.MinerAndWalletRelation{
+			MinerId:  "f0402822",
+			WalletId: "f3v4qg66ekmrygwdxbikzecodh7hbowozldlooixszmjl5ftar2t3whyatwo36va2ngstwxtb4xuscwughndja",
+		}
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation2)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation3)
@@ -440,7 +469,10 @@ func InitMinerData() {
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation45)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation46)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation47)
-		n, err = o.InsertMulti(47, minerAndWalletRelations)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation48)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation49)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation50)
+		n, err = o.InsertMulti(50, minerAndWalletRelations)
 		if err != nil {
 			fmt.Println("insert minerAndWalletRelations err:", err)
 		}

@@ -7,7 +7,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/gen"
 	"github.com/filecoin-project/lotus/chain/types"
 	logging "github.com/ipfs/go-log/v2"
-	"profit-allocation/lotus/reward"
+	"profit-allocation/lotus/client"
 	"profit-allocation/models"
 	"sort"
 	"sync"
@@ -57,7 +57,7 @@ func GetMinerMineBlockPercentage(start, end, miner string) (float64, []models.Bl
 }
 
 func calculateBlock(start, end string) (abi.ChainEpoch, abi.ChainEpoch, error) {
-	tipset, err := reward.Client.ChainHead(context.Background())
+	tipset, err := client.Client.ChainHead(context.Background())
 	if err != nil {
 		blockLog.Errorf("calculateBlock get chain head error:%+v", err)
 		return 0, 0, err
@@ -117,7 +117,7 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 	defer wait.Done()
 	for i := begin; i > end; i-- {
 		start := time.Now()
-		tipset, err := reward.Client.ChainGetTipSetByHeight(context.Background(), i, types.NewTipSetKey())
+		tipset, err := client.Client.ChainGetTipSetByHeight(context.Background(), i, types.NewTipSetKey())
 		if err != nil {
 			blockLog.Errorf("calculateBlock get chain head error:%+v", err)
 			return
@@ -155,13 +155,13 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 func calculateWiner(h abi.ChainEpoch, miner address.Address) bool {
 	ctx := context.Background()
 	round := h + 1
-	tp, err := reward.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+	tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		blockLog.Errorf("ChainGetTipSetByHeight err:%+v", err)
 		return false
 	}
 
-	mbi, err := reward.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
+	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
 		blockLog.Errorf("MinerGetBaseInfo err:%+v", err)
 		return false
@@ -184,7 +184,7 @@ func calculateWiner(h abi.ChainEpoch, miner address.Address) bool {
 		rbase = bvals[len(bvals)-1]
 	}
 
-	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, reward.Client)
+	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
 	if err != nil {
 		blockLog.Errorf("IsRoundWinner err:%+v", err)
 		return false

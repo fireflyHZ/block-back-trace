@@ -338,6 +338,8 @@ func TestMine() {
 	ctx := context.Background()
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
+	tokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
+	requestHeader.Set("Authorization", tokenHeader)
 	LotusHost, err := web.AppConfig.String("lotusHost")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)
@@ -349,12 +351,12 @@ func TestMine() {
 		return
 	}
 	defer closer()
-	minerAddr, err := address.NewFromString("f088290")
+	minerAddr, err := address.NewFromString("f02420")
 	if err != nil {
 		fmt.Println("NewFromString err:", err)
 		return
 	}
-	for i := 573060; i < 574261; i++ {
+	for i := 579560; i < 590800; i++ {
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())

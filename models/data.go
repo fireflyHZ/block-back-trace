@@ -8,9 +8,10 @@ import (
 )
 
 var (
-	Wallets   []string
-	Miners    []string
-	LotusHost string
+	Wallets        []string
+	Miners         []string
+	LotusHost      string
+	LotusSignToken string
 )
 
 var log = logging.Logger("models")
@@ -33,6 +34,11 @@ func InitData() error {
 	}
 
 	LotusHost, err = web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return err
+	}
+	LotusSignToken, err = web.AppConfig.String("LotusSignToken")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return err
