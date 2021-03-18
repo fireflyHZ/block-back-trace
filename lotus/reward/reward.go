@@ -946,13 +946,13 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 	round := h + 1
 	tp, err := Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
-		rewardLog.Errorf("ChainGetTipSetByHeight err:%+v", err)
+		rewardLog.Warnf("ChainGetTipSetByHeight err:%+v", err)
 		return false
 	}
 
 	mbi, err := Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
-		rewardLog.Errorf("MinerGetBaseInfo err:%+v", err)
+		rewardLog.Warnf("MinerGetBaseInfo err:%+v", err)
 		return false
 	}
 
@@ -975,7 +975,7 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 
 	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, Client)
 	if err != nil {
-		rewardLog.Errorf("IsRoundWinner err:%+v", err)
+		rewardLog.Warnf("IsRoundWinner miner%+v err:%+v", miner, err)
 		return false
 	}
 
