@@ -356,19 +356,21 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 			return err
 		}
 	}
-	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
+	//rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
+	rewardInfo := new(models.MinerStatusAndDailyChange)
+
 	//入库
-	n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
-	//n, err = txOrm.QueryTable("fly_reward_info").Filter("miner_id", miner).Filter("time", tStr).All(rewardInfo)
+	//n, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and time=to_date(?,'YYYY-MM-DD')", minerId, t.Format("2006-01-02")).QueryRows(&rewardInfos)
+	n, err = txOmer.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", minerId).Filter("time", t).All(rewardInfo)
 	if err != nil {
-		rewardLog.Errorf("Error  QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", err, n, t.Format("2006-01-02"))
+		rewardLog.Errorf("Error  QueryTable fly_miner_status_and_daily_change:%+v err:%+v num:%+v time:%+v", err, n, t.Format("2006-01-02"))
 		errTx := txOmer.Rollback()
 		if errTx != nil {
-			rewardLog.Debug("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
+			rewardLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
-	rewardInfo := new(models.MinerStatusAndDailyChange)
+	//rewardInfo := new(models.MinerStatusAndDailyChange)
 	if n == 0 {
 		//记录块收益
 		//rewardInfo.Time = tStr
@@ -390,7 +392,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		}
 	} else {
 		//记录块收益
-		rewardInfo = &rewardInfos[0]
+		//rewardInfo = &rewardInfos[0]
 		//更新walletinfo
 		if rewardInfo.Epoch < epoch {
 			rewardInfo.Gas += gas
