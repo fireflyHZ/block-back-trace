@@ -523,7 +523,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardInfo.TotalWinCounts += winCount
 		rewardInfo.Time = t
 		rewardInfo.UpdateTime = t
-
+		rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
 		_, err = txOrm.Insert(rewardInfo)
 		if err != nil {
 			rewardLog.Errorf("Insert miner:%+v time:%+v err:%+v ", miner, t, err)
@@ -550,6 +550,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 			rewardInfo.WinCounts += winCount
 			rewardInfo.TotalWinCounts += winCount
 			rewardInfo.UpdateTime = t
+			rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
 			_, err := txOrm.Update(rewardInfo)
 			if err != nil {
 				rewardLog.Errorf("Update miner:%+v time:%+v err:%+v ", miner, t, err)
