@@ -125,12 +125,6 @@ func getRewardAndPledge(dealBlcokHeight int64, end int64) (int64, error) {
 	dh := dealBlcokHeight
 
 	for i := end; i < dealBlcokHeight; i++ {
-		//记录全网出块和对应miner
-		err := recordNetMinerAndBlock(chainHeightHandle)
-		if err != nil {
-			rewardLog.Errorf("record net miner and block height:%+v err=%+v", i, err)
-			return i, err
-		}
 		//计算出块权
 		err = recordMineBlockRight(chainHeightHandle)
 		if err != nil {
@@ -345,7 +339,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			}
 
 		}
-		rewardLog.Debugf("miner:%+v epoch:%+v  power:%+v  pledge:%+v", miner, epoch, rewardInfo.Power, rewardInfo.Pledge)
+		rewardLog.Infof("miner:%+v epoch:%+v  power:%+v  pledge:%+v", miner, epoch, rewardInfo.Power, rewardInfo.Pledge)
 
 	}
 	err = updateListenRewardNetStatus(epoch + 1)
@@ -362,7 +356,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		rewardLog.Errorf("calculatePowerAndPledge orm transation commit error: %+v", err)
 		return err
 	}
-	rewardLog.Debug("calculate complete epoch:%+v ", epoch)
+	rewardLog.Infof("calculate complete epoch:%+v ", epoch)
 	return nil
 }
 
@@ -464,6 +458,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardLog.Errorf("get block right num error: %+v", err)
 		return err
 	}
+	rewardLog.Infof("miner %+v have %+v mine right on %+v", miner, rightNum, t.String())
 	/*mineBlock := new(models.MineBlocks)
 	n, err = txOrm.QueryTable("fly_mine_blocks").Filter("miner_id", miner).Filter("epoch", epoch).All(mineBlock)
 	if err != nil {
@@ -507,7 +502,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardLog.Errorf("QueryTable rewardInfo:%+v err:%+v num:%+v time:%+v", miner, err, n, tStr)
 		errTx := txOrm.Rollback()
 		if errTx != nil {
-			rewardLog.Debug("collectWalletData orm transation rollback error: %+v", errTx)
+			rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
@@ -543,7 +538,6 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		//rewardInfo = &rewardInfos[0]
 		//更新walletinfo
 		if rewardInfo.Epoch < epoch {
-
 			rewardInfo.Pledge += pleage - oldPleage
 			rewardInfo.Power += power - oldPower
 			rewardInfo.Vesting += vesting - oldVesting
@@ -582,7 +576,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardLog.Errorf("collectWalletData orm transation commit error: %+v", err)
 		return err
 	}
-	rewardLog.Debugf("miner:%+v epoch:%+v reward:%+v total:%+v", miner, epoch, value, rewardInfo.Reward)
+	rewardLog.Infof("miner:%+v epoch:%+v reward:%+v", miner, epoch, value)
 	return nil
 }
 
@@ -893,19 +887,6 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 	return
 }
 
-func recordNetMinerAndBlock(tipset *types.TipSet) error {
-	for _, b := range tipset.Blocks() {
-		mb := new(models.NetMinerAndBlock)
-		mb.Epoch = int64(tipset.Height())
-		mb.MinerId = b.Miner.String()
-		err := mb.Insert()
-		if err != nil {
-			rewardLog.Errorf("record net miner and block epoch:%+v miner:%+v err:%+v", tipset.Height(), b.Miner, err)
-			return err
-		}
-	}
-	return nil
-}
 func recordMineBlockRight(tipset *types.TipSet) error {
 	for _, miner := range models.Miners {
 		minerAddr, _ := address.NewFromString(miner)
@@ -921,6 +902,7 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 				rewardLog.Errorf("calculate miner right err:%+v", err)
 				return err
 			}
+			rewardLog.Infof("miner %+v have a mine right in epoch %+v", miner, tipset.Height())
 		}
 
 	}

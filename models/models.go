@@ -130,13 +130,6 @@ type MineMessages struct {
 	CreateTime time.Time
 }
 
-//全网出块表
-type NetMinerAndBlock struct {
-	Id      int    `orm:"pk;auto"`
-	MinerId string `orm:"index"`
-	Epoch   int64  `orm:"index"`
-}
-
 //miner出块权记录表
 type MineBlockRight struct {
 	Id         int    `orm:"pk;auto"`

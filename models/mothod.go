@@ -20,21 +20,6 @@ func (p *PreAndProveMessages) Insert() error {
 	return nil
 }
 
-func (mb *NetMinerAndBlock) Insert() error {
-	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_net_miner_and_block").Filter("miner_id", mb.MinerId).Filter("epoch", mb.Epoch).All(mb)
-	if err != nil {
-		return err
-	}
-	if num == 0 {
-		_, err := o.Insert(mb)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func (mbr *MineBlockRight) Insert() error {
 	o := orm.NewOrm()
 	num, err := o.QueryTable("fly_mine_block_right").Filter("miner_id", mbr.MinerId).Filter("epoch", mbr.Epoch).All(mbr)

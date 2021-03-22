@@ -89,7 +89,6 @@ func initDatabase() error {
 		new(models.MineMessages),
 		new(models.MinerStatusAndDailyChange),
 		new(models.MinerAndWalletRelation),
-		new(models.NetMinerAndBlock),
 		new(models.MineBlockRight),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
