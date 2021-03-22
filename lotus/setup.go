@@ -67,6 +67,8 @@ func InitMinerData() {
 	pleagef0148452, err := strconv.ParseFloat("0.0", 64)
 	pleagef0161819, err := strconv.ParseFloat("0.0", 64)
 	pleagef0402822, err := strconv.ParseFloat("0.0", 64)
+	pleagef0419944, err := strconv.ParseFloat("0.0", 64)
+	pleagef0419945, err := strconv.ParseFloat("0.0", 64)
 
 	if err != nil {
 		setupLog.Error("ParseFloat err:%+v", err)
@@ -191,6 +193,20 @@ func InitMinerData() {
 			CreateTime:   time.Now(),
 			UpdateTime:   time.Now(),
 		}
+		miner18 := models.MinerInfo{
+			MinerId:      "f0419944",
+			QualityPower: 0.0,
+			Pleage:       pleagef0419944,
+			CreateTime:   time.Now(),
+			UpdateTime:   time.Now(),
+		}
+		miner19 := models.MinerInfo{
+			MinerId:      "f0419945",
+			QualityPower: 0.0,
+			Pleage:       pleagef0419945,
+			CreateTime:   time.Now(),
+			UpdateTime:   time.Now(),
+		}
 		minerInfo = append(minerInfo, miner1)
 		minerInfo = append(minerInfo, miner2)
 		minerInfo = append(minerInfo, miner3)
@@ -208,9 +224,11 @@ func InitMinerData() {
 		minerInfo = append(minerInfo, miner15)
 		minerInfo = append(minerInfo, miner16)
 		minerInfo = append(minerInfo, miner17)
+		minerInfo = append(minerInfo, miner18)
+		minerInfo = append(minerInfo, miner19)
 
 		//minerInfo=append(minerInfo,miner1)
-		n, err = o.InsertMulti(17, minerInfo)
+		n, err = o.InsertMulti(19, minerInfo)
 		if err != nil {
 			fmt.Println("insert netrundata err:", err)
 		}
@@ -422,6 +440,14 @@ func InitMinerData() {
 			MinerId:  "f0402822",
 			WalletId: "f3v4qg66ekmrygwdxbikzecodh7hbowozldlooixszmjl5ftar2t3whyatwo36va2ngstwxtb4xuscwughndja",
 		}
+		minerAndWalletRelation51 := models.MinerAndWalletRelation{
+			MinerId:  "f0419944",
+			WalletId: "f3wh4krcqdtxuq2e766ycmamdryipawxqlbe3zgcyet42n45nibbc3cwssnztz4o7wdegfnwelns3b4m5rb5ma",
+		}
+		minerAndWalletRelation52 := models.MinerAndWalletRelation{
+			MinerId:  "f0419945",
+			WalletId: "f3w4nsqkplw3rb6fdjtgz5o4omhtoil7vqwsrh5procl3goccpvfvckqyyktqgpgl3hkx5f6m446qqrkko5qnq",
+		}
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation2)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation3)
@@ -472,7 +498,9 @@ func InitMinerData() {
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation48)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation49)
 		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation50)
-		n, err = o.InsertMulti(50, minerAndWalletRelations)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation51)
+		minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation52)
+		n, err = o.InsertMulti(52, minerAndWalletRelations)
 		if err != nil {
 			fmt.Println("insert minerAndWalletRelations err:", err)
 		}
