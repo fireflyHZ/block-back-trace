@@ -507,7 +507,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		return err
 	}
 	//rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
-	rewardLog.Infof("n:%+v miner %+v reward info %+v mine right on %+v", n, miner, rewardInfo, epoch)
+	//rewardLog.Infof("n:%+v miner %+v reward info %+v mine right on %+v", n, miner, rewardInfo, epoch)
 	if n == 0 {
 		//记录块收益
 		//rewardInfo.Time = tStr
@@ -808,7 +808,7 @@ func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommi
 		return err
 	}
 	if num == 0 {
-		minerPowerStatus.Epoch = epoch
+		//minerPowerStatus.Epoch = epoch
 		minerPowerStatus.TotalPower = power
 		minerPowerStatus.TotalAvailable = available
 		minerPowerStatus.TotalPledge = pleage
@@ -832,7 +832,7 @@ func putMinerPowerStatus(o orm.TxOrmer, miner string, power, available, preCommi
 		}
 	} else {
 		//	minerPowerStatus = &minerPowerStatuss[0]
-		minerPowerStatus.Epoch = epoch
+		//minerPowerStatus.Epoch = epoch
 		minerPowerStatus.TotalPower = power
 		minerPowerStatus.TotalAvailable = available
 		minerPowerStatus.TotalPledge = pleage
