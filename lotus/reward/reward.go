@@ -394,7 +394,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardLog.Errorf("GetMienrPleage ParseFloat err:%+v", err)
 		errTx := txOrm.Rollback()
 		if errTx != nil {
-			rewardLog.Debug("collectWalletData orm transation rollback error: %+v", errTx)
+			rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
@@ -404,7 +404,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	if err != nil {
 		errTx := txOrm.Rollback()
 		if errTx != nil {
-			rewardLog.Debug("collectWalletData orm transation rollback error: %+v", errTx)
+			rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
@@ -416,7 +416,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardLog.Errorf("QueryTable minerInfo:%+v err:%+v num:%+v ", miner, err, n)
 		errTx := txOrm.Rollback()
 		if errTx != nil {
-			rewardLog.Debug("collectMinerData orm transation rollback error: %+v", errTx)
+			rewardLog.Errorf("collectMinerData orm transation rollback error: %+v", errTx)
 		}
 		return err
 	}
@@ -440,7 +440,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 			rewardLog.Errorf("Update minerInfo miner:%+v  err:%+v ", miner, err)
 			errTx := txOrm.Rollback()
 			if errTx != nil {
-				rewardLog.Debug("collectMinerData orm transation rollback error: %+v", errTx)
+				rewardLog.Errorf("collectMinerData orm transation rollback error: %+v", errTx)
 			}
 			return err
 		}
@@ -506,6 +506,8 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		}
 		return err
 	}
+	//rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
+	rewardLog.Infof("n:%+v miner %+v reward info %+v mine right on %+v", n, miner, rewardInfo, epoch)
 	if n == 0 {
 		//记录块收益
 		//rewardInfo.Time = tStr
