@@ -218,7 +218,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			}
 			return err
 		}
-		power, precentage, err := getMinerPower(miner, tipsetKey)
+		power, percentage, err := getMinerPower(miner, tipsetKey)
 		if err != nil {
 			if fmt.Sprintf("%+v", err) == "actor not found" {
 				rewardLog.Warnf("GetMienrPleage getMinerPower miner:%+v height:%+v err:%+v", miner, height, err)
@@ -232,15 +232,15 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			return err
 		}
 		//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
-		err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, precentage, sectorCount, epoch, t)
-		if err != nil {
-			rewardLog.Errorf(" GetMienrPleage putMinerPowerStatus miner:%+v height:%+v err:%+v", miner, height, err)
-			err := txOrm.Rollback()
-			if err != nil {
-				rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", err)
-			}
-			return err
-		}
+		//err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, percentage, sectorCount, epoch, t)
+		//if err != nil {
+		//	rewardLog.Errorf(" GetMienrPleage putMinerPowerStatus miner:%+v height:%+v err:%+v", miner, height, err)
+		//	err := txOrm.Rollback()
+		//	if err != nil {
+		//		rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", err)
+		//	}
+		//	return err
+		//}
 		//收益分配
 		minerInfo := new(models.MinerInfo)
 		n, err := txOrm.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
@@ -303,6 +303,16 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			rewardInfo.MinedPercentage = 0
 			rewardInfo.Time = t
 			rewardInfo.UpdateTime = t
+			//total
+			rewardInfo.TotalPower = power
+			rewardInfo.TotalAvailable = available
+			rewardInfo.TotalPledge = pleage
+			rewardInfo.TotalPreCommit = preCommit
+			rewardInfo.TotalVesting = vesting
+			rewardInfo.LiveSectorsNumber = sectorCount.Live
+			rewardInfo.ActiveSectorsNumber = sectorCount.Active
+			rewardInfo.FaultySectorsNumber = sectorCount.Faulty
+			rewardInfo.PowerPercentage = percentage
 
 			_, err = txOrm.Insert(rewardInfo)
 			if err != nil {
@@ -328,6 +338,15 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 					rewardInfo.MinedPercentage = float64(rewardInfo.BlockNum) / float64(rightNum)
 				}
 				rewardInfo.UpdateTime = t
+				rewardInfo.TotalPower = power
+				rewardInfo.TotalAvailable = available
+				rewardInfo.TotalPledge = pleage
+				rewardInfo.TotalPreCommit = preCommit
+				rewardInfo.TotalVesting = vesting
+				rewardInfo.LiveSectorsNumber = sectorCount.Live
+				rewardInfo.ActiveSectorsNumber = sectorCount.Active
+				rewardInfo.FaultySectorsNumber = sectorCount.Faulty
+				rewardInfo.PowerPercentage = percentage
 				_, err := txOrm.Update(rewardInfo)
 				if err != nil {
 					rewardLog.Errorf("Update miner:%+v time:%+v err:%+v ", miner, t, err)
@@ -401,14 +420,14 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	}
 	//	rewardLog.Debug("------gas:%+v,mine:%+v,penalty:%+v,value:%+v", gas, mine, penalty, value)
 	//新增存储当天miner power状态、MinerPowerStatus
-	err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, percentage, sectorCounts, epoch, t)
-	if err != nil {
-		errTx := txOrm.Rollback()
-		if errTx != nil {
-			rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
-		}
-		return err
-	}
+	//err = putMinerPowerStatus(txOrm, miner, power, available, preCommit, vesting, pleage, percentage, sectorCounts, epoch, t)
+	//if err != nil {
+	//	errTx := txOrm.Rollback()
+	//	if errTx != nil {
+	//		rewardLog.Errorf("collectWalletData orm transation rollback error: %+v", errTx)
+	//	}
+	//	return err
+	//}
 	//收益分配
 	minerInfo := new(models.MinerInfo)
 	n, err := txOrm.QueryTable("fly_miner_info").Filter("miner_id", miner).All(minerInfo)
@@ -460,40 +479,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		return err
 	}
 	rewardLog.Infof("miner %+v have %+v mine right on %+v", miner, rightNum, t.String())
-	/*mineBlock := new(models.MineBlocks)
-	n, err = txOrm.QueryTable("fly_mine_blocks").Filter("miner_id", miner).Filter("epoch", epoch).All(mineBlock)
-	if err != nil {
-		rewardLog.Errorf("QueryTable mine blocks :%+v err:%+v num:%+v ", miner, err, n)
-		errTx := txOrm.Rollback()
-		if errTx != nil {
-			rewardLog.Debug("collectMinerData orm transation rollback error: %+v", errTx)
-		}
-		return err
-	}
-	if n == 0 {
-		mineBlock.MinerId = miner
-		mineBlock.Epoch = epoch
-		mineBlock.Reward = value
-		mineBlock.WinCount = winCount
-		mineBlock.CreateTime = t
 
-		_, err = txOrm.Insert(mineBlock)
-		if err != nil {
-			rewardLog.Errorf("Update minerInfo miner:%+v  err:%+v ", miner, err)
-			errTx := txOrm.Rollback()
-			if errTx != nil {
-				rewardLog.Debug("collectMinerData orm transation rollback error: %+v", errTx)
-			}
-			return err
-		}
-	} else {
-		rewardLog.Warnf(" blocks has mined  :%+v epoch:%+v num:%+v ", miner, epoch, n)
-		errTx := txOrm.Rollback()
-		if errTx != nil {
-			rewardLog.Debug("GcollectMinerData orm transation rollback error: %+v", errTx)
-		}
-		return nil
-	}*/
 	rewardInfo := new(models.MinerStatusAndDailyChange)
 	//rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	//入库
@@ -511,7 +497,6 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 	//rewardLog.Infof("n:%+v miner %+v reward info %+v mine right on %+v", n, miner, rewardInfo, epoch)
 	if n == 0 {
 		//记录块收益
-		//rewardInfo.Time = tStr
 		rewardInfo.Epoch = epoch
 		rewardInfo.MinerId = miner
 		rewardInfo.Pledge = pleage - oldPleage
@@ -526,6 +511,16 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		rewardInfo.TotalWinCounts += winCount
 		rewardInfo.Time = t
 		rewardInfo.UpdateTime = t
+		//total
+		rewardInfo.TotalPower = power
+		rewardInfo.TotalAvailable = available
+		rewardInfo.TotalPledge = pleage
+		rewardInfo.TotalPreCommit = preCommit
+		rewardInfo.TotalVesting = vesting
+		rewardInfo.LiveSectorsNumber = sectorCounts.Live
+		rewardInfo.ActiveSectorsNumber = sectorCounts.Active
+		rewardInfo.FaultySectorsNumber = sectorCounts.Faulty
+		rewardInfo.PowerPercentage = percentage
 		rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
 		_, err = txOrm.Insert(rewardInfo)
 		if err != nil {
@@ -554,6 +549,16 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 			rewardInfo.WinCounts += winCount
 			rewardInfo.TotalWinCounts += winCount
 			rewardInfo.UpdateTime = t
+
+			rewardInfo.TotalPower = power
+			rewardInfo.TotalAvailable = available
+			rewardInfo.TotalPledge = pleage
+			rewardInfo.TotalPreCommit = preCommit
+			rewardInfo.TotalVesting = vesting
+			rewardInfo.LiveSectorsNumber = sectorCounts.Live
+			rewardInfo.ActiveSectorsNumber = sectorCounts.Active
+			rewardInfo.FaultySectorsNumber = sectorCounts.Faulty
+			rewardInfo.PowerPercentage = percentage
 			rewardLog.Infof("miner %+v reward info %+v mine right on %+v", miner, rewardInfo, epoch)
 			_, err := txOrm.Update(rewardInfo)
 			if err != nil {

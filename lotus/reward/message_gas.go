@@ -377,7 +377,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		rewardInfo.MinerId = minerId
 		rewardInfo.Gas = gas
 		rewardInfo.TotalGas += gas
-		rewardInfo.Epoch = epoch
+		//rewardInfo.Epoch = epoch
 		rewardInfo.Time = t
 		rewardInfo.UpdateTime = t
 
@@ -392,25 +392,20 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		}
 	} else {
 		//记录块收益
-		//rewardInfo = &rewardInfos[0]
-		rewardLog.Infof("now epoch:%+v ", rewardInfo.Epoch)
 		//更新walletinfo
-		if rewardInfo.Epoch < epoch {
-			rewardInfo.Gas += gas
-			rewardInfo.TotalGas += gas
-			rewardInfo.Epoch = epoch
-			rewardInfo.UpdateTime = t
-			_, err := txOmer.Update(rewardInfo)
-			if err != nil {
-				rewardLog.Errorf("Error  Update miner:%+v time:%+v err:%+v ", minerId, t, err)
-				errTx := txOmer.Rollback()
-				if errTx != nil {
-					rewardLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
-				}
-				return err
+		rewardInfo.Gas += gas
+		rewardInfo.TotalGas += gas
+		//	rewardInfo.Epoch = epoch
+		rewardInfo.UpdateTime = t
+		_, err := txOmer.Update(rewardInfo)
+		if err != nil {
+			rewardLog.Errorf("Error  Update miner:%+v time:%+v err:%+v ", minerId, t, err)
+			errTx := txOmer.Rollback()
+			if errTx != nil {
+				rewardLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 			}
+			return err
 		}
-
 	}
 
 	err = txOmer.Commit()
