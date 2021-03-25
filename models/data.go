@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	Wallets        []string
-	Miners         []string
+	Wallets        map[string]int
+	Miners         map[string]int
 	LotusHost      string
 	LotusSignToken string
 )
@@ -28,11 +28,14 @@ func InitData() error {
 		log.Error("get miner and wallet relation info's number is 0")
 		return errors.New("get miner and wallet relation info's number is 0")
 	}
+	miners := make(map[string]int)
+	wallets := make(map[string]int)
 	for _, info := range minerAndWalletRelations {
-		Miners = append(Miners, info.MinerId)
-		Wallets = append(Wallets, info.WalletId)
+		miners[info.MinerId] = 1
+		wallets[info.WalletId] = 2
 	}
-
+	Miners = miners
+	Wallets = wallets
 	LotusHost, err = web.AppConfig.String("lotusHost")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)

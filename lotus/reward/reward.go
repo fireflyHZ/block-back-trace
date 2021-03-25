@@ -198,7 +198,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 		rewardLog.Errorf("collectWalletData orm transation begin error: %+v", err)
 		return err
 	}
-	for _, miner := range models.Miners {
+	for miner, _ := range models.Miners {
 		//获取出块权数量
 		rightNum, err := getBlockRightNum(miner, t)
 		if err != nil {
@@ -898,7 +898,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 }
 
 func recordMineBlockRight(tipset *types.TipSet) error {
-	for _, miner := range models.Miners {
+	for miner, _ := range models.Miners {
 		minerAddr, _ := address.NewFromString(miner)
 		if calculateMinerRight(tipset.Height()-1, minerAddr) {
 			mbr := new(models.MineBlockRight)

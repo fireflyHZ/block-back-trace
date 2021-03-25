@@ -183,7 +183,7 @@ func unmarshalState(r io.Reader) *reward.State {
 
 func inWallets(walletId string) bool {
 
-	for _, wallet := range models.Wallets {
+	for wallet, _ := range models.Wallets {
 		if wallet == walletId {
 			return true
 		}
@@ -192,7 +192,7 @@ func inWallets(walletId string) bool {
 }
 
 func inMiners(minerId string) bool {
-	for _, mid := range models.Miners {
+	for mid, _ := range models.Miners {
 		if mid == minerId {
 			return true
 		}
