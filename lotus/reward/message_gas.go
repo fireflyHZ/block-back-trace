@@ -393,6 +393,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 	} else {
 		//记录块收益
 		//rewardInfo = &rewardInfos[0]
+		rewardLog.Infof("now epoch:%+v ", rewardInfo.Epoch)
 		//更新walletinfo
 		if rewardInfo.Epoch < epoch {
 			rewardInfo.Gas += gas

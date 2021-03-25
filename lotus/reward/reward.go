@@ -314,7 +314,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 				return err
 			}
 		} else {
-			rewardLog.Infof("now  miner:%+v epoch:%+v ", miner, epoch)
+			rewardLog.Infof("now  miner:%+v epoch:%+v ", miner, rewardInfo.Epoch)
 			//rewardInfo = &rewardInfos[0]
 			if rewardInfo.Epoch < epoch {
 
@@ -538,7 +538,7 @@ func calculateRewardAndPledge(index int, blocks []*types.BlockHeader, blockCid [
 		}
 	} else {
 		//记录块收益
-		rewardLog.Infof("now  miner:%+v epoch:%+v ", miner, epoch)
+		rewardLog.Infof("now  miner:%+v epoch:%+v ", miner, rewardInfo.Epoch)
 		//rewardInfo = &rewardInfos[0]
 		//更新walletinfo
 		if rewardInfo.Epoch < epoch {

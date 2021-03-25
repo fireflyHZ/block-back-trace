@@ -33,7 +33,7 @@ func GetMinerMineBlockPercentage(start, end, miner string) (float64, []models.Bl
 		blockLog.Errorf("calculateBlock error:%+v", err)
 		return 0, nil, nil, err
 	}
-	blockLog.Infof("calculateMineBlockPercentage from:%+v to:%+v", from, to)
+	//blockLog.Infof("calculateMineBlockPercentage from:%+v to:%+v", from, to)
 
 	counter, missed, mined := calculateMineBlockPercentage(from, to, miner)
 	//if err != nil {
