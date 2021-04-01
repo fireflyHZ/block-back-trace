@@ -98,14 +98,12 @@ func (c *RewardController) GetRewardAndPledge() {
 
 	expendInfo := make([]models.ExpendInfo, 0)
 	if mp == "f02420" {
-		//		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
-		num, err = o.QueryTable("fly_expend_info").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&expendInfo)
+		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
+		//num, err = o.QueryTable("fly_expend_info").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&expendInfo)
 	} else {
-		num, err = o.QueryTable("fly_expend_info").Filter("miner_id", mp).Filter("time", queryTime).All(&expendInfo)
-		//		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
+		//num, err = o.QueryTable("fly_expend_info").Filter("miner_id", mp).Filter("time", queryTime).All(&expendInfo)
+		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
 	}
-	//	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
-	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num == 0 {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
@@ -267,8 +265,8 @@ func (c *RewardController) GetMinerInfo() {
 	}
 
 	expendInfos := make([]models.ExpendInfo, 0)
-	num, err = o.QueryTable("fly_expend_info").Filter("miner_id", miner).Filter("time", queryTime).All(&expendInfos)
-	//	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
+	//num, err = o.QueryTable("fly_expend_info").Filter("miner_id", miner).Filter("time", queryTime).All(&expendInfos)
+	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
