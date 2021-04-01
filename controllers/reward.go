@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	logging "github.com/ipfs/go-log/v2"
@@ -36,19 +37,32 @@ func (c *RewardController) GetRewardAndPledge() {
 		c.ServeJSON()
 		return
 	}
+
 	rewardLog.Infof("new request time:%+v", t)
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	o := orm.NewOrm()
 	var num int64
-	var err error
+	//var err error
+	queryTime, err := time.ParseInLocation("2006-01-02", t, time.Local)
+	if err != nil {
+		resp := models.RewardResp{
+			Code:   "faile",
+			Msg:    fmt.Sprintf("parse time err:", err),
+			Reward: 0.0,
+			Pledge: 0.0,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
 	if mp == "f02420" {
-		num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&rewardInfos)
+		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&rewardInfos)
+		//num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&rewardInfos)
 	} else {
-		num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&rewardInfos)
+		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", mp).Filter("time", queryTime).All(&rewardInfos)
+		//num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&rewardInfos)
 	}
 
-	//num, err := o.QueryTable("fly_reward_info").Filter("time", t).All(&rewardInfo)
-	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", rewardInfo)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:       "fail",
@@ -83,9 +97,11 @@ func (c *RewardController) GetRewardAndPledge() {
 
 	expendInfo := make([]models.ExpendInfo, 0)
 	if mp == "f02420" {
-		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
+		//		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
+		num, err = o.QueryTable("fly_expend_info").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&expendInfo)
 	} else {
-		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
+		num, err = o.QueryTable("fly_expend_info").Filter("miner_id", mp).Filter("time", queryTime).All(&expendInfo)
+		//		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
 	}
 	//	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
@@ -204,9 +220,20 @@ func (c *RewardController) GetMinerInfo() {
 		return
 	}
 	rewardLog.Infof("new request miner:%+v time:%+v", miner, t)
-	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
+	queryTime, err := time.ParseInLocation("2006-01-02", t, time.Local)
+	if err != nil {
+		resp := models.RewardResp{
+			Code: "faile",
+			Msg:  "time is nil",
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+	rewardInfo := new(models.MinerStatusAndDailyChange)
 	o := orm.NewOrm()
-	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&rewardInfos)
+	num, err := o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", miner).Filter("time", queryTime).All(rewardInfo)
+	//	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&rewardInfos)
 	if err != nil || num == 0 {
 		resp := models.RewardResp{
 			Code:       "fail",
@@ -221,7 +248,7 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	} else {
-		rewardInfo := rewardInfos[0]
+		//rewardInfo := rewardInfos[0]
 		timeStamp = rewardInfo.UpdateTime
 		reward = rewardInfo.Reward
 		pledge = rewardInfo.Pledge
@@ -237,9 +264,8 @@ func (c *RewardController) GetMinerInfo() {
 	}
 
 	expendInfos := make([]models.ExpendInfo, 0)
-	//num, err = o.QueryTable("fly_expend_info").Filter("wallet_id", wallet.WalletId).Filter("time", t).All(expendInfo)
-	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
-	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
+	num, err = o.QueryTable("fly_expend_info").Filter("miner_id", miner).Filter("time", queryTime).All(&expendInfos)
+	//	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
 	if err != nil {
 		resp := models.RewardResp{
 			Code:        "fail",
