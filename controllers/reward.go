@@ -38,7 +38,7 @@ func (c *RewardController) GetRewardAndPledge() {
 		return
 	}
 
-	rewardLog.Infof("new request time:%+v", t)
+	rewardLog.Infof("new request mp:%+v time:%+v", mp, t)
 	rewardInfos := make([]models.MinerStatusAndDailyChange, 0)
 	o := orm.NewOrm()
 	var num int64
@@ -64,6 +64,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	}
 
 	if err != nil || num == 0 {
+		rewardLog.Errorf("get miner status and daily change err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
 			Code:       "fail",
 			Msg:        "get reward info fail",
@@ -106,6 +107,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	//	num, err = o.QueryTable("fly_expend_info").Filter("time", t).All(&expendInfo)
 	//rewardLog.Debug("DEBUG: QueryRewardInfo() reward: %+v ", expendInfo)
 	if err != nil || num == 0 {
+		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
 			Code:        "fail",
 			Msg:         "get expend info fail",
@@ -235,6 +237,7 @@ func (c *RewardController) GetMinerInfo() {
 	num, err := o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", miner).Filter("time", queryTime).All(rewardInfo)
 	//	num, err := o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&rewardInfos)
 	if err != nil || num == 0 {
+		rewardLog.Errorf("get miner status and daily change err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
 			Code:       "fail",
 			Msg:        "get reward info fail",
@@ -267,6 +270,7 @@ func (c *RewardController) GetMinerInfo() {
 	num, err = o.QueryTable("fly_expend_info").Filter("miner_id", miner).Filter("time", queryTime).All(&expendInfos)
 	//	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
 	if err != nil {
+		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
 			Code:        "fail",
 			Msg:         "get expend info fail",
