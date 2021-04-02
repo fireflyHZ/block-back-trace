@@ -64,6 +64,7 @@ type RewardResp struct {
 	Power          float64
 	Gas            float64
 	BlockNumber    int
+	SectorsNumber  int64
 	WinCount       int64
 	TotalPower     float64
 	TotalAvailable float64

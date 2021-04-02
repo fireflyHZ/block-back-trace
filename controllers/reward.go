@@ -290,7 +290,26 @@ func (c *RewardController) GetMinerInfo() {
 			gas += expendInfo.OverEstimationBurn
 		}
 	}
+	expendMsgs := make([]models.ExpendMessages, 0)
 
+	sectorNum, err := o.Raw("select * from fly_expend_messages where miner_id=? and method=7 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
+	if err != nil {
+		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code:        "fail",
+			Msg:         "get expend info fail",
+			Reward:      reward,
+			Pledge:      pledge,
+			Power:       power,
+			Gas:         gas,
+			BlockNumber: blockNum,
+			WinCount:    winCount,
+			TotalPower:  totalPower,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
@@ -299,6 +318,7 @@ func (c *RewardController) GetMinerInfo() {
 		Power:          power,
 		Gas:            gas,
 		BlockNumber:    blockNum,
+		SectorsNumber:  sectorNum,
 		WinCount:       winCount,
 		TotalPower:     totalPower,
 		TotalAvailable: totalAvailable,
