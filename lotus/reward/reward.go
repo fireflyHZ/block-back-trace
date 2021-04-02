@@ -300,7 +300,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 			rewardInfo.Vesting = vesting - oldVesting
 			rewardInfo.Reward = 0
 			rewardInfo.Epoch = epoch
-			rewardInfo.MinedPercentage = 0
+			rewardInfo.MinedPercentage = 1
 			rewardInfo.Time = t
 			rewardInfo.UpdateTime = t
 			//total
@@ -333,7 +333,7 @@ func calculatePowerAndPledge(height abi.ChainEpoch, tipsetKey types.TipSetKey, t
 				rewardInfo.Vesting += vesting - oldVesting
 				rewardInfo.Epoch = epoch
 				if rightNum == 0 {
-					rewardInfo.MinedPercentage = 0
+					rewardInfo.MinedPercentage = 1
 				} else {
 					rewardInfo.MinedPercentage = float64(rewardInfo.BlockNum) / float64(rightNum)
 				}
