@@ -56,7 +56,7 @@ func (c *RewardController) GetRewardAndPledge() {
 		return
 	}
 	if mp == "f02420" {
-		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&rewardInfos)
+		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id__in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&rewardInfos)
 		//num, err = o.Raw("select * from fly_miner_status_and_daily_change where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&rewardInfos)
 	} else {
 		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", mp).Filter("time", queryTime).All(&rewardInfos)
