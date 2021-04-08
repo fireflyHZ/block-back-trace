@@ -122,6 +122,9 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 			blockLog.Errorf("calculateBlock get chain head error:%+v", err)
 			return
 		}
+		if tipset.Height() != i {
+			continue
+		}
 		//time
 		tStr := time.Unix(int64(tipset.MinTimestamp()), 0).String()
 		//flag
