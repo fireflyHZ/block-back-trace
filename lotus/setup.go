@@ -51,27 +51,29 @@ func InitMinerData() {
 		fmt.Println("11111 QueryTable fly_net_run_data_pro", err)
 	}*/
 	/*	pleagef02420, err := strconv.ParseFloat("63628.11301812885", 64)
-			pleagef021695, err := strconv.ParseFloat("1751.8603603064178", 64)
-			pleagef021704, err := strconv.ParseFloat("2070.172072901768", 64)
-			pleagef044315, err := strconv.ParseFloat("2881.346726219449", 64)
-			pleagef055446, err := strconv.ParseFloat("2009.8058479382062", 64)
-			pleagef088290, err := strconv.ParseFloat("1452.7006079800967", 64)
-			pleagef099132, err := strconv.ParseFloat("5702.729052391221", 64)
-			pleagef0104398, err := strconv.ParseFloat("8388.527425174609", 64)
-			pleagef0117450, err := strconv.ParseFloat("1236.490325142298", 64)
-			pleagef0122533, err := strconv.ParseFloat("3940.5199383872227", 64)
-			pleagef0129422, err := strconv.ParseFloat("0.0", 64)
-			pleagef0130686, err := strconv.ParseFloat("4442.871949606818", 64)
-			pleagef0144528, err := strconv.ParseFloat("37.651937681223465", 64)
-			pleagef0144530, err := strconv.ParseFloat("934.4305342858444", 64)
-			pleagef0148452, err := strconv.ParseFloat("0.0", 64)
-			pleagef0161819, err := strconv.ParseFloat("0.0", 64)
-			pleagef0402822, err := strconv.ParseFloat("0.0", 64)
-			pleagef0419944, err := strconv.ParseFloat("0.0", 64)
-			pleagef0419945, err := strconv.ParseFloat("0.0", 64)
+		pleagef021695, err := strconv.ParseFloat("1751.8603603064178", 64)
+		pleagef021704, err := strconv.ParseFloat("2070.172072901768", 64)
+		pleagef044315, err := strconv.ParseFloat("2881.346726219449", 64)
+		pleagef055446, err := strconv.ParseFloat("2009.8058479382062", 64)
+		pleagef088290, err := strconv.ParseFloat("1452.7006079800967", 64)
+		pleagef099132, err := strconv.ParseFloat("5702.729052391221", 64)
+		pleagef0104398, err := strconv.ParseFloat("8388.527425174609", 64)
+		pleagef0117450, err := strconv.ParseFloat("1236.490325142298", 64)
+		pleagef0122533, err := strconv.ParseFloat("3940.5199383872227", 64)
+		pleagef0129422, err := strconv.ParseFloat("0.0", 64)
+		pleagef0130686, err := strconv.ParseFloat("4442.871949606818", 64)
+		pleagef0144528, err := strconv.ParseFloat("37.651937681223465", 64)
+		pleagef0144530, err := strconv.ParseFloat("934.4305342858444", 64)
+		pleagef0148452, err := strconv.ParseFloat("0.0", 64)
+		pleagef0161819, err := strconv.ParseFloat("0.0", 64)
+		pleagef0402822, err := strconv.ParseFloat("0.0", 64)
+		pleagef0419944, err := strconv.ParseFloat("0.0", 64)
+		pleagef0419945, err := strconv.ParseFloat("0.0", 64)
 		pleagef0464858, err := strconv.ParseFloat("0.0", 64)
-		pleagef0465677, err := strconv.ParseFloat("0.0", 64)*/
-	pleagef0464884, err := strconv.ParseFloat("0.0", 64)
+		pleagef0465677, err := strconv.ParseFloat("0.0", 64)
+		pleagef0464884, err := strconv.ParseFloat("0.0", 64)*/
+
+	pleagef0515389, err := strconv.ParseFloat("0.0", 64)
 	if err != nil {
 		setupLog.Error("ParseFloat err:%+v", err)
 	}
@@ -222,11 +224,18 @@ func InitMinerData() {
 		Pleage:       pleagef0465677,
 		CreateTime:   time.Now(),
 		UpdateTime:   time.Now(),
-	}*/
+	}
 	miner22 := models.MinerInfo{
 		MinerId:      "f0464884",
 		QualityPower: 0.0,
 		Pleage:       pleagef0464884,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}*/
+	miner23 := models.MinerInfo{
+		MinerId:      "f0515389",
+		QualityPower: 0.0,
+		Pleage:       pleagef0515389,
 		CreateTime:   time.Now(),
 		UpdateTime:   time.Now(),
 	}
@@ -251,8 +260,9 @@ func InitMinerData() {
 	minerInfo = append(minerInfo, miner18)
 	minerInfo = append(minerInfo, miner19)
 	minerInfo = append(minerInfo, miner20)
-	minerInfo = append(minerInfo, miner21)*/
-	minerInfo = append(minerInfo, miner22)
+	minerInfo = append(minerInfo, miner21)
+	minerInfo = append(minerInfo, miner22)*/
+	minerInfo = append(minerInfo, miner23)
 	//minerInfo=append(minerInfo,miner1)
 	_, err = o.InsertMulti(1, minerInfo)
 	if err != nil {
@@ -481,9 +491,13 @@ func InitMinerData() {
 	//	MinerId:  "f0465677",
 	//	WalletId: "f3w36vxisasfduydnwqj7myatekdxvz6w4ptl6o2a35vklbcgcbvgviu6atle3hszvrkhmu6jvcxvnyypd2nia",
 	//}
-	minerAndWalletRelation55 := models.MinerAndWalletRelation{
-		MinerId:  "f0464884",
-		WalletId: "f3xcahwrx2wg7flwius2p6jy4ivea4bxn4utebawofgjl3eek2nsys2gy4in4pyhbywqoctpbc2dsbif7gzpja",
+	//minerAndWalletRelation55 := models.MinerAndWalletRelation{
+	//	MinerId:  "f0464884",
+	//	WalletId: "f3xcahwrx2wg7flwius2p6jy4ivea4bxn4utebawofgjl3eek2nsys2gy4in4pyhbywqoctpbc2dsbif7gzpja",
+	//}
+	minerAndWalletRelation56 := models.MinerAndWalletRelation{
+		MinerId:  "f0515389",
+		WalletId: "f3ujnmotubgd5vkssdutr7nis5bequfh55lpijzzqfe6b6ngcz4o6i65j3kzjmwaacyqzg7u2mjz7iyf5c3h7a",
 	}
 	/*minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation2)
@@ -538,8 +552,9 @@ func InitMinerData() {
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation51)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation52)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation53)
-	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation54)*/
-	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation55)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation54)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation55)*/
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation56)
 	_, err = o.InsertMulti(1, minerAndWalletRelations)
 	if err != nil {
 		fmt.Println("insert minerAndWalletRelations err:", err)
