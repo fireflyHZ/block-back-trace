@@ -298,8 +298,8 @@ func (c *RewardController) GetMinerInfo() {
 		//rewardInfo := rewardInfos[0]
 		timeStamp = rewardInfo.UpdateTime
 		reward = rewardInfo.Reward
-		pledge = rewardInfo.Pledge - rewardInfoBefore.Pledge
-		power = rewardInfo.Power - rewardInfoBefore.Power
+		pledge = rewardInfo.TotalPledge - rewardInfoBefore.TotalPledge
+		power = rewardInfo.TotalPower - rewardInfoBefore.TotalPower
 		blockNum = rewardInfo.BlockNum
 		winCount = rewardInfo.WinCounts
 		//
