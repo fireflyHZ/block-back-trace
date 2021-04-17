@@ -2,7 +2,7 @@
 all: profit forward
 
 deps:
-	git submodule update --init --recursive
+	#git submodule update --init  --recursive
 	make -C extern/filecoin-ffi all
 
 profit: deps

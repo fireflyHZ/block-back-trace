@@ -9,14 +9,12 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-crypto"
 	"github.com/filecoin-project/go-state-types/abi"
-	"github.com/filecoin-project/lotus/api/apibstore"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
+	"github.com/filecoin-project/lotus/blockstore"
 	"github.com/filecoin-project/lotus/chain/actors/adt"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
 	"github.com/filecoin-project/lotus/chain/gen"
 	"github.com/filecoin-project/lotus/chain/types"
-	"github.com/filecoin-project/lotus/lib/blockstore"
-	"github.com/filecoin-project/lotus/lib/bufbstore"
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log/v2"
@@ -238,7 +236,7 @@ func TetsGetInfo() {
 		fmt.Println(err)
 	}
 
-	tbs := bufbstore.NewTieredBstore(apibstore.NewAPIBlockstore(nodeApi), blockstore.NewTemporary())
+	tbs := blockstore.NewTieredBstore(blockstore.NewAPIBlockstore(nodeApi), blockstore.NewMemory())
 	mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
 	if err != nil {
 		fmt.Println(err)
