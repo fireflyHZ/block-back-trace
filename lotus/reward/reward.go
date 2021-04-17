@@ -755,9 +755,6 @@ func TestCalculateReward() {
 	n := 0
 	for {
 
-		if "2020-11-22" <= time.Unix(int64(chainHeightHandle.Blocks()[0].Timestamp), 0).Format("2006-01-02") {
-			break
-		}
 		chainHeightAfter, err := getChainHeadByHeight(i + 1)
 		if err != nil {
 			rewardLog.Errorf("handleRequestInfo() getChainHeadByHeight height:%+v err=%+v", i, err)
@@ -930,7 +927,7 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 
 	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
-		rewardLog.Warnf("MinerGetBaseInfo err:%+v", err)
+		rewardLog.Warnf("MinerGetBaseInfo miner:%+v err:%+v", miner, err)
 		return false
 	}
 

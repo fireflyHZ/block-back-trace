@@ -213,7 +213,7 @@ func TetsGetInfo() {
 	}
 	defer closer()
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(568669)
+	var epoch = abi.ChainEpoch(674793)
 	tipset, _ := nodeApi.ChainHead(context.Background())
 	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()

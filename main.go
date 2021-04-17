@@ -18,8 +18,8 @@ import (
 )
 
 func main() {
-	err := log.Init()
-	if err != nil {
+
+	if err := log.Init(); err != nil {
 		fmt.Println("init log error:", err)
 		return
 	}
