@@ -286,7 +286,7 @@ func TetsGetInfo1() {
 		return
 	}
 	defer closer()
-	var h = abi.ChainEpoch(343200)
+	var h = abi.ChainEpoch(675080)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println("sdfadf1 err:", err)
@@ -295,10 +295,12 @@ func TetsGetInfo1() {
 	ms, err := nodeApi.ChainGetParentMessages(ctx, tp.Cids()[0])
 	if err != nil {
 		fmt.Println("sdfadf2 err:", err)
+		return
 	}
 	resp, err := nodeApi.ChainGetParentReceipts(ctx, tp.Cids()[0])
 	if err != nil {
 		fmt.Println("sdfadf3 err:", err)
+		return
 	}
 	for i, m := range ms {
 		if m.Message.Method == 0 {

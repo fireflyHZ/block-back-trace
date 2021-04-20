@@ -884,7 +884,7 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 	resp, err := client.Client.ChainGetParentReceipts(ctx, blockCid)
 
 	if err != nil {
-		rewardForLog.Errorf("getGasout  ChainGetParentReceipts err:%+v", err)
+		rewardLog.Errorf("getGasout  ChainGetParentReceipts err:%+v", err)
 		return
 	}
 	if messages.Method == 5 && height > 343200 {

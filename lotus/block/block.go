@@ -96,23 +96,25 @@ func calculateMineBlockPercentage(begin, end abi.ChainEpoch, miner string) (*min
 	}
 	missed := make([]models.BlockInfo, 0)
 	mined := make([]models.BlockInfo, 0)
+	wins := make([]models.BlockInfo, 0)
 	//将begin end分组
 	for {
 		if begin-end <= groupNum {
 			wait.Add(1)
-			go do(begin, end, counter, minerAddr, &missed, &mined)
+			go do(begin, end, counter, minerAddr, &missed, &mined, &wins)
 			break
 		}
 		wait.Add(1)
-		go do(begin, begin-groupNum, counter, minerAddr, &missed, &mined)
+		go do(begin, begin-groupNum, counter, minerAddr, &missed, &mined, &wins)
 		//是否sleep
 		begin -= groupNum
 	}
 	wait.Wait()
+	blockLog.Infof("mined:%+v    missed:%+v   wins:%+v", mined, missed, wins)
 	return counter, missed, mined
 }
 
-func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address, missed, mined *[]models.BlockInfo) {
+func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address, missed, mined, wins *[]models.BlockInfo) {
 
 	defer wait.Done()
 	for i := begin; i > end; i-- {
@@ -149,6 +151,7 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 			if flag {
 				*missed = append(*missed, models.BlockInfo{i, tStr})
 			}
+			*wins = append(*wins, models.BlockInfo{i, tStr})
 		}
 		blockLog.Infof("winer:%+v", time.Now().Sub(end))
 	}
