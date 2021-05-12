@@ -1,3 +1,6 @@
 [submodule "extern/filecoin-ffi"]
 	path = extern/filecoin-ffi
 	url = https://github.com/filecoin-project/filecoin-ffi.git
+[submodule "extern/--force"]
+	path = extern/--force
+	url = https://github.com/filecoin-project/filecoin-ffi.git

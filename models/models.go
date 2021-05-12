@@ -52,6 +52,7 @@ type ListenRewardNetStatus struct {
 type MinerInfo struct {
 	Id           int `orm:"pk;auto"`
 	MinerId      string
+	Name         string
 	QualityPower float64
 	Pleage       float64
 	Vesting      float64
