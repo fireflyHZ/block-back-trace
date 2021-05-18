@@ -7,7 +7,6 @@ import (
 	"github.com/beego/beego/v2/server/web"
 	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
-	"github.com/filecoin-project/go-crypto"
 	"github.com/filecoin-project/go-state-types/abi"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/blockstore"
@@ -20,6 +19,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/prometheus/common/log"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"profit-allocation/models"
 	"time"
@@ -212,62 +212,79 @@ func TetsGetInfo() {
 		return
 	}
 	defer closer()
+	minerAddr, _ := address.NewFromString("f0515389")
+	data := []byte{}
+	for i := 706000; i < 710400; i++ {
+		var epoch = abi.ChainEpoch(i)
+		//tipset, _ := nodeApi.ChainHead(context.Background())
+		//fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
+		t := types.NewTipSetKey()
+		//ver, _ := nodeApi.StateNetworkVersion(context.Background(), tipset.Key())
+		//fmt.Printf("version:%+v\n", ver)
+		blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
+		if err != nil {
+			//	rewardForLog.Error("Error get chain head err:%+v",err)
+			fmt.Printf("Error get chain head err:%+v\n", err)
+			return
+		}
+
+		p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
+		fmt.Printf("==========%+v\n", p)
+
+		//---------------------
+		ctx := context.Background()
+		mact, err := nodeApi.StateGetActor(ctx, minerAddr, blocks.Key())
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		tbs := blockstore.NewTieredBstore(blockstore.NewAPIBlockstore(nodeApi), blockstore.NewMemory())
+		mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
+		if err != nil {
+			fmt.Println(err)
+		}
+		lockedFunds, err := mas.LockedFunds()
+		if err != nil {
+			fmt.Println(err)
+		}
+		availBalance, err := mas.AvailableBalance(mact.Balance)
+		if err != nil {
+			fmt.Println(err)
+		}
+		ep := fmt.Sprintf("epoch: %d\n", i)
+
+		mb := fmt.Sprintf("Miner Balance: %s\n", color.YellowString("%s", types.FIL(mact.Balance)))
+		pre := fmt.Sprintf("\tPreCommit:   %s\n", types.FIL(lockedFunds.PreCommitDeposits))
+		pl := fmt.Sprintf("\tPledge:      %s\n", types.FIL(lockedFunds.InitialPledgeRequirement))
+		v := fmt.Sprintf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
+		a := fmt.Sprintf("\tAvailable:   %s\n", types.FIL(availBalance))
+		data = append(data, []byte(ep)...)
+		data = append(data, []byte(mb)...)
+		data = append(data, []byte(pre)...)
+		data = append(data, []byte(pl)...)
+		data = append(data, []byte(v)...)
+		data = append(data, []byte(a)...)
+		data = append(data, []byte("-------------------------\n")...)
+
+	}
+	ioutil.WriteFile("vesting", data, 0644)
 	//block,err:=nodeApi.ChainHead(context.Background())
-	var epoch = abi.ChainEpoch(674793)
-	tipset, _ := nodeApi.ChainHead(context.Background())
-	fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
-	t := types.NewTipSetKey()
-	ver, _ := nodeApi.StateNetworkVersion(context.Background(), tipset.Key())
-	fmt.Printf("version:%+v\n", ver)
-	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
-	if err != nil {
-		//	rewardForLog.Error("Error get chain head err:%+v",err)
-		fmt.Printf("Error get chain head err:%+v\n", err)
-		return
-	}
-	minerAddr, _ := address.NewFromString("f0148452")
-	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
-	fmt.Printf("==========%+v\n", p)
 
-	//---------------------
-	ctx := context.Background()
-	mact, err := nodeApi.StateGetActor(ctx, minerAddr, blocks.Key())
-	if err != nil {
-		fmt.Println(err)
-	}
+	//color.Green("\tAvailable:   %s", types.FIL(availBalance))
 
-	tbs := blockstore.NewTieredBstore(blockstore.NewAPIBlockstore(nodeApi), blockstore.NewMemory())
-	mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
-	if err != nil {
-		fmt.Println(err)
-	}
-	lockedFunds, err := mas.LockedFunds()
-	if err != nil {
-		fmt.Println(err)
-	}
-	availBalance, err := mas.AvailableBalance(mact.Balance)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("Miner Balance: %s\n", color.YellowString("%s", types.FIL(mact.Balance)))
-	fmt.Printf("\tPreCommit:   %s\n", types.FIL(lockedFunds.PreCommitDeposits))
-	fmt.Printf("\tPledge:      %s\n", types.FIL(lockedFunds.InitialPledgeRequirement))
-	fmt.Printf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
-	color.Green("\tAvailable:   %s", types.FIL(availBalance))
-
-	pr, err := crypto.GenerateKey()
-	if err != nil {
-		fmt.Printf("err", err)
-	}
-
-	fmt.Printf("priv:%+v\n", pr)
-	fmt.Printf("priv:%+v\n", len(pr))
-
-	secCounts, err := nodeApi.StateMinerSectorCount(ctx, minerAddr, types.EmptyTSK)
-	if err != nil {
-		return
-	}
-	fmt.Printf("sector counts:%+v\n", secCounts)
+	//pr, err := crypto.GenerateKey()
+	//if err != nil {
+	//	fmt.Printf("err", err)
+	//}
+	//
+	//fmt.Printf("priv:%+v\n", pr)
+	//fmt.Printf("priv:%+v\n", len(pr))
+	//
+	//secCounts, err := nodeApi.StateMinerSectorCount(ctx, minerAddr, types.EmptyTSK)
+	//if err != nil {
+	//	return
+	//}
+	//fmt.Printf("sector counts:%+v\n", secCounts)
 
 }
 
@@ -286,7 +303,7 @@ func TetsGetInfo1() {
 		return
 	}
 	defer closer()
-	var h = abi.ChainEpoch(675080)
+	var h = abi.ChainEpoch(716400)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println("sdfadf1 err:", err)

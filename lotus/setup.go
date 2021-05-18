@@ -245,9 +245,51 @@ func InitMinerData() {
 		Pleage:       pleagef0601583,
 		CreateTime:   time.Now(),
 		UpdateTime:   time.Now(),
-	}*/
+	}
 	miner25 := models.MinerInfo{
 		MinerId:      "f0674600",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}*/
+	miner26 := models.MinerInfo{
+		MinerId:      "f0464884",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}
+	miner27 := models.MinerInfo{
+		MinerId:      "f0465677",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}
+	miner28 := models.MinerInfo{
+		MinerId:      "f0734053",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}
+	miner29 := models.MinerInfo{
+		MinerId:      "f0748137",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}
+	miner30 := models.MinerInfo{
+		MinerId:      "f0748101",
+		QualityPower: 0.0,
+		Pleage:       0.0,
+		CreateTime:   time.Now(),
+		UpdateTime:   time.Now(),
+	}
+	miner31 := models.MinerInfo{
+		MinerId:      "f0724097",
 		QualityPower: 0.0,
 		Pleage:       0.0,
 		CreateTime:   time.Now(),
@@ -276,7 +318,12 @@ func InitMinerData() {
 	minerInfo = append(minerInfo, miner21)
 	minerInfo = append(minerInfo, miner22)
 	minerInfo = append(minerInfo, miner23)*/
-	minerInfo = append(minerInfo, miner25)
+	minerInfo = append(minerInfo, miner26)
+	minerInfo = append(minerInfo, miner27)
+	minerInfo = append(minerInfo, miner28)
+	minerInfo = append(minerInfo, miner29)
+	minerInfo = append(minerInfo, miner30)
+	minerInfo = append(minerInfo, miner31)
 	//minerInfo=append(minerInfo,miner1)
 	_, err := o.InsertMulti(1, minerInfo)
 	if err != nil {
@@ -517,9 +564,53 @@ func InitMinerData() {
 	//	MinerId:  "f0601583",
 	//	WalletId: "f3snbiwnnbwwg3yu4xam2vwp4ien5kajba5rmjm4fce5f7by4piytortjiqqyr3ziizfav5o55smsexwghaawa",
 	//}
-	minerAndWalletRelation58 := models.MinerAndWalletRelation{
-		MinerId:  "f0674600",
-		WalletId: "f3vmhcs4luq7izg2etu2nhdafo6dbecidyghfj7v3ench2jwozo56g2bkqphrug7ividek7zewiuv62evyf7dq",
+	//minerAndWalletRelation58 := models.MinerAndWalletRelation{
+	//	MinerId:  "f0674600",
+	//	WalletId: "f3vmhcs4luq7izg2etu2nhdafo6dbecidyghfj7v3ench2jwozo56g2bkqphrug7ividek7zewiuv62evyf7dq",
+	//}
+	minerAndWalletRelation59 := models.MinerAndWalletRelation{
+		MinerId:  "f0464884",
+		WalletId: "f3xcahwrx2wg7flwius2p6jy4ivea4bxn4utebawofgjl3eek2nsys2gy4in4pyhbywqoctpbc2dsbif7gzpja",
+	}
+	minerAndWalletRelation60 := models.MinerAndWalletRelation{
+		MinerId:  "f0464884",
+		WalletId: "f3um76gy5dre4pe5mzn3xpxgy54xa4tvind35orxqtvgyoq5qpuvjomawxps7yjqok5asfw3zahpm2h3tg3pza",
+	}
+	minerAndWalletRelation61 := models.MinerAndWalletRelation{
+		MinerId:  "f0465677",
+		WalletId: "f3w36vxisasfduydnwqj7myatekdxvz6w4ptl6o2a35vklbcgcbvgviu6atle3hszvrkhmu6jvcxvnyypd2nia",
+	}
+	minerAndWalletRelation62 := models.MinerAndWalletRelation{
+		MinerId:  "f0734053",
+		WalletId: "f3svtgoeifppirbd7vofusapqnvhtq4a4qxdia723xfhxreauny7ulyxlb27jcfjcbefbca5xg2pwkyl5svuxa",
+	}
+	minerAndWalletRelation63 := models.MinerAndWalletRelation{
+		MinerId:  "f0734053",
+		WalletId: "f3xcvvj5vphk32gy6ic5avc44dvdkkghbxtyzklfvcazsrdfhsmc5u3qpur3zzsty6qxktaeo7xjopfbumoroa",
+	}
+	minerAndWalletRelation64 := models.MinerAndWalletRelation{
+		MinerId:  "f0748137",
+		WalletId: "f3sd3qsbuwacuboh766tpxh2ocqabj3csjggkti3thhyb76mm5rxibm2k4iplgvsr562soqyn4t3ohfngokeja",
+	}
+	minerAndWalletRelation65 := models.MinerAndWalletRelation{
+		MinerId:  "f0748137",
+		WalletId: "f3qkqp6fdkw74xb4dptv5w2zxtxk6dzxqglzh6rrfmizxue3sylimcwhn5qg53o6ga2hzvxaafvklnopwlx3vq",
+	}
+	minerAndWalletRelation66 := models.MinerAndWalletRelation{
+		MinerId:  "f0748101",
+		WalletId: "f3rz5awkspikz3v7lbhild42qoulatp6vjxapj7ybyufql6qzqddy5vrgniu2x7cj3qanjcyvabtcgdx7rxvhq",
+	}
+	minerAndWalletRelation67 := models.MinerAndWalletRelation{
+		MinerId:  "f0748101",
+		WalletId: "f3shaznfixepgqkdfsmjbhjilkily7vy7i5osafkx2ygkp2ous7bimmqetrnqtgwyayzhngmdysciovuipmlya",
+	}
+	minerAndWalletRelation68 := models.MinerAndWalletRelation{
+		MinerId:  "f0724097",
+		WalletId: "f3wineh5tjw3hrif2eqtpomsk5gmtkxjtcaplwsi65sz2xthptj4ngq4ragp6xr35fj5bj757o6ajdsys33maa",
+	}
+	minerAndWalletRelation69 := models.MinerAndWalletRelation{
+		MinerId:  "f0724097",
+		WalletId: "f3wou7jqrcy4nth6myqqje4daehbd4rvcy6ni27ycesbneqqbeaebp6yoac5ppagr64x2no4fndwgeotkmm6la",
 	}
 	/*minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation1)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation2)
@@ -578,8 +669,18 @@ func InitMinerData() {
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation55)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation56)
 	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation57)*/
-	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation58)
-	_, err = o.InsertMulti(1, minerAndWalletRelations)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation59)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation60)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation61)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation62)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation63)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation64)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation65)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation66)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation67)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation68)
+	minerAndWalletRelations = append(minerAndWalletRelations, minerAndWalletRelation69)
+	_, err = o.InsertMulti(11, minerAndWalletRelations)
 	if err != nil {
 		fmt.Println("insert minerAndWalletRelations err:", err)
 	}

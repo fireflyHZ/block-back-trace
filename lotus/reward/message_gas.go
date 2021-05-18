@@ -73,7 +73,7 @@ func queryMsgGasNetStatus() (height int64, err error) {
 		return
 	}
 	if n == 0 {
-		height = 580000
+		height = 715000
 		return
 	} else {
 		height = netRunData.ReceiveBlockHeight
