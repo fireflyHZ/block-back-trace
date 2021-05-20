@@ -43,8 +43,8 @@ func CalculateMsgGasData() {
 		return
 	}
 
-	if blockHeight-CostFromHeight > 200 {
-		h, err := handleMsgGasInfo(CostFromHeight+200, CostFromHeight)
+	if blockHeight-CostFromHeight > 2000 {
+		h, err := handleMsgGasInfo(CostFromHeight+2000, CostFromHeight)
 		if err != nil {
 			msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
 			return
