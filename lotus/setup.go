@@ -36,10 +36,12 @@ func Setup() {
 }
 
 func loop() {
+	setupLog.Info("loop begin")
 	sync.Wg.Add(2)
 	go reward.CalculateMsgGasData()
 	go reward.CollectTotalRerwardAndPledge()
 	sync.Wg.Wait()
+	setupLog.Info("loop end")
 }
 
 func InitMinerData() {
