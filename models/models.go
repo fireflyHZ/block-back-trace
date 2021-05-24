@@ -58,6 +58,8 @@ type MinerInfo struct {
 	Vesting      float64
 	CreateTime   time.Time
 	UpdateTime   time.Time
+	Type         uint8
+	Location     string
 }
 
 //miner power status
