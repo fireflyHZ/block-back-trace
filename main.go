@@ -71,8 +71,8 @@ func initDatabase() error {
 	if err != nil {
 		return err
 	}
-	maxIdle := 15
-	maxConn := 15
+	maxIdle := 200
+	maxConn := 200
 	// 注册数据库
 	if err := orm.RegisterDataBase("default", "postgres", url, orm.MaxIdleConnections(maxIdle), orm.MaxOpenConnections(maxConn)); err != nil {
 		return err
