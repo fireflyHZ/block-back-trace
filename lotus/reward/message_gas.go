@@ -43,8 +43,8 @@ func CalculateMsgGasData() {
 		return
 	}
 
-	if blockHeight-CostFromHeight > 2000 {
-		h, err := handleMsgGasInfo(CostFromHeight+2000, CostFromHeight)
+	if blockHeight-CostFromHeight > 50000 {
+		h, err := handleMsgGasInfo(CostFromHeight+50000, CostFromHeight)
 		if err != nil {
 			msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
 			return
@@ -119,6 +119,7 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 	dh := dealBlcokHeight
 
 	for i := end; i < dealBlcokHeight; i++ {
+		msgLog.Infof(" Handle Msg Gas Info height:%+v ", i)
 		chainHeightAfter, err := getChainHeadByHeight(i + 1)
 		if err != nil {
 			msgLog.Errorf("ERROR: handleMsgGasInfo() getChainHeadByHeight height:%+v err=%+v", dealBlcokHeight, err)
