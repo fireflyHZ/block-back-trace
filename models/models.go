@@ -58,7 +58,7 @@ type MinerInfo struct {
 	Vesting      float64
 	CreateTime   time.Time
 	UpdateTime   time.Time
-	Type         uint8
+	Type         int
 	Location     string
 }
 
