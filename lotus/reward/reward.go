@@ -897,11 +897,12 @@ func getGasout(blockCid cid.Cid, messages *types.Message, basefee abi.TokenAmoun
 func recordMineBlockRight(tipset *types.TipSet) error {
 	for miner, _ := range models.Miners {
 		minerAddr, _ := address.NewFromString(miner)
-		if calculateMinerRight(tipset.Height()-1, minerAddr) {
+		if ok, winCount := calculateMinerRight(tipset.Height()-1, minerAddr); ok {
 			mbr := new(models.MineBlockRight)
 			mbr.MinerId = miner
 			mbr.Epoch = int64(tipset.Height())
 			mbr.Missed = true
+			mbr.WinCount = winCount
 			mbr.Time = time.Unix(int64(tipset.MinTimestamp()), 0)
 			mbr.UpdateTime = time.Unix(int64(tipset.MinTimestamp()), 0)
 			err := mbr.Insert()
@@ -916,28 +917,28 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 	return nil
 }
 
-func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
+func calculateMinerRight(h abi.ChainEpoch, miner address.Address) (bool, int64) {
 	ctx := context.Background()
 	round := h + 1
 	tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		rewardLog.Warnf("ChainGetTipSetByHeight err:%+v", err)
-		return false
+		return false, 0
 	}
 
 	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
 		rewardLog.Warnf("MinerGetBaseInfo miner:%+v err:%+v", miner, err)
-		return false
+		return false, 0
 	}
 
 	if mbi == nil {
 
-		return false
+		return false, 0
 	}
 	if !mbi.EligibleForMining {
 		// slashed or just have no power yet
-		return false
+		return false, 0
 	}
 
 	beaconPrev := mbi.PrevBeaconEntry
@@ -951,13 +952,13 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) bool {
 	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
 	if err != nil {
 		rewardLog.Warnf("IsRoundWinner miner%+v err:%+v", miner, err)
-		return false
+		return false, 0
 	}
 
 	if p == nil {
-		return false
+		return false, 0
 	}
-	return true
+	return true, p.WinCount
 }
 
 func updateMineBlockRight(epoch int64, miner string, t time.Time, value float64, winCount int64) error {
