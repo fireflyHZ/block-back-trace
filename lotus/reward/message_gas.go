@@ -226,6 +226,7 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.BlockHeader) error {
 	var err error
 	var minerId string
+	var ok bool
 	//获取minerid
 	walletId := message.Message.From.String()
 	to := message.Message.To.String()
@@ -243,8 +244,8 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		to = message.Message.From.String()
 		//walletId=""
 	} else {
-		minerId, err = getMinerByWallte(walletId)
-		if err != nil {
+		minerId, ok = models.Wallets[walletId]
+		if !ok {
 			msgLog.Errorf("get miner by wallte :%+v err:%+v", walletId, err)
 			return err
 		}
@@ -620,14 +621,14 @@ func initWallet(tipset types.TipSetKey) error {
 			msgLog.Errorf("state account owner key miner:%+v err:%+v", m, err)
 			return err
 		}
-		models.Wallets[ownerAddr.String()] = 2
+		models.Wallets[ownerAddr.String()] = m
 		//worker address
 		wokerAddr, err := client.Client.StateAccountKey(ctx, mi.Worker, types.EmptyTSK)
 		if err != nil {
 			msgLog.Errorf("state account worker key miner:%+v err:%+v", m, err)
 			return err
 		}
-		models.Wallets[wokerAddr.String()] = 2
+		models.Wallets[wokerAddr.String()] = m
 		//control address
 		for _, controlAddr := range mi.ControlAddresses {
 			contorl, err := client.Client.StateAccountKey(ctx, controlAddr, types.EmptyTSK)
@@ -635,7 +636,7 @@ func initWallet(tipset types.TipSetKey) error {
 				msgLog.Errorf("state account control key miner:%+v err%+v:", m, err)
 				return err
 			}
-			models.Wallets[contorl.String()] = 2
+			models.Wallets[contorl.String()] = m
 		}
 	}
 	return nil

@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	Wallets        = make(map[string]int)
+	Wallets        = make(map[string]string)
 	Miners         = make(map[string]int)
 	LotusHost      string
 	LotusSignToken string
