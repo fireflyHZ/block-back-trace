@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
+	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
@@ -132,6 +133,13 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 			return i, err
 		}
 		blocks := chainHeightHandle.Blocks()
+		//初始化地址
+		err = initWallet(chainHeightHandle.Key())
+		if err != nil {
+			msgLog.Errorf("ERROR: handleMsgGasInfo() initWallet height:%+v  err=%v", chainHeightHandle.Height(), err)
+			return i, err
+		}
+		msgLog.Infof("--------wallet:%+v ", models.Wallets)
 		//计算支出
 		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key(), i)
 		if err != nil {
@@ -591,6 +599,46 @@ func parseGasoutToFloat(gasout vm.GasOutputs, valueStr string) (float64, float64
 		return 0, 0, 0, 0, 0, err
 	}
 	return gas, baseBurn, overBurn, value, penalty, nil
+}
+
+func initWallet(tipset types.TipSetKey) error {
+	ctx := context.Background()
+	for m, _ := range models.Miners {
+		minerAddr, err := address.NewFromString(m)
+		if err != nil {
+			msgLog.Errorf("NewFromString miner:%+v err:%+v", m, err)
+			return err
+		}
+		mi, err := client.Client.StateMinerInfo(ctx, minerAddr, tipset)
+		if err != nil {
+			msgLog.Errorf("StateMinerInfo miner:%+v err:%+v", m, err)
+			return err
+		}
+		//owner address
+		ownerAddr, err := client.Client.StateAccountKey(ctx, mi.Owner, types.EmptyTSK)
+		if err != nil {
+			msgLog.Errorf("state account owner key miner:%+v err:%+v", m, err)
+			return err
+		}
+		models.Wallets[ownerAddr.String()] = 2
+		//worker address
+		wokerAddr, err := client.Client.StateAccountKey(ctx, mi.Worker, types.EmptyTSK)
+		if err != nil {
+			msgLog.Errorf("state account worker key miner:%+v err:%+v", m, err)
+			return err
+		}
+		models.Wallets[wokerAddr.String()] = 2
+		//control address
+		for _, controlAddr := range mi.ControlAddresses {
+			contorl, err := client.Client.StateAccountKey(ctx, controlAddr, types.EmptyTSK)
+			if err != nil {
+				msgLog.Errorf("state account control key miner:%+v err%+v:", m, err)
+				return err
+			}
+			models.Wallets[contorl.String()] = 2
+		}
+	}
+	return nil
 }
 
 func TestMsg() {

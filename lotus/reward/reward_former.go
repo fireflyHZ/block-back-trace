@@ -418,3 +418,56 @@ func TestMine() {
 	}
 
 }
+
+func TestMinerInfo() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	minerAddr, err := address.NewFromString("f0419944")
+	if err != nil {
+		fmt.Println("NewFromString err:", err)
+		return
+	}
+	tip, err := nodeApi.ChainHead(ctx)
+	if err != nil {
+		fmt.Println("chain head err:", err)
+		return
+	}
+	mi, err := nodeApi.StateMinerInfo(ctx, minerAddr, tip.Key())
+	if err != nil {
+		fmt.Println("info err:", err)
+		return
+	}
+	fmt.Printf("miner info:%+v\n", mi)
+	fmt.Println("protocol", mi.Worker.Protocol())
+	addr, err := nodeApi.StateAccountKey(ctx, mi.Worker, types.EmptyTSK)
+	if err != nil {
+		fmt.Println("state account key err:", err)
+		return
+	}
+	fmt.Println("work ====", addr)
+	addr, err = nodeApi.StateAccountKey(ctx, mi.ControlAddresses[0], types.EmptyTSK)
+	if err != nil {
+		fmt.Println("state account key err:", err)
+		return
+	}
+	fmt.Println("controller ====", addr)
+	addr, err = nodeApi.StateAccountKey(ctx, mi.Owner, types.EmptyTSK)
+	if err != nil {
+		fmt.Println("state account key err:", err)
+		return
+	}
+	fmt.Println("owner ====", addr)
+
+}

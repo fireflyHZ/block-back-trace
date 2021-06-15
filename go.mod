@@ -15,6 +15,7 @@ require (
 	github.com/ipfs/go-ipld-cbor v0.0.5
 	github.com/ipfs/go-log/v2 v2.1.2-0.20200626104915-0016c0b4b3e4
 	github.com/lib/pq v1.7.0
+	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/prometheus/common v0.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/whyrusleeping/cbor-gen v0.0.0-20210219115102-f37d292932f2

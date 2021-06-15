@@ -29,13 +29,13 @@ func InitData() error {
 		return errors.New("get miner and wallet relation info's number is 0")
 	}
 	miners := make(map[string]int)
-	wallets := make(map[string]int)
+	//wallets := make(map[string]int)
 	for _, info := range minerAndWalletRelations {
 		miners[info.MinerId] = 1
-		wallets[info.WalletId] = 2
+		//	wallets[info.WalletId] = 2
 	}
 	Miners = miners
-	Wallets = wallets
+	//Wallets = wallets
 	LotusHost, err = web.AppConfig.String("lotusHost")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)
