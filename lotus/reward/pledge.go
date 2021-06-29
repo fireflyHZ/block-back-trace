@@ -29,7 +29,7 @@ func GetMienrPleage(minerAddr string, epoch abi.ChainEpoch) (float64, float64, f
 	requestHeader := http.Header{}
 	ctx := context.Background()
 
-	api, closer, err := lotusClient.NewFullNodeRPC(context.Background(), models.LotusHost, requestHeader)
+	api, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), models.LotusHost, requestHeader)
 	if err != nil {
 		return 0, 0, 0, 0, nil, err
 	}

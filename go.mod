@@ -6,14 +6,13 @@ require (
 	github.com/beego/beego/v2 v2.0.1
 	github.com/fatih/color v1.9.0
 	github.com/filecoin-project/go-address v0.0.5
-	github.com/filecoin-project/go-crypto v0.0.0-20191218222705-effae4ea9f03
-	github.com/filecoin-project/go-state-types v0.1.0
-	github.com/filecoin-project/lotus v1.8.0
+	github.com/filecoin-project/go-state-types v0.1.1-0.20210506134452-99b279731c48
+	github.com/filecoin-project/lotus v1.10.0
 	github.com/filecoin-project/specs-actors v0.9.13
-	github.com/filecoin-project/specs-actors/v2 v2.3.5-0.20210114162132-5b58b773f4fb
+	github.com/filecoin-project/specs-actors/v2 v2.3.5
 	github.com/ipfs/go-cid v0.0.7
 	github.com/ipfs/go-ipld-cbor v0.0.5
-	github.com/ipfs/go-log/v2 v2.1.2-0.20200626104915-0016c0b4b3e4
+	github.com/ipfs/go-log/v2 v2.1.3
 	github.com/lib/pq v1.7.0
 	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/prometheus/common v0.10.0

@@ -206,7 +206,7 @@ func TetsGetInfo() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
@@ -297,7 +297,7 @@ func TetsGetInfo1() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
@@ -362,7 +362,7 @@ func TestMine() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
@@ -428,7 +428,7 @@ func TestMinerInfo() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	nodeApi, closer, err := lotusClient.NewFullNodeRPC(context.Background(), LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
