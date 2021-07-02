@@ -20,8 +20,7 @@ func (p *PreAndProveMessages) Insert() error {
 	return nil
 }
 
-func (mbr *MineBlockRight) Insert() error {
-	o := orm.NewOrm()
+func (mbr *MineBlockRight) Insert(o orm.TxOrmer) error {
 	num, err := o.QueryTable("fly_mine_block_right").Filter("miner_id", mbr.MinerId).Filter("epoch", mbr.Epoch).All(mbr)
 	if err != nil {
 		return err
