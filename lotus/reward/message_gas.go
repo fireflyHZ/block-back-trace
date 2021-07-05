@@ -11,8 +11,8 @@ import (
 	"github.com/filecoin-project/lotus/api"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/lotus/chain/vm"
-	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
-	"github.com/filecoin-project/specs-actors/v2/actors/builtin/miner"
+	"github.com/filecoin-project/specs-actors/v5/actors/builtin"
+	"github.com/filecoin-project/specs-actors/v5/actors/builtin/miner"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/lotus/client"
@@ -202,9 +202,9 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 
 		//记录precommit和provecommit消息
 		if inMiners(message.Message.To.String()) {
-			if message.Message.Method == 6 || message.Message.Method == 7 {
+			if isPledgeMessage(message.Message.Method) {
 				//pre
-				err := recordPreAndProveCommitMsg(message, height, block.Timestamp, message.Message.Method)
+				err := recordPreAndProveCommitMsg(message, height, block.Timestamp)
 				if err != nil {
 					return err
 				}
@@ -221,6 +221,13 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 		msgLog.Errorf("update hight:%+v err:%+v", h, err)
 	}
 	return nil
+}
+
+func isPledgeMessage(method abi.MethodNum) bool {
+	return method == builtin.MethodsMiner.PreCommitSector ||
+		method == builtin.MethodsMiner.PreCommitSectorBatch ||
+		method == builtin.MethodsMiner.ProveCommitSector ||
+		method == builtin.MethodsMiner.ProveCommitAggregate
 }
 
 func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.BlockHeader) error {
@@ -481,14 +488,17 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (ab
 	return penaltyFee, nil
 }
 
-func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, method abi.MethodNum) error {
+func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) error {
 	msgLookup, err := client.Client.StateSearchMsg(context.Background(), msg.Cid)
 	if err != nil {
 		msgLog.Errorf("statr search msg err:%+v", err)
 		return err
 	}
-	m := new(models.PreAndProveMessages)
-	if method == 6 {
+	ms := make([]*models.PreAndProveMessages, 0)
+
+	switch msg.Message.Method {
+	case builtin.MethodsMiner.PreCommitSector:
+		m := new(models.PreAndProveMessages)
 		params := new(miner.PreCommitSectorParams)
 		b := new(bytes.Buffer)
 		_, err := b.Write(msg.Message.Params)
@@ -508,8 +518,45 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, 
 		}
 		m.SectorNumber = sectorNum
 		m.Method = 6
-	}
-	if method == 7 {
+		m.MessageId = msg.Cid.String()
+		m.From = msg.Message.From.String()
+		m.To = msg.Message.To.String()
+		m.Epoch = epoch
+		m.Status = int(msgLookup.Receipt.ExitCode)
+		m.CreateTime = time.Unix(int64(timeStamp), 0)
+		ms = append(ms, m)
+	case builtin.MethodsMiner.PreCommitSectorBatch:
+		params := new(miner.PreCommitSectorBatchParams)
+		b := new(bytes.Buffer)
+		_, err := b.Write(msg.Message.Params)
+		if err != nil {
+			msgLog.Errorf("record preCommit msg:%+v write byte err:%+v", msg.Cid, err)
+			return err
+		}
+		err = params.UnmarshalCBOR(b)
+		if err != nil {
+			msgLog.Errorf("record preCommit msg:%+v unmarshal err:%+v", msg.Cid, err)
+			return err
+		}
+		for _, param := range params.Sectors {
+			m := new(models.PreAndProveMessages)
+			sectorNum, err := strconv.ParseInt(param.SectorNumber.String(), 10, 64)
+			if err != nil {
+				msgLog.Errorf("record preCommit msg:%+v parse sector number err:%+v", msg.Cid, err)
+				return err
+			}
+			m.SectorNumber = sectorNum
+			m.Method = 6
+			m.MessageId = msg.Cid.String()
+			m.From = msg.Message.From.String()
+			m.To = msg.Message.To.String()
+			m.Epoch = epoch
+			m.Status = int(msgLookup.Receipt.ExitCode)
+			m.CreateTime = time.Unix(int64(timeStamp), 0)
+			ms = append(ms, m)
+		}
+	case builtin.MethodsMiner.ProveCommitSector:
+		m := new(models.PreAndProveMessages)
 		params := new(miner.ProveCommitSectorParams)
 		b := new(bytes.Buffer)
 		_, err := b.Write(msg.Message.Params)
@@ -529,15 +576,58 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64, 
 		}
 		m.SectorNumber = sectorNum
 		m.Method = 7
+		m.MessageId = msg.Cid.String()
+		m.From = msg.Message.From.String()
+		m.To = msg.Message.To.String()
+		m.Epoch = epoch
+		m.Status = int(msgLookup.Receipt.ExitCode)
+		m.CreateTime = time.Unix(int64(timeStamp), 0)
+		ms = append(ms, m)
+	case builtin.MethodsMiner.ProveCommitAggregate:
+		m := new(models.PreAndProveMessages)
+		params := new(miner.ProveCommitAggregateParams)
+		b := new(bytes.Buffer)
+		_, err := b.Write(msg.Message.Params)
+		if err != nil {
+			msgLog.Errorf("record  proveCommit msg:%+v write byte err:%+v", msg.Cid, err)
+			return err
+		}
+		err = params.UnmarshalCBOR(b)
+		if err != nil {
+			msgLog.Errorf("record  proveCommit msg:%+v unmarshal err:%+v", msg.Cid, err)
+			return err
+		}
+		count, err := params.SectorNumbers.Count()
+		if err != nil {
+			msgLog.Errorf("record  proveCommit msg:%+v get sector count err:%+v", msg.Cid, err)
+			return err
+		}
+		sectors, err := params.SectorNumbers.AllMap(count)
+		if err != nil {
+			msgLog.Errorf("record  proveCommit msg:%+v get sectors info err:%+v", msg.Cid, err)
+			return err
+		}
+		for sector, ok := range sectors {
+			if ok {
+				m.Status = 0
+			} else {
+				m.Status = 1
+			}
+			m.Status = int(msgLookup.Receipt.ExitCode)
+			m.SectorNumber = int64(sector)
+			m.Method = 7
+			m.MessageId = msg.Cid.String()
+			m.From = msg.Message.From.String()
+			m.To = msg.Message.To.String()
+			m.Epoch = epoch
+
+			m.CreateTime = time.Unix(int64(timeStamp), 0)
+			ms = append(ms, m)
+		}
+
 	}
 
-	m.MessageId = msg.Cid.String()
-	m.From = msg.Message.From.String()
-	m.To = msg.Message.To.String()
-	m.Epoch = epoch
-	m.Status = int(msgLookup.Receipt.ExitCode)
-	m.CreateTime = time.Unix(int64(timeStamp), 0)
-	return m.Insert()
+	return models.InsertPledgeMsg(ms)
 }
 
 func withdrawMsgValue(msg api.Message) (abi.TokenAmount, error) {

@@ -1,6 +1,7 @@
 package reward
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
@@ -8,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/lotus/api"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/blockstore"
 	"github.com/filecoin-project/lotus/chain/actors/adt"
@@ -15,6 +17,8 @@ import (
 	"github.com/filecoin-project/lotus/chain/gen"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
+	"github.com/filecoin-project/specs-actors/v5/actors/builtin"
+	miner2 "github.com/filecoin-project/specs-actors/v5/actors/builtin/miner"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/prometheus/common/log"
@@ -469,5 +473,47 @@ func TestMinerInfo() {
 		return
 	}
 	fmt.Println("owner ====", addr)
+
+}
+
+func TestProveCommitAggregateParams() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	tip, _ := nodeApi.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(905185), types.EmptyTSK)
+	msgs, _ := nodeApi.ChainGetParentMessages(ctx, tip.Cids()[0])
+	var msg api.Message
+	for _, m := range msgs {
+		if m.Message.To.String() == "f0144528" && m.Message.Method == builtin.MethodsMiner.ProveCommitAggregate {
+			msg = m
+			break
+		}
+	}
+	fmt.Println(msg)
+	params := new(miner2.ProveCommitAggregateParams)
+	b := new(bytes.Buffer)
+	_, err = b.Write(msg.Message.Params)
+	if err != nil {
+		fmt.Printf("record  proveCommit msg:%+v write byte err:%+v", msg.Cid, err)
+		return
+	}
+	err = params.UnmarshalCBOR(b)
+	if err != nil {
+		fmt.Printf("record  proveCommit msg:%+v unmarshal err:%+v", msg.Cid, err)
+		return
+	}
+	c, _ := params.SectorNumbers.Count()
+	fmt.Println(params.SectorNumbers.AllMap(c))
 
 }

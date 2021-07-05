@@ -5,22 +5,26 @@ import (
 	"time"
 )
 
-func (p *PreAndProveMessages) Insert() error {
+func InsertPledgeMsg(p []*PreAndProveMessages) error {
 	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_pre_and_prove_messages").Filter("message_id", p.MessageId).All(p)
-	if err != nil {
-		return err
-	}
-	if num == 0 {
-		_, err := o.Insert(p)
+	for _, msg := range p {
+		num, err := o.QueryTable("fly_pre_and_prove_messages").Filter("message_id", msg.MessageId).All(msg)
 		if err != nil {
 			return err
 		}
+		if num == 0 {
+			_, err := o.Insert(msg)
+			if err != nil {
+				return err
+			}
+		}
 	}
+
 	return nil
 }
 
-func (mbr *MineBlockRight) Insert(o orm.TxOrmer) error {
+func (mbr *MineBlockRight) Insert() error {
+	o := orm.NewOrm()
 	num, err := o.QueryTable("fly_mine_block_right").Filter("miner_id", mbr.MinerId).Filter("epoch", mbr.Epoch).All(mbr)
 	if err != nil {
 		return err
