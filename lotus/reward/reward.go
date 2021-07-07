@@ -965,7 +965,7 @@ func updateMineBlockRight(epoch int64, miner string, t time.Time, value float64,
 	mbr := new(models.MineBlockRight)
 	mbr.MinerId = miner
 	mbr.Epoch = epoch
-	mbr.Missed = true
+	mbr.Missed = false
 	mbr.Reward = value
 	mbr.WinCount = winCount
 	mbr.Time = t
