@@ -21,7 +21,7 @@ func (c *RewardController) GetRewardAndPledge() {
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
 	var timeStamp time.Time
-	var gas float64
+	var gas, windowPostGas, penalty float64
 
 	t := c.GetString("time")
 	mp := c.GetString("mp")
@@ -156,7 +156,77 @@ func (c *RewardController) GetRewardAndPledge() {
 			gas += info.OverEstimationBurn
 		}
 	}
+	expendMsgs := make([]models.ExpendMessages, 0)
+	//window post gas
+	if mp == "f02420" {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id in ('f02420','f021695','f021704') and method=5 and create_time::date=to_date(?,'YYYY-MM-DD')", t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			windowPostGas += expendInfo.Gas
+			windowPostGas += expendInfo.BaseBurnFee
+			windowPostGas += expendInfo.OverEstimationBurn
+		}
+	} else {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id=? and method=5 and create_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			windowPostGas += expendInfo.Gas
+			windowPostGas += expendInfo.BaseBurnFee
+			windowPostGas += expendInfo.OverEstimationBurn
+		}
+	}
+	if err != nil || num == 0 {
+		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code:        "fail",
+			Msg:         "get expend info fail",
+			Reward:      reward,
+			Pledge:      pledge,
+			Power:       power,
+			Gas:         gas,
+			BlockNumber: blockNum,
+			WinCount:    winCount,
+			TotalPower:  totalPower,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+	expendMsgs = make([]models.ExpendMessages, 0)
+	//penalty
+	if mp == "f02420" {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id in ('f02420','f021695','f021704') and method not in (0,2,3,4,5,6,7,8,11,16,18,23,25,26) and create_time::date=to_date(?,'YYYY-MM-DD')", t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			penalty += expendInfo.Gas
+			penalty += expendInfo.BaseBurnFee
+			penalty += expendInfo.OverEstimationBurn
+			penalty += expendInfo.Value
+		}
+	} else {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id=? and method not in (0,2,3,4,5,6,7,8,11,16,18,23,25,26) and create_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			penalty += expendInfo.Gas
+			penalty += expendInfo.BaseBurnFee
+			penalty += expendInfo.OverEstimationBurn
+			penalty += expendInfo.Value
+		}
+	}
 
+	if err != nil || num == 0 {
+		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code:        "fail",
+			Msg:         "get expend info fail",
+			Reward:      reward,
+			Pledge:      pledge,
+			Power:       power,
+			Gas:         gas,
+			BlockNumber: blockNum,
+			WinCount:    winCount,
+			TotalPower:  totalPower,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
@@ -171,6 +241,8 @@ func (c *RewardController) GetRewardAndPledge() {
 		TotalPreCommit: totalPreCommit,
 		TotalPleage:    totalPleage,
 		TotalVesting:   totalVesting,
+		WindowPostGas:  windowPostGas,
+		Penalty:        penalty,
 		Update:         timeStamp,
 	}
 	c.Data["json"] = &resp
@@ -226,7 +298,7 @@ func (c *RewardController) GetMinerInfo() {
 	var winCount int64
 	var reward, pledge, power, totalPower, totalAvailable, totalPreCommit, totalVesting, totalPleage float64
 	var timeStamp time.Time
-	var gas float64
+	var gas, windowPostGas, penalty float64
 
 	miner := c.GetString("miner")
 	t := c.GetString("time")
@@ -356,6 +428,55 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	}
+	expendMsgs = make([]models.ExpendMessages, 0)
+	_, err = o.Raw("select * from fly_expend_messages where miner_id=? and method=5 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
+	for _, expendInfo := range expendMsgs {
+		windowPostGas += expendInfo.Gas
+		windowPostGas += expendInfo.BaseBurnFee
+		windowPostGas += expendInfo.OverEstimationBurn
+	}
+	if err != nil {
+		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code:        "fail",
+			Msg:         "get expend info fail",
+			Reward:      reward,
+			Pledge:      pledge,
+			Power:       power,
+			Gas:         gas,
+			BlockNumber: blockNum,
+			WinCount:    winCount,
+			TotalPower:  totalPower,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+	expendMsgs = make([]models.ExpendMessages, 0)
+	_, err = o.Raw("select * from fly_expend_messages where miner_id=? and method not in (0,2,3,4,5,6,7,8,11,16,18,23,25,26) and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
+	for _, expendInfo := range expendMsgs {
+		penalty += expendInfo.Gas
+		penalty += expendInfo.BaseBurnFee
+		penalty += expendInfo.OverEstimationBurn
+		penalty += expendInfo.Value
+	}
+	if err != nil {
+		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code:        "fail",
+			Msg:         "get expend info fail",
+			Reward:      reward,
+			Pledge:      pledge,
+			Power:       power,
+			Gas:         gas,
+			BlockNumber: blockNum,
+			WinCount:    winCount,
+			TotalPower:  totalPower,
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
@@ -371,6 +492,8 @@ func (c *RewardController) GetMinerInfo() {
 		TotalPreCommit: totalPreCommit,
 		TotalPleage:    totalPleage,
 		TotalVesting:   totalVesting,
+		WindowPostGas:  windowPostGas,
+		Penalty:        penalty,
 		Update:         timeStamp,
 	}
 	c.Data["json"] = &resp

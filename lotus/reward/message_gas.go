@@ -584,7 +584,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 		m.CreateTime = time.Unix(int64(timeStamp), 0)
 		ms = append(ms, m)
 	case builtin.MethodsMiner.ProveCommitAggregate:
-		m := new(models.PreAndProveMessages)
+
 		params := new(miner.ProveCommitAggregateParams)
 		b := new(bytes.Buffer)
 		_, err := b.Write(msg.Message.Params)
@@ -608,6 +608,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			return err
 		}
 		for sector, ok := range sectors {
+			m := new(models.PreAndProveMessages)
 			if ok {
 				m.Status = 0
 			} else {

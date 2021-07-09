@@ -71,6 +71,8 @@ type RewardResp struct {
 	TotalPreCommit float64
 	TotalPleage    float64
 	TotalVesting   float64
+	WindowPostGas  float64
+	Penalty        float64
 	Update         time.Time
 }
 
