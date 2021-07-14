@@ -17,9 +17,9 @@ var (
 var log = logging.Logger("models")
 
 func InitData() error {
-	minerAndWalletRelations := make([]MinerAndWalletRelation, 0)
+	minerInfos := make([]MinerInfo, 0)
 	o := orm.NewOrm()
-	num, err := o.QueryTable("fly_miner_and_wallet_relation").All(&minerAndWalletRelations)
+	num, err := o.QueryTable("fly_miner_info").All(&minerInfos)
 	if err != nil {
 		log.Errorf("get miner and wallet relation info err:%+v\n", err)
 		return err
@@ -30,7 +30,7 @@ func InitData() error {
 	}
 	miners := make(map[string]int)
 	//wallets := make(map[string]int)
-	for _, info := range minerAndWalletRelations {
+	for _, info := range minerInfos {
 		miners[info.MinerId] = 1
 		//	wallets[info.WalletId] = 2
 	}
