@@ -9,6 +9,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/go-state-types/big"
 	"github.com/filecoin-project/lotus/api"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/blockstore"
@@ -19,11 +20,13 @@ import (
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
 	"github.com/filecoin-project/specs-actors/v5/actors/builtin"
 	miner2 "github.com/filecoin-project/specs-actors/v5/actors/builtin/miner"
+	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/prometheus/common/log"
 	"io"
 	"io/ioutil"
+	//big2 "math/big"
 	"net/http"
 	"profit-allocation/models"
 	"time"
@@ -516,4 +519,61 @@ func TestProveCommitAggregateParams() {
 	c, _ := params.SectorNumbers.Count()
 	fmt.Println(params.SectorNumbers.AllMap(c))
 
+}
+
+func TestStateReplay() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(ctx, LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	mcid, err := cid.Decode("bafy2bzacebjgniq5pnuhqbbq7wd3x3hf4rsj2zjqp7teiq5ogmezcenqfz3bm")
+	if err != nil {
+		fmt.Printf("message cid was invalid: %s\n", err)
+		return
+	}
+
+	res, err := nodeApi.StateReplay(ctx, types.EmptyTSK, mcid)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("Replay receipt:")
+	fmt.Printf("Exit code: %d\n", res.MsgRct.ExitCode)
+	fmt.Printf("Return: %x\n", res.MsgRct.Return)
+	fmt.Printf("Gas Used: %d\n", res.MsgRct.GasUsed)
+
+	fmt.Printf("Base Fee Burn: %d\n", res.GasCost.BaseFeeBurn)
+	fmt.Printf("Overestimaton Burn: %d\n", res.GasCost.OverEstimationBurn)
+	fmt.Printf("Miner Penalty: %d\n", res.GasCost.MinerPenalty)
+	fmt.Printf("Miner Tip: %d\n", res.GasCost.MinerTip)
+	fmt.Printf("Refund: %d\n", res.GasCost.Refund)
+
+	fmt.Printf("Total Message Cost: %d\n", res.GasCost.TotalCost)
+
+	if res.MsgRct.ExitCode != 0 {
+		fmt.Printf("Error message: %q\n", res.Error)
+	}
+
+	fmt.Printf("%s\t%s\t%s\t%d\t%d\t\n", res.Msg.From, res.Msg.To, res.Msg.Value, res.Msg.Method, res.MsgRct.ExitCode)
+	burn := big.NewInt(res.GasCost.BaseFeeBurn.Int64())
+	printInternalExecutions("\t", res.ExecutionTrace.Subcalls, &burn)
+	fmt.Println(burn.Int64())
+}
+func printInternalExecutions(prefix string, trace []types.ExecutionTrace, burn *big.Int) {
+	for _, im := range trace {
+
+		*burn = big.Add(big.NewInt(burn.Int64()), big.NewInt(im.Msg.Value.Int64()))
+		fmt.Printf("%s%s\t%s\t%s\t%d\t%d\t\n", prefix, im.Msg.From, im.Msg.To, im.Msg.Value, im.Msg.Method, im.MsgRct.ExitCode)
+		printInternalExecutions(prefix+"\t", im.Subcalls, burn)
+	}
 }

@@ -160,7 +160,8 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			if messagesCostMap[message.Cid.String()] {
 				continue
 			}
-			gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
+			//gasout, err := getGasout(blockAfter, message.Message, basefee, i, height)
+			gasout, err := getGasoutByStateReplay(message.Message.Cid())
 			if err != nil {
 				return err
 			}
@@ -228,6 +229,38 @@ func isPledgeMessage(method abi.MethodNum) bool {
 		method == builtin.MethodsMiner.PreCommitSectorBatch ||
 		method == builtin.MethodsMiner.ProveCommitSector ||
 		method == builtin.MethodsMiner.ProveCommitAggregate
+}
+
+func getGasoutByStateReplay(msg cid.Cid) (gasout vm.GasOutputs, err error) {
+	ctx := context.Background()
+	var tip, baseburn, overburn, penalty abi.TokenAmount
+	res, err := client.Client.StateReplay(ctx, types.EmptyTSK, msg)
+	if err != nil {
+		return gasout, err
+	}
+	overburn = res.GasCost.OverEstimationBurn
+	baseburn = res.GasCost.BaseFeeBurn
+	penalty = res.GasCost.MinerPenalty
+	tip = res.GasCost.MinerTip
+
+	getSubCallsCost(res.ExecutionTrace.Subcalls, &baseburn)
+
+	gasout = vm.GasOutputs{
+		BaseFeeBurn:        baseburn,
+		OverEstimationBurn: overburn,
+		MinerPenalty:       penalty,
+		MinerTip:           tip,
+	}
+	return
+}
+
+func getSubCallsCost(trace []types.ExecutionTrace, burn *big.Int) {
+
+	for _, im := range trace {
+		*burn = big.Add(*burn, im.Msg.Value)
+		getSubCallsCost(im.Subcalls, burn)
+	}
+
 }
 
 func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.BlockHeader) error {
@@ -453,38 +486,7 @@ func reportConsensusFaultPenalty(tipsetKey types.TipSetKey, msg api.Message) (ab
 	r := bytes.NewReader(rewardStateRaw)
 	rewardActorState := unmarshalState(r)
 
-	//fmt.Printf("%+v\n", rewardActorState.ThisEpochRewardSmoothed.Estimate())
 	penaltyFee = miner.ConsensusFaultPenalty(rewardActorState.ThisEpochRewardSmoothed.Estimate())
-	//fmt.Printf("%+v\n", penaltyFee)
-	//rcfp := new(miner.ReportConsensusFaultParams)
-	//b := new(bytes.Buffer)
-	//_, err = b.Write(msg.Message.Params)
-	////fmt.Printf("msg :%+v",msg.Message)
-	////fmt.Println(n, err)
-	//if err != nil {
-	//	msgLog.Errorf("reportConsensusFaultPenalty Write Message.Params err:%+v", err)
-	//	return "0", "0", err
-	//}
-	//err = rcfp.UnmarshalCBOR(b)
-	//if err != nil {
-	//	msgLog.Errorf("reportConsensusFaultPenalty rcfp UnmarshalCBOR err:%+v", err)
-	//	return "0", "0", err
-	//}
-	//faultAge := abi.ChainEpoch(1000)
-	//slasherReward := miner.RewardForConsensusSlashReport(faultAge, penaltyFee)
-	////fmt.Printf("%+v\n%+v\n", penaltyFee.String(), slasherReward.String())
-	//burnFee := big.NewInt(0)
-	//burnFee.Sub(penaltyFee.Int, slasherReward.Int)
-	//burnFeeStr := burnFee.String()
-	//if len(burnFeeStr) > 19 {
-	//	burnFeeStr = burnFeeStr[:19]
-	//}
-	//slasherRewardStr := slasherReward.String()
-	//if len(slasherRewardStr) > 19 {
-	//	slasherRewardStr = slasherRewardStr[:19]
-	//}
-	//return burnFeeStr, slasherRewardStr, nil
-
 	return penaltyFee, nil
 }
 
