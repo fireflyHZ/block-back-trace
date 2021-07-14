@@ -154,7 +154,7 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, tipsetKey types.TipSetKey, height int64) error {
 	messagesCostMap := make(map[string]bool)
 	consensusFaultMap := make(map[string]bool)
-	for i, message := range messages {
+	for _, message := range messages {
 		//计算支出
 		if inWallets(message.Message.From.String()) || inMiners(message.Message.From.String()) {
 			if messagesCostMap[message.Cid.String()] {
