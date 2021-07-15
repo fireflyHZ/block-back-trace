@@ -45,8 +45,8 @@ func CalculateMsgGasData() {
 		return
 	}
 
-	if blockHeight-CostFromHeight > 200 {
-		h, err := handleMsgGasInfo(CostFromHeight+200, CostFromHeight)
+	if blockHeight-CostFromHeight > 60000 {
+		h, err := handleMsgGasInfo(CostFromHeight+60000, CostFromHeight)
 		if err != nil {
 			msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
 			return
@@ -154,8 +154,11 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 
 func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefee abi.TokenAmount, blockAfter cid.Cid, tipsetKey types.TipSetKey, height int64) error {
 	messagesCostMap := make(map[string]bool)
-	consensusFaultMap := make(map[string]bool)
+	//consensusFaultMap := make(map[string]bool)
 	for _, message := range messages {
+		if !isPledgeMessage(message.Message.Method) {
+			continue
+		}
 		//计算支出
 		if inWallets(message.Message.From.String()) || inMiners(message.Message.From.String()) {
 			if messagesCostMap[message.Cid.String()] {
@@ -173,45 +176,45 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			messagesCostMap[message.Cid.String()] = true
 		}
 		//计算ReportConsensusFault惩罚
-		if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
-			if consensusFaultMap[message.Cid.String()] {
-				continue
-			}
-			//计算
-
-			burn, err := reportConsensusFaultPenalty(tipsetKey, message)
-			if err != nil {
-				return err
-			}
-			zeroTokenAmount := abi.NewTokenAmount(0)
-			burnTokenAmount := burn
-			valueTokenAmount := abi.NewTokenAmount(0)
-			gas := vm.GasOutputs{
-				BaseFeeBurn:        burnTokenAmount,
-				OverEstimationBurn: zeroTokenAmount,
-				MinerPenalty:       zeroTokenAmount,
-				MinerTip:           valueTokenAmount,
-				Refund:             zeroTokenAmount,
-				GasRefund:          0,
-				GasBurned:          0,
-			}
-			err = recordCostMessage(gas, message, block)
-			if err != nil {
-				return err
-			}
-			consensusFaultMap[message.Cid.String()] = true
-		}
+		//if message.Message.Method == 15 && inMiners(message.Message.To.String()) {
+		//	if consensusFaultMap[message.Cid.String()] {
+		//		continue
+		//	}
+		//	//计算
+		//
+		//	burn, err := reportConsensusFaultPenalty(tipsetKey, message)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	zeroTokenAmount := abi.NewTokenAmount(0)
+		//	burnTokenAmount := burn
+		//	valueTokenAmount := abi.NewTokenAmount(0)
+		//	gas := vm.GasOutputs{
+		//		BaseFeeBurn:        burnTokenAmount,
+		//		OverEstimationBurn: zeroTokenAmount,
+		//		MinerPenalty:       zeroTokenAmount,
+		//		MinerTip:           valueTokenAmount,
+		//		Refund:             zeroTokenAmount,
+		//		GasRefund:          0,
+		//		GasBurned:          0,
+		//	}
+		//	err = recordCostMessage(gas, message, block)
+		//	if err != nil {
+		//		return err
+		//	}
+		//	consensusFaultMap[message.Cid.String()] = true
+		//}
 
 		//记录precommit和provecommit消息
-		if inMiners(message.Message.To.String()) {
-			if isPledgeMessage(message.Message.Method) {
-				//pre
-				err := recordPreAndProveCommitMsg(message, height, block.Timestamp)
-				if err != nil {
-					return err
-				}
-			}
-		}
+		//if inMiners(message.Message.To.String()) {
+		//	if isPledgeMessage(message.Message.Method) {
+		//		//pre
+		//		err := recordPreAndProveCommitMsg(message, height, block.Timestamp)
+		//		if err != nil {
+		//			return err
+		//		}
+		//	}
+		//}
 
 	}
 	h, err := strconv.ParseInt(block.Height.String(), 10, 64)

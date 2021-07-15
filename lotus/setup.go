@@ -37,9 +37,9 @@ func Setup() {
 
 func loop() {
 	setupLog.Info("loop begin")
-	sync.Wg.Add(2)
+	sync.Wg.Add(1)
 	go reward.CalculateMsgGasData()
-	go reward.CollectTotalRerwardAndPledge()
+	//go reward.CollectTotalRerwardAndPledge()
 	sync.Wg.Wait()
 	setupLog.Info("loop end")
 }
