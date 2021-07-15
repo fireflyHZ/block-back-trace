@@ -33,7 +33,7 @@ func main() {
 	}
 
 	//reward.TestStateReplay()
-	go lotus.Setup()
+	lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)
 	shutdownDone := make(chan struct{})

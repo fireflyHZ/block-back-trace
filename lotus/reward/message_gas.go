@@ -44,26 +44,30 @@ func CalculateMsgGasData() {
 	if blockHeight <= CostFromHeight+11 {
 		return
 	}
-
-	if blockHeight-CostFromHeight > 60000 {
-		h, err := handleMsgGasInfo(CostFromHeight+60000, CostFromHeight)
-		if err != nil {
-			msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
-			return
-		}
-		CostFromHeight = h
-	} else {
-		h, err := handleMsgGasInfo(blockHeight, CostFromHeight)
-		if err != nil {
-			msgLog.Errorf("CalculateMsgGasData() handleRequestInfo <=50 err:%+v", err)
-			return
-		}
-		CostFromHeight = h
-	}
-	err = updateMsgGasNetStatus(CostFromHeight)
+	_, err = handleMsgGasInfo(904400, 892000)
 	if err != nil {
-		msgLog.Errorf("updateMsgGasNetRunDataTmp height:%+v err :%+v", CostFromHeight, err)
+		msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
+		return
 	}
+	//if blockHeight-CostFromHeight > 60000 {
+	//	h, err := handleMsgGasInfo(CostFromHeight+60000, CostFromHeight)
+	//	if err != nil {
+	//		msgLog.Errorf(" CalculateMsgGasData() handleRequestInfo >50 err:%+v", err)
+	//		return
+	//	}
+	//	CostFromHeight = h
+	//} else {
+	//	h, err := handleMsgGasInfo(blockHeight, CostFromHeight)
+	//	if err != nil {
+	//		msgLog.Errorf("CalculateMsgGasData() handleRequestInfo <=50 err:%+v", err)
+	//		return
+	//	}
+	//	CostFromHeight = h
+	//}
+	//err = updateMsgGasNetStatus(CostFromHeight)
+	//if err != nil {
+	//	msgLog.Errorf("updateMsgGasNetRunDataTmp height:%+v err :%+v", CostFromHeight, err)
+	//}
 
 }
 
@@ -217,14 +221,14 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 		//}
 
 	}
-	h, err := strconv.ParseInt(block.Height.String(), 10, 64)
-	if err != nil {
-		msgLog.Errorf("parse hight:%+v err:%+v", block.Height.String(), err)
-	}
-	err = updateMsgGasNetStatus(h)
-	if err != nil {
-		msgLog.Errorf("update hight:%+v err:%+v", h, err)
-	}
+	//h, err := strconv.ParseInt(block.Height.String(), 10, 64)
+	//if err != nil {
+	//	msgLog.Errorf("parse hight:%+v err:%+v", block.Height.String(), err)
+	//}
+	//err = updateMsgGasNetStatus(h)
+	//if err != nil {
+	//	msgLog.Errorf("update hight:%+v err:%+v", h, err)
+	//}
 	return nil
 }
 
