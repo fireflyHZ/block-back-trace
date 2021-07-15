@@ -705,6 +705,9 @@ func initWallet(tipset types.TipSetKey) error {
 		}
 		mi, err := client.Client.StateMinerInfo(ctx, minerAddr, tipset)
 		if err != nil {
+			if err.Error() == "actor not found" {
+				continue
+			}
 			msgLog.Errorf("StateMinerInfo miner:%+v err:%+v", m, err)
 			return err
 		}

@@ -47,10 +47,10 @@ func CollectTotalRerwardAndPledge() {
 		return
 	}
 
-	if blockHeight-rewardBlockHeight > 50000 {
+	if blockHeight-rewardBlockHeight > 200 {
 		//	rewardLog.Debug("DEBUG: collectLotusChainBlockRunData()  >200")
 
-		h, err := getRewardAndPledge(rewardBlockHeight+50000, rewardBlockHeight)
+		h, err := getRewardAndPledge(rewardBlockHeight+200, rewardBlockHeight)
 		if err != nil {
 			rewardLog.Errorf("get reward and pledge handle > 200 err:%+v", err)
 			return
