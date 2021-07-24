@@ -6,8 +6,7 @@ import (
 	"github.com/beego/beego/v2/server/web"
 	"profit-allocation/controllers"
 	"profit-allocation/lotus"
-	"profit-allocation/tool/log"
-
+	"profit-allocation/lotus/reward"
 	//_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"os"
@@ -19,20 +18,20 @@ import (
 
 func main() {
 
-	if err := log.Init(); err != nil {
-		fmt.Println("init log error:", err)
-		return
-	}
-	if err := initDatabase(); err != nil {
-		fmt.Println("init database error:", err)
-		return
-	}
-	if err := models.InitData(); err != nil {
-		fmt.Println("init data error:", err)
-		return
-	}
+	//if err := log.Init(); err != nil {
+	//	fmt.Println("init log error:", err)
+	//	return
+	//}
+	//if err := initDatabase(); err != nil {
+	//	fmt.Println("init database error:", err)
+	//	return
+	//}
+	//if err := models.InitData(); err != nil {
+	//	fmt.Println("init data error:", err)
+	//	return
+	//}
 
-	//reward.TestStateReplay()
+	reward.TestMinerPower()
 	lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)

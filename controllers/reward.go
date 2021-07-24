@@ -125,13 +125,13 @@ func (c *RewardController) GetRewardAndPledge() {
 		}
 	}
 
-	expendInfo := make([]models.ExpendInfo, 0)
+	expendInfo := make([]models.ExpendMessages, 0)
 	if mp == "f02420" {
-		num, err = o.Raw("select * from fly_expend_info where miner_id=? or miner_id=? or miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
+		num, err = o.Raw("select * from fly_expend_messages where miner_id=? or miner_id=? or miner_id=? and method in (6,7,25,26) and update_time::date=to_date(?,'YYYY-MM-DD')", "f02420", "f021695", "f021704", t).QueryRows(&expendInfo)
 		//num, err = o.QueryTable("fly_expend_info").Filter("miner_id_in", "f02420", "f021695", "f021704").Filter("time", queryTime).All(&expendInfo)
 	} else {
 		//num, err = o.QueryTable("fly_expend_info").Filter("miner_id", mp).Filter("time", queryTime).All(&expendInfo)
-		num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
+		num, err = o.Raw("select * from fly_expend_messages where miner_id=? and method in (6,7,25,26) and update_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendInfo)
 	}
 	if err != nil || num == 0 {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
@@ -382,9 +382,11 @@ func (c *RewardController) GetMinerInfo() {
 		totalVesting = rewardInfo.TotalVesting
 	}
 
-	expendInfos := make([]models.ExpendInfo, 0)
+	expendInfos := make([]models.ExpendMessages, 0)
 	//num, err = o.QueryTable("fly_expend_info").Filter("miner_id", miner).Filter("time", queryTime).All(&expendInfos)
-	num, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
+	//_, err = o.Raw("select * from fly_expend_info where miner_id=? and update_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
+	num, err = o.Raw("select * from fly_expend_messages where miner_id=? and method in (6,7,25,26) and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendInfos)
+
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
@@ -408,9 +410,9 @@ func (c *RewardController) GetMinerInfo() {
 			gas += expendInfo.OverEstimationBurn
 		}
 	}
-	expendMsgs := make([]models.ExpendMessages, 0)
+	sectorInfo := make([]models.PreAndProveMessages, 0)
 
-	sectorNum, err := o.Raw("select * from fly_expend_messages where miner_id=? and method=7 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
+	sectorNum, err := o.Raw("select * from fly_pre_and_prove_messages where miner_id=? and method=7 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&sectorInfo)
 	if err != nil {
 		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
@@ -428,7 +430,7 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	}
-	expendMsgs = make([]models.ExpendMessages, 0)
+	expendMsgs := make([]models.ExpendMessages, 0)
 	_, err = o.Raw("select * from fly_expend_messages where miner_id=? and method=5 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
 	for _, expendInfo := range expendMsgs {
 		windowPostGas += expendInfo.Gas

@@ -577,3 +577,63 @@ func printInternalExecutions(prefix string, trace []types.ExecutionTrace, burn *
 		printInternalExecutions(prefix+"\t", im.Subcalls, burn)
 	}
 }
+
+func TestMinerPower() {
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	minerAddr, _ := address.NewFromString("f0144528")
+	var epoch = abi.ChainEpoch(926640)
+	//tipset, _ := nodeApi.ChainHead(context.Background())
+	//fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
+	t := types.NewTipSetKey()
+	//ver, _ := nodeApi.StateNetworkVersion(context.Background(), tipset.Key())
+	//fmt.Printf("version:%+v\n", ver)
+	blocks, err := nodeApi.ChainGetTipSetByHeight(context.Background(), epoch, t)
+	if err != nil {
+		//	rewardForLog.Error("Error get chain head err:%+v",err)
+		fmt.Printf("Error get chain head err:%+v\n", err)
+		return
+	}
+
+	p, _ := nodeApi.StateMinerPower(context.Background(), minerAddr, blocks.Key())
+	fmt.Printf("==========%+v\n", p)
+
+	//---------------------
+	ctx := context.Background()
+	mact, err := nodeApi.StateGetActor(ctx, minerAddr, blocks.Key())
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	tbs := blockstore.NewTieredBstore(blockstore.NewAPIBlockstore(nodeApi), blockstore.NewMemory())
+	mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
+	if err != nil {
+		fmt.Println(err)
+	}
+	lockedFunds, err := mas.LockedFunds()
+	if err != nil {
+		fmt.Println(err)
+	}
+	availBalance, err := mas.AvailableBalance(mact.Balance)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Printf("Miner Balance: %s\n", color.YellowString("%s", types.FIL(mact.Balance)))
+	fmt.Printf("\tPreCommit:   %s\n", types.FIL(lockedFunds.PreCommitDeposits))
+	fmt.Printf("\tPledge:      %s\n", types.FIL(lockedFunds.InitialPledgeRequirement))
+	fmt.Printf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
+	fmt.Printf("\tAvailable:   %s\n", types.FIL(availBalance))
+
+}
