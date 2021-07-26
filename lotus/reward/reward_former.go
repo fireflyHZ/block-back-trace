@@ -189,10 +189,10 @@ func unmarshalState(r io.Reader) *reward.State {
 func inWallets(walletId string) bool {
 
 	for wallet, m := range models.Wallets {
+		if m == "f0148452" || m == "f02420" {
+			msgLog.Infof("listen wallet  :%+v ", wallet)
+		}
 		if wallet == walletId {
-			if m == "f0148452" || m == "f02420" {
-				msgLog.Infof("listen wallet  :%+v ", wallet)
-			}
 			return true
 		}
 	}
