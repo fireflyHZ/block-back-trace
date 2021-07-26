@@ -8,7 +8,7 @@ import (
 func InsertPledgeMsg(p []*PreAndProveMessages) error {
 	o := orm.NewOrm()
 	for _, msg := range p {
-		num, err := o.QueryTable("fly_pre_and_prove_messages").Filter("message_id", msg.MessageId).All(msg)
+		num, err := o.QueryTable("fly_pre_and_prove_messages").Filter("message_id", msg.MessageId).Filter("sector_number", msg.SectorNumber).All(msg)
 		if err != nil {
 			return err
 		}
