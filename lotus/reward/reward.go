@@ -181,7 +181,7 @@ func getRewardAndPledge(dealBlcokHeight int64, end int64) (int64, error) {
 
 func isExecutingPoint(nowDatetime time.Time) bool {
 	_, nowMin, _ := nowDatetime.Clock()
-	if nowMin == 59 {
+	if nowMin == 59 || nowMin == 30 {
 		return true
 	} else {
 		return false
