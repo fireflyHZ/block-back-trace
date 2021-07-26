@@ -161,9 +161,9 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 	messagesCostMap := make(map[string]bool)
 	consensusFaultMap := make(map[string]bool)
 	for _, message := range messages {
-		if !isPledgeMessage(message.Message.Method) {
-			continue
-		}
+		//if !isPledgeMessage(message.Message.Method) {
+		//	continue
+		//}
 		//计算支出
 		if inWallets(message.Message.From.String()) || inMiners(message.Message.From.String()) {
 			if messagesCostMap[message.Cid.String()] {
