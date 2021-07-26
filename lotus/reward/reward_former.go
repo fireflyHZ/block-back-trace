@@ -188,8 +188,11 @@ func unmarshalState(r io.Reader) *reward.State {
 
 func inWallets(walletId string) bool {
 
-	for wallet, _ := range models.Wallets {
+	for wallet, m := range models.Wallets {
 		if wallet == walletId {
+			if m == "f0148452" || m == "f02420" {
+				msgLog.Infof("listen wallet  :%+v ", wallet)
+			}
 			return true
 		}
 	}
@@ -441,7 +444,7 @@ func TestMinerInfo() {
 		return
 	}
 	defer closer()
-	minerAddr, err := address.NewFromString("f0419944")
+	minerAddr, err := address.NewFromString("f0144528")
 	if err != nil {
 		fmt.Println("NewFromString err:", err)
 		return

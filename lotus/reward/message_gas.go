@@ -145,6 +145,7 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 			return i, err
 		}
 		msgLog.Infof("listen wallet number :%+v ", len(models.Wallets))
+
 		//计算支出
 		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key(), i)
 		if err != nil {
