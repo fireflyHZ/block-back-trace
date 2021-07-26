@@ -414,7 +414,7 @@ func (c *RewardController) GetMinerInfo() {
 	}
 	sectorInfo := make([]models.PreAndProveMessages, 0)
 
-	sectorNum, err := o.Raw("select * from fly_pre_and_prove_messages where to = ? and method=7 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&sectorInfo)
+	sectorNum, err := o.Raw("select * from fly_pre_and_prove_messages where \"to\" = ? and method=7 and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&sectorInfo)
 	if err != nil {
 		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
