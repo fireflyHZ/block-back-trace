@@ -2,6 +2,7 @@ package block
 
 import (
 	"context"
+	"fmt"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/lotus/chain/gen"
@@ -34,8 +35,8 @@ func GetMinerMineBlockPercentage(start, end, miner string) (float64, []models.Bl
 		return 0, nil, nil, err
 	}
 	//blockLog.Infof("calculateMineBlockPercentage from:%+v to:%+v", from, to)
-
-	counter, missed, mined := calculateMineBlockPercentage(from, to, miner)
+	var errCalc error
+	counter, missed, mined := calculateMineBlockPercentage(from, to, miner, &errCalc)
 	//if err != nil {
 	//	blockLog.Errorf("calculateMineBlockPercentage error:%+v", err)
 	//	return 0, err
@@ -49,9 +50,9 @@ func GetMinerMineBlockPercentage(start, end, miner string) (float64, []models.Bl
 		return mined[i].Epoch < mined[j].Epoch
 	})
 	if counter.winNum == 0 {
-		return 1, missed, mined, nil
+		return 1, missed, mined, errCalc
 	} else {
-		return counter.mineNum / counter.winNum, missed, mined, nil
+		return counter.mineNum / counter.winNum, missed, mined, errCalc
 	}
 
 }
@@ -87,11 +88,12 @@ func calculateBlock(start, end string) (abi.ChainEpoch, abi.ChainEpoch, error) {
 	return from, to, nil
 }
 
-func calculateMineBlockPercentage(begin, end abi.ChainEpoch, miner string) (*mineBlockNum, []models.BlockInfo, []models.BlockInfo) {
+func calculateMineBlockPercentage(begin, end abi.ChainEpoch, miner string, errCalc *error) (*mineBlockNum, []models.BlockInfo, []models.BlockInfo) {
 	counter := new(mineBlockNum)
 	minerAddr, err := address.NewFromString(miner)
 	if err != nil {
 		blockLog.Errorf("NewFromString err:", err)
+		*errCalc = err
 		return counter, nil, nil
 	}
 	missed := make([]models.BlockInfo, 0)
@@ -101,11 +103,11 @@ func calculateMineBlockPercentage(begin, end abi.ChainEpoch, miner string) (*min
 	for {
 		if begin-end <= groupNum {
 			wait.Add(1)
-			go do(begin, end, counter, minerAddr, &missed, &mined, &wins)
+			go do(begin, end, counter, minerAddr, &missed, &mined, &wins, errCalc)
 			break
 		}
 		wait.Add(1)
-		go do(begin, begin-groupNum, counter, minerAddr, &missed, &mined, &wins)
+		go do(begin, begin-groupNum, counter, minerAddr, &missed, &mined, &wins, errCalc)
 		//是否sleep
 		begin -= groupNum
 	}
@@ -114,7 +116,7 @@ func calculateMineBlockPercentage(begin, end abi.ChainEpoch, miner string) (*min
 	return counter, missed, mined
 }
 
-func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address, missed, mined, wins *[]models.BlockInfo) {
+func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address, missed, mined, wins *[]models.BlockInfo, errCalc *error) {
 
 	defer wait.Done()
 	for i := begin; i > end; i-- {
@@ -122,6 +124,7 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 		tipset, err := client.Client.ChainGetTipSetByHeight(context.Background(), i, types.NewTipSetKey())
 		if err != nil {
 			blockLog.Errorf("calculateBlock get chain head error:%+v", err)
+			*errCalc = fmt.Errorf("calculateBlock get chain head error:%+v", err)
 			return
 		}
 		if tipset.Height() != i {
@@ -144,7 +147,7 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 		blockLog.Infof("mined:%+v", time.Now().Sub(start))
 		end := time.Now()
 		//计算winner
-		if calculateWiner(i-1, miner) {
+		if calculateWiner(i-1, miner, errCalc) {
 			counter.lock.Lock()
 			counter.winNum++
 			counter.lock.Unlock()
@@ -158,18 +161,20 @@ func do(begin, end abi.ChainEpoch, counter *mineBlockNum, miner address.Address,
 
 }
 
-func calculateWiner(h abi.ChainEpoch, miner address.Address) bool {
+func calculateWiner(h abi.ChainEpoch, miner address.Address, errCalc *error) bool {
 	ctx := context.Background()
 	round := h + 1
 	tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 	if err != nil {
 		blockLog.Errorf("ChainGetTipSetByHeight err:%+v", err)
+		*errCalc = fmt.Errorf("ChainGetTipSetByHeight err:%+v", err)
 		return false
 	}
 
 	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
 	if err != nil {
 		blockLog.Errorf("MinerGetBaseInfo err:%+v", err)
+		*errCalc = fmt.Errorf("MinerGetBaseInfo err:%+v", err)
 		return false
 	}
 
@@ -193,6 +198,7 @@ func calculateWiner(h abi.ChainEpoch, miner address.Address) bool {
 	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
 	if err != nil {
 		blockLog.Errorf("IsRoundWinner err:%+v", err)
+		*errCalc = fmt.Errorf("IsRoundWinner err:%+v", err)
 		return false
 	}
 

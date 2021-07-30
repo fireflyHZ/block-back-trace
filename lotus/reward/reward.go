@@ -920,45 +920,49 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 func calculateMinerRight(h abi.ChainEpoch, miner address.Address) (bool, int64) {
 	ctx := context.Background()
 	round := h + 1
-	tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
-	if err != nil {
-		rewardLog.Warnf("ChainGetTipSetByHeight err:%+v", err)
-		return false, 0
-	}
+	for {
+		tp, err := client.Client.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+		if err != nil {
+			rewardLog.Warnf("ChainGetTipSetByHeight err:%+v", err)
+			time.Sleep(time.Second * 3)
+			continue
+		}
 
-	mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
-	if err != nil {
-		rewardLog.Warnf("MinerGetBaseInfo miner:%+v err:%+v", miner, err)
-		return false, 0
-	}
+		mbi, err := client.Client.MinerGetBaseInfo(ctx, miner, round, tp.Key())
+		if err != nil {
+			rewardLog.Warnf("MinerGetBaseInfo miner:%+v err:%+v", miner, err)
+			time.Sleep(time.Second * 3)
+			continue
+		}
 
-	if mbi == nil {
+		if mbi == nil {
+			time.Sleep(time.Second * 3)
+			continue
+		}
+		if !mbi.EligibleForMining {
+			// slashed or just have no power yet
+			return false, 0
+		}
 
-		return false, 0
-	}
-	if !mbi.EligibleForMining {
-		// slashed or just have no power yet
-		return false, 0
-	}
+		beaconPrev := mbi.PrevBeaconEntry
+		bvals := mbi.BeaconEntries
 
-	beaconPrev := mbi.PrevBeaconEntry
-	bvals := mbi.BeaconEntries
+		rbase := beaconPrev
+		if len(bvals) > 0 {
+			rbase = bvals[len(bvals)-1]
+		}
 
-	rbase := beaconPrev
-	if len(bvals) > 0 {
-		rbase = bvals[len(bvals)-1]
-	}
+		p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
+		if err != nil {
+			rewardLog.Warnf("IsRoundWinner miner%+v err:%+v", miner, err)
+			return false, 0
+		}
 
-	p, err := gen.IsRoundWinner(ctx, tp, round, miner, rbase, mbi, client.SignClient)
-	if err != nil {
-		rewardLog.Warnf("IsRoundWinner miner%+v err:%+v", miner, err)
-		return false, 0
+		if p == nil {
+			return false, 0
+		}
+		return true, p.WinCount
 	}
-
-	if p == nil {
-		return false, 0
-	}
-	return true, p.WinCount
 }
 
 func updateMineBlockRight(epoch int64, miner string, t time.Time, value float64, winCount int64) error {
