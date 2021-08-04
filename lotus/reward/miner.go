@@ -5,7 +5,6 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/lotus/chain/types"
 	"profit-allocation/lotus/client"
-	"profit-allocation/models"
 	"profit-allocation/tool/bit"
 	"strconv"
 )
@@ -16,8 +15,6 @@ type MinerBalance struct {
 }
 
 func QueryMinerAddressBalance(minerId string) (addrs map[string][]*MinerBalance, err error) {
-	models.LotusHost = "http://172.16.10.243:1235/rpc/v0"
-	client.CreateLotusClient()
 	addrs, err = getMinerAddress(minerId)
 	if err != nil {
 		msgLog.Errorf("Get miner address error, miner:%+v err:%+v", minerId, err)

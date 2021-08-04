@@ -936,8 +936,7 @@ func calculateMinerRight(h abi.ChainEpoch, miner address.Address) (bool, int64) 
 		}
 
 		if mbi == nil {
-			time.Sleep(time.Second * 3)
-			continue
+			return false, 0
 		}
 		if !mbi.EligibleForMining {
 			// slashed or just have no power yet
