@@ -17,7 +17,7 @@ func Init() error {
 	//	return err
 	//}
 	//
-	//if err := logging.SetLogLevel("wallet-ctr-log", "DEBUG"); err != nil {
+	//if err := logging.SetLogLevel("miner-ctr-log", "DEBUG"); err != nil {
 	//	return err
 	//}
 	//models
