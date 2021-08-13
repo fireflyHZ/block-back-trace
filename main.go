@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	//reward.TestMinerInfo()
+	//reward.Testmine()
 	go lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)
@@ -86,11 +86,11 @@ func initDatabase() error {
 		new(models.MinerInfo),
 		new(models.ExpendMessages),
 		new(models.PreAndProveMessages),
-		//new(models.MineBlocks),
 		new(models.MineMessages),
 		new(models.MinerStatusAndDailyChange),
 		new(models.MinerAndWalletRelation),
 		new(models.MineBlockRight),
+		new(models.AllMinersMined),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		return err

@@ -91,6 +91,19 @@ type GetBlockPercentageResp struct {
 	Missed          []BlockInfo
 }
 
+type GetMinersLuckResp struct {
+	Code       string
+	Msg        string
+	MinersLuck []MinerLuck
+}
+
+type MinerLuck struct {
+	Miner       string
+	Luck        string
+	BlockNumber int
+	TotalValue  float64
+}
+
 type BlockInfo struct {
 	Epoch abi.ChainEpoch
 	Time  string

@@ -49,6 +49,7 @@ type ListenRewardNetStatus struct {
 	CreateTime         time.Time
 	UpdateTime         time.Time
 }
+
 type MinerInfo struct {
 	Id           int `orm:"pk;auto"`
 	MinerId      string
@@ -106,22 +107,6 @@ type PreAndProveMessages struct {
 	CreateTime   time.Time
 }
 
-//出块记录
-type MineBlocks struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	//	WalletId string
-	Epoch  int64
-	Reward float64
-	//Gas      string
-	//Penalty  string
-	//Value    string
-	//Power    float64
-	WinCount int64
-	//Time       string
-	CreateTime time.Time
-}
-
 //打包的message记录
 type MineMessages struct {
 	Id         int `orm:"pk;auto"`
@@ -145,15 +130,14 @@ type MineBlockRight struct {
 	UpdateTime time.Time
 }
 
-type MessageRewardInfo struct {
-	Id      int `orm:"pk;auto"`
-	MinerId string
-	//	WalletId string
-	Epoch string
-
-	Value      string
-	Time       string
-	UpdateTime int64
+//全部矿工出块记录
+type AllMinersMined struct {
+	MinerId    string `orm:"index"`
+	Epoch      int64  `orm:"index"`
+	Reward     float64
+	Power      float64 `orm:"index"`
+	TotalPower float64
+	Time       time.Time
 }
 
 type WalletBaseinfo struct {
@@ -164,16 +148,6 @@ type WalletBaseinfo struct {
 	BalanceAttofil string
 	CreateTime     int64
 	UpdateTime     int64
-	Status         string
-}
-
-type WalletHistoryData struct {
-	Id       int `orm:"pk;auto"`
-	WalletId string
-	//NodeId         string
-	BalanceFil     string
-	BalanceAttofil string
-	CreateTime     int64
 	Status         string
 }
 
@@ -199,21 +173,6 @@ type NetRunDataPro struct {
 	UpdateTime         int64
 }
 
-type RewardMessages struct {
-	Id        int `orm:"pk;auto"`
-	MessageId string
-	MinerId   string
-	From      string
-	Epoch     string
-
-	Value string
-	//RewardValue        string
-	Method uint64
-
-	Time       string
-	CreateTime uint64
-}
-
 //分配至order和user版本使用 以下
 type UserInfo struct {
 	Id            int `orm:"pk;auto"`
@@ -228,16 +187,6 @@ type UserInfo struct {
 	Reward        float64 //总奖励
 	Fee           float64 //总奖励
 	UpdateTime    string
-}
-
-type UserBlockRewardInfo struct {
-	Id         int `orm:"pk;auto"`
-	UserId     int
-	MinerId    string
-	Reward     float64
-	Power      float64
-	Epoch      string
-	CreateTime uint64
 }
 
 type UserDailyRewardInfo struct {
@@ -264,16 +213,6 @@ type OrderInfo struct {
 	UpdateTime uint64
 }
 
-type OrderBlockRewardInfo struct {
-	Id         int `orm:"pk;auto"`
-	OrderId    int
-	MinerId    string
-	Reward     float64
-	Power      float64
-	Epoch      int
-	CreateTime uint64
-}
-
 type OrderDailyRewardInfo struct {
 	Id      int `orm:"pk;auto"`
 	OrderId int
@@ -287,88 +226,6 @@ type OrderDailyRewardInfo struct {
 	UpdateTime uint64
 }
 
-type SettlePlan struct {
-	Id        int
-	TreatyId  int
-	ArticleId int
-	Quantity  float64
-	AddTime   string
-}
-
-type OrderGoods struct {
-	Id         int
-	ChannelId  int
-	ArticleId  int
-	OrderId    int
-	GoodsId    int
-	GoodsNo    string
-	GoodsTitle string
-	ImgUrl     string
-	SpecText   string
-	GoodsPrice float64
-	RealPrice  float64
-	Quantity   int
-	Point      int
-}
-
-type Orders struct {
-	Id               int
-	SiteId           int
-	OrderNo          string
-	TradeNo          string
-	UserId           int
-	UserName         string
-	PaymentId        int
-	PaymentFee       float64
-	PaymentStatus    int
-	PaymentTime      string
-	IdcFee           float64
-	TreatyId         int
-	TreatyStart_date int64
-	TreatyEnd_date   int64
-	TreatyQuantity   float64
-	TreatyStatus     int
-	TreatyTime       string
-	ExpressId        int
-	ExpressNo        string
-	ExpressFee       float64
-	ExpressStatus    int
-	ExpressTime      string
-	AcceptName       string
-	PostCode         string
-	Telphone         string
-	Mobile           string
-	Email            string
-	Area             string
-	Address          string
-	Message          string
-	Remark           string
-	IsEsign          int
-	IsIdc            int
-	IsConfirm        int
-	IsInvoice        int
-	InvoiceTitle     string
-	InvoiceTaxes     float64
-	PayableAmount    float64
-	RealAmount       float64
-	OrderAmount      float64
-	Point            int
-	Status           int
-	AddTime          string
-	ConfirmTime      string
-	CompleteTime     string
-	PaymentVoucher   string
-}
-
-type OrderDailyCostInfo struct {
-	Id          int `orm:"pk;auto"`
-	OrderId     int
-	UserId      int
-	Expend      float64
-	ValueReward float64
-	Time        string
-}
-
 type VestingInfo struct {
 	Id        int `orm:"pk;auto"`
 	UserId    int
@@ -376,40 +233,6 @@ type VestingInfo struct {
 	Release   float64
 	Times     int32
 	StartTime string
-}
-
-//转账记录表
-type Transfer struct {
-	Id            int `orm:"pk;auto"`
-	From          string
-	To            string
-	ServiceCharge float64
-	Value         float64
-	Time          int64
-}
-
-//user 信息初始化表
-type UserFilDaily struct {
-	Id        int `orm:"pk;auto"`
-	UserId    int
-	Date      string
-	FilAmount float64
-	Type      int32
-	Days      int32
-	Remark    string
-	AddTime   string
-}
-
-type UserFilPledge struct {
-	Id         int `orm:"pk;auto"`
-	UserId     int
-	Date       string
-	FilPledge  float64
-	FilRelease float64
-	Type       int32
-	Days       int32
-	Remark     string
-	AddTime    string
 }
 
 type MinerAndWalletRelation struct {

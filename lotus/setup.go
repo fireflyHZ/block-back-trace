@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	logging "github.com/ipfs/go-log/v2"
+	"profit-allocation/lotus/block"
 	"profit-allocation/lotus/client"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
@@ -25,7 +26,7 @@ func Setup() {
 	collectTime := time.NewTicker(time.Second * time.Duration(30))
 
 	defer collectTime.Stop()
-
+	go block.RecordAllBlocks()
 	for {
 		select {
 		case <-collectTime.C:

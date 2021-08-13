@@ -10,12 +10,15 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/abi"
 	"github.com/filecoin-project/go-state-types/big"
+	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/lotus/api"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/blockstore"
+	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/actors/adt"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
 	"github.com/filecoin-project/lotus/chain/gen"
+	"github.com/filecoin-project/lotus/chain/store"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
 	"github.com/filecoin-project/specs-actors/v5/actors/builtin"
@@ -636,4 +639,82 @@ func TestMinerPower() {
 	fmt.Printf("\tVesting:     %s\n", types.FIL(lockedFunds.VestingFunds))
 	fmt.Printf("\tAvailable:   %s\n", types.FIL(availBalance))
 
+}
+
+func Testmine() {
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	tokenHeader := fmt.Sprintf("Bearer %s", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.9cmZqbtPKaJ5q1KFeb67ZTnE-17G61Es6Gckf2eUVXM")
+	requestHeader.Set("Authorization", tokenHeader)
+	SignClient, _, err := lotusClient.NewFullNodeRPCV0(context.Background(), "http://172.16.10.243:1235/rpc/v0", requestHeader)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	m, err := address.NewFromString("f0601583")
+	if err != nil {
+		fmt.Println(err)
+	}
+	ctx := context.Background()
+	round := abi.ChainEpoch(1009107)
+	tp, err := SignClient.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	mbi, err := SignClient.MinerGetBaseInfo(ctx, m, round, tp.Key())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if mbi == nil {
+		fmt.Println("mbi == nil")
+		return
+	}
+	fmt.Printf("%+v", mbi)
+	if !mbi.EligibleForMining {
+		// slashed or just have no power yet
+		fmt.Println("EligibleForMining")
+		return
+	}
+
+	beaconPrev := mbi.PrevBeaconEntry
+	bvals := mbi.BeaconEntries
+
+	rbase := beaconPrev
+	if len(bvals) > 0 {
+		rbase = bvals[len(bvals)-1]
+	}
+
+	buf := new(bytes.Buffer)
+	if err := m.MarshalCBOR(buf); err != nil {
+		return
+	}
+
+	input, err := store.DrawRandomness(rbase.Data, crypto.DomainSeparationTag_TicketProduction, round-build.TicketRandomnessLookback, buf.Bytes())
+	if err != nil {
+		return
+	}
+	fmt.Printf("input %x\n", input)
+
+	vrfOut, err := gen.ComputeVRF(ctx, SignClient.WalletSign, mbi.WorkerKey, input)
+	if err != nil {
+		return
+	}
+	fmt.Printf("vrfOut %x \n", vrfOut)
+
+	p, err := gen.IsRoundWinner(ctx, tp, round, m, rbase, mbi, SignClient)
+	if err != nil {
+		fmt.Println("IsRoundWinner err:%+v", err)
+		return
+	}
+
+	if p == nil {
+		fmt.Println("p==nil")
+		return
+	}
+	fmt.Println(p)
+	return
 }
