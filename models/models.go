@@ -132,6 +132,7 @@ type MineBlockRight struct {
 
 //全部矿工出块记录
 type AllMinersMined struct {
+	Id         int    `orm:"pk;auto"`
 	MinerId    string `orm:"index"`
 	Epoch      int64  `orm:"index"`
 	Reward     float64
