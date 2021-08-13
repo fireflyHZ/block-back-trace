@@ -24,20 +24,23 @@ import (
 const backtrack = abi.ChainEpoch(14 * 2880)
 
 func RecordAllBlocks() {
+Retry:
 	ctx := context.Background()
 	o := orm.NewOrm()
 	allMined := make([]models.AllMinersMined, 0)
 	num, err := o.QueryTable("fly_all_miners_mined").OrderBy("-epoch").All(&allMined)
 	if err != nil {
 		blockLog.Errorf("find fly_all_miners_mined error:%+v", err)
-		return
+		sleep()
+		goto Retry
 	}
 	begin := abi.ChainEpoch(0)
 	if num == 0 {
 		head, err := client.Client.ChainHead(ctx)
 		if err != nil {
 			blockLog.Errorf("get chain head error:%+v", err)
-			return
+			sleep()
+			goto Retry
 		}
 		begin = head.Height() - backtrack
 	} else {
@@ -57,14 +60,16 @@ func RecordAllBlocks() {
 				tipset, err := client.Client.ChainGetTipSetByHeight(ctx, begin+1, types.EmptyTSK)
 				if err != nil {
 					blockLog.Errorf("get chain tipset by height error:%+v", err)
-					return
+					sleep()
+					goto Retry
 				}
 				for _, block := range tipset.Blocks() {
 					mineBlock := new(models.AllMinersMined)
 					num, err := o.QueryTable("fly_all_miners_mined").Filter("epoch", int64(block.Height)).Filter("miner_id", block.Miner.String()).All(&mineBlock)
 					if err != nil {
 						blockLog.Errorf("find fly_all_miners_mined error:%+v", err)
-						return
+						sleep()
+						goto Retry
 					}
 					//已有数据continue
 					if num != 0 {
@@ -75,7 +80,8 @@ func RecordAllBlocks() {
 					rewardFloat, power, totalPower, err := calculateReward(ctx, tipset.Key(), block.ElectionProof.WinCount, block.Miner)
 					if err != nil {
 						blockLog.Errorf("calculate reward error miner:%+v height:%+v err:%+v", block.Miner, block.Height, err)
-						return
+						sleep()
+						goto Retry
 					}
 					//插入数据
 					mineBlock.Epoch = int64(block.Height)
@@ -87,7 +93,8 @@ func RecordAllBlocks() {
 					_, err = o.Insert(mineBlock)
 					if err != nil {
 						blockLog.Errorf("calculate reward error miner:%+v height:%+v err:%+v", block.Miner, block.Height, err)
-						return
+						sleep()
+						goto Retry
 					}
 				}
 				//更新高度
@@ -101,7 +108,7 @@ func RecordAllBlocks() {
 }
 
 func sleep() {
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Second * 60)
 }
 
 func calculateReward(ctx context.Context, tipsetKey types.TipSetKey, winCount int64, miner address.Address) (float64, float64, float64, error) {
