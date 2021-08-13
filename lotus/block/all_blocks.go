@@ -63,6 +63,7 @@ Retry:
 					sleep()
 					goto Retry
 				}
+				blockLog.Infof("begin record height:%+v", begin+1)
 				for _, block := range tipset.Blocks() {
 					mineBlock := new(models.AllMinersMined)
 					num, err := o.QueryTable("fly_all_miners_mined").Filter("epoch", int64(block.Height)).Filter("miner_id", block.Miner.String()).All(&mineBlock)
