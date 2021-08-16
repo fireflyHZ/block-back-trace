@@ -22,7 +22,7 @@ import (
 )
 
 //14天
-const backtrack = abi.ChainEpoch(14 * 2880)
+const backtrack = abi.ChainEpoch(2 * 2880)
 
 func RecordAllBlocks() {
 Retry:
@@ -94,7 +94,7 @@ Retry:
 					mineBlock.Time = time.Unix(int64(block.Timestamp), 0)
 					_, err = o.Insert(mineBlock)
 					if err != nil {
-						blockLog.Errorf("calculate reward error miner:%+v height:%+v err:%+v", block.Miner, block.Height, err)
+						blockLog.Errorf("insert into table error miner:%+v height:%+v err:%+v", block.Miner, block.Height, err)
 						sleep()
 						goto Retry
 					}

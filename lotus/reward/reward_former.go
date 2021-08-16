@@ -737,18 +737,19 @@ func TestPower() {
 		return
 	}
 	defer closer()
-	m, err := address.NewFromString("f0601583")
+	m, err := address.NewFromString("f0393119")
 	if err != nil {
 		fmt.Println(err)
 	}
-	round := abi.ChainEpoch(1026264)
+	round := abi.ChainEpoch(1018800)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("1", err)
 		return
 	}
 	power, err := nodeApi.StateMinerPower(ctx, m, tp.Key())
 	if err != nil {
+		fmt.Println("2", err)
 		return
 	}
 	var f float64 = 1024
@@ -758,5 +759,8 @@ func TestPower() {
 	p := math.Pow(1024, 4)
 	ll := big.NewInt(0).Div(power.TotalPower.QualityAdjPower.Int, big.NewInt(int64(p)).Int)
 	fmt.Println(minerPower, minerPower/float64(ll.Int64()))
-
+	_, err = nodeApi.StateGetActor(ctx, builtin.RewardActorAddr, tp.Key())
+	if err != nil {
+		fmt.Println("3", err)
+	}
 }
