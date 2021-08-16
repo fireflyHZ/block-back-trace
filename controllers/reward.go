@@ -28,10 +28,8 @@ func (c *RewardController) GetRewardAndPledge() {
 
 	if t == "" {
 		resp := models.RewardResp{
-			Code:   "faile",
-			Msg:    "time  is nil",
-			Reward: 0.0,
-			Pledge: 0.0,
+			Code: "faile",
+			Msg:  "time  is nil",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -47,10 +45,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	queryTime, err := time.ParseInLocation("2006-01-02", t, time.Local)
 	if err != nil {
 		resp := models.RewardResp{
-			Code:   "faile",
-			Msg:    fmt.Sprintf("parse time err:", err),
-			Reward: 0.0,
-			Pledge: 0.0,
+			Code: "faile",
+			Msg:  fmt.Sprintf("parse time err:", err),
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -60,10 +56,8 @@ func (c *RewardController) GetRewardAndPledge() {
 		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id__in", "f02420", "f021695", "f021704").Filter("time", queryTime.AddDate(0, 0, -1)).All(&rewardBeforeInfos)
 		if err != nil {
 			resp := models.RewardResp{
-				Code:   "faile",
-				Msg:    "get reward before info fail",
-				Reward: 0.0,
-				Pledge: 0.0,
+				Code: "faile",
+				Msg:  "get reward before info fail",
 			}
 			c.Data["json"] = &resp
 			c.ServeJSON()
@@ -75,10 +69,8 @@ func (c *RewardController) GetRewardAndPledge() {
 		num, err = o.QueryTable("fly_miner_status_and_daily_change").Filter("miner_id", mp).Filter("time", queryTime.AddDate(0, 0, -1)).All(&rewardBeforeInfos)
 		if err != nil {
 			resp := models.RewardResp{
-				Code:   "faile",
-				Msg:    "get reward before info fail",
-				Reward: 0.0,
-				Pledge: 0.0,
+				Code: "faile",
+				Msg:  "get reward before info fail",
 			}
 			c.Data["json"] = &resp
 			c.ServeJSON()
@@ -92,13 +84,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	if err != nil {
 		rewardLog.Errorf("get miner status and daily change err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:       "fail",
-			Msg:        "get reward info fail",
-			Reward:     reward,
-			Pledge:     pledge,
-			Power:      power,
-			Gas:        gas,
-			TotalPower: totalPower,
+			Code: "fail",
+			Msg:  "get reward info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -138,15 +125,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -178,15 +158,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -215,15 +188,8 @@ func (c *RewardController) GetRewardAndPledge() {
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -232,19 +198,19 @@ func (c *RewardController) GetRewardAndPledge() {
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
-		Reward:         reward,
-		Pledge:         pledge,
-		Power:          power,
-		Gas:            gas,
+		Reward:         fmt.Sprintf("%f", reward),
+		Pledge:         fmt.Sprintf("%f", pledge),
+		Power:          fmt.Sprintf("%f", power),
+		Gas:            fmt.Sprintf("%f", gas),
 		BlockNumber:    blockNum,
 		WinCount:       winCount,
-		TotalPower:     totalPower,
-		TotalAvailable: totalAvailable,
-		TotalPreCommit: totalPreCommit,
-		TotalPleage:    totalPleage,
-		TotalVesting:   totalVesting,
-		WindowPostGas:  windowPostGas,
-		Penalty:        penalty,
+		TotalPower:     fmt.Sprintf("%f", totalPower),
+		TotalAvailable: fmt.Sprintf("%f", totalAvailable),
+		TotalPreCommit: fmt.Sprintf("%f", totalPreCommit),
+		TotalPleage:    fmt.Sprintf("%f", totalPleage),
+		TotalVesting:   fmt.Sprintf("%f", totalVesting),
+		WindowPostGas:  fmt.Sprintf("%f", windowPostGas),
+		Penalty:        fmt.Sprintf("%f", penalty),
 		Update:         timeStamp,
 	}
 	c.Data["json"] = &resp
@@ -340,13 +306,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil || num == 0 {
 		rewardLog.Errorf("get miner status and daily change err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:       "fail",
-			Msg:        "get reward info fail",
-			Reward:     reward,
-			Pledge:     pledge,
-			Power:      power,
-			Gas:        gas,
-			TotalPower: totalPower,
+			Code: "fail",
+			Msg:  "get reward info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -357,13 +318,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil || num == 0 {
 		rewardLog.Errorf("get miner status and daily change err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:       "fail",
-			Msg:        "get reward info fail",
-			Reward:     reward,
-			Pledge:     pledge,
-			Power:      power,
-			Gas:        gas,
-			TotalPower: totalPower,
+			Code: "fail",
+			Msg:  "get reward info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -392,15 +348,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil {
 		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -418,15 +367,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil {
 		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -442,15 +384,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil {
 		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -467,15 +402,8 @@ func (c *RewardController) GetMinerInfo() {
 	if err != nil {
 		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
 		resp := models.RewardResp{
-			Code:        "fail",
-			Msg:         "get expend info fail",
-			Reward:      reward,
-			Pledge:      pledge,
-			Power:       power,
-			Gas:         gas,
-			BlockNumber: blockNum,
-			WinCount:    winCount,
-			TotalPower:  totalPower,
+			Code: "fail",
+			Msg:  "get expend info fail",
 		}
 		c.Data["json"] = &resp
 		c.ServeJSON()
@@ -484,20 +412,20 @@ func (c *RewardController) GetMinerInfo() {
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
-		Reward:         reward,
-		Pledge:         pledge,
-		Power:          power,
-		Gas:            gas,
+		Reward:         fmt.Sprintf("%f", reward),
+		Pledge:         fmt.Sprintf("%f", pledge),
+		Power:          fmt.Sprintf("%f", power),
+		Gas:            fmt.Sprintf("%f", gas),
 		BlockNumber:    blockNum,
 		SectorsNumber:  sectorNum,
 		WinCount:       winCount,
-		TotalPower:     totalPower,
-		TotalAvailable: totalAvailable,
-		TotalPreCommit: totalPreCommit,
-		TotalPleage:    totalPleage,
-		TotalVesting:   totalVesting,
-		WindowPostGas:  windowPostGas,
-		Penalty:        penalty,
+		TotalPower:     fmt.Sprintf("%f", totalPower),
+		TotalAvailable: fmt.Sprintf("%f", totalAvailable),
+		TotalPreCommit: fmt.Sprintf("%f", totalPreCommit),
+		TotalPleage:    fmt.Sprintf("%f", totalPleage),
+		TotalVesting:   fmt.Sprintf("%f", totalVesting),
+		WindowPostGas:  fmt.Sprintf("%f", windowPostGas),
+		Penalty:        fmt.Sprintf("%f", penalty),
 		Update:         timeStamp,
 	}
 	c.Data["json"] = &resp

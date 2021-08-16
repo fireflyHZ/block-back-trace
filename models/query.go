@@ -59,20 +59,20 @@ type UserDailyInfoResp struct {
 type RewardResp struct {
 	Code           string
 	Msg            string
-	Reward         float64
-	Pledge         float64
-	Power          float64
-	Gas            float64
+	Reward         string
+	Pledge         string
+	Power          string
+	Gas            string
 	BlockNumber    int
 	SectorsNumber  int64
 	WinCount       int64
-	TotalPower     float64
-	TotalAvailable float64
-	TotalPreCommit float64
-	TotalPleage    float64
-	TotalVesting   float64
-	WindowPostGas  float64
-	Penalty        float64
+	TotalPower     string
+	TotalAvailable string
+	TotalPreCommit string
+	TotalPleage    string
+	TotalVesting   string
+	WindowPostGas  string
+	Penalty        string
 	Update         time.Time
 }
 
