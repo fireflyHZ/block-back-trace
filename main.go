@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	//reward.Testmine()
+	//reward.TestPower()
 	go lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)

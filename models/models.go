@@ -137,7 +137,7 @@ type AllMinersMined struct {
 	Epoch      int64  `orm:"index"`
 	Reward     float64
 	Power      float64 `orm:"index"`
-	TotalPower float64
+	TotalPower int64
 	Time       time.Time
 }
 

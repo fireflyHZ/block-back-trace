@@ -16,6 +16,7 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
 	cid "github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
+	"math"
 	"profit-allocation/lotus/client"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
@@ -689,7 +690,9 @@ func calculateReward(index int, miner address.Address, blockCid []cid.Cid, tipse
 	}
 	var f float64 = 1024
 	minerPower := float64(power.MinerPower.QualityAdjPower.Int64()) / f / f / f / f
-	percentage := float64(power.MinerPower.QualityAdjPower.Int64()) / float64(power.TotalPower.QualityAdjPower.Int64())
+	p := math.Pow(1024, 4)
+	totalPower := big.NewInt(0).Div(power.TotalPower.QualityAdjPower.Int, big.NewInt(int64(p)).Int)
+	percentage := minerPower / float64(totalPower.Int64())
 	rewardActor, err := client.Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
 	if err != nil {
 		rewardLog.Errorf("StateGetActor err:%+v", err)
@@ -738,7 +741,9 @@ func getMinerPower(minerStr string, tipsetKey types.TipSetKey) (float64, float64
 	}
 	var f float64 = 1024
 	minerPower := float64(power.MinerPower.QualityAdjPower.Int64()) / f / f / f / f
-	percentage := float64(power.MinerPower.QualityAdjPower.Int64()) / float64(power.TotalPower.QualityAdjPower.Int64())
+	p := math.Pow(1024, 4)
+	totalPower := big.NewInt(0).Div(power.TotalPower.QualityAdjPower.Int, big.NewInt(int64(p)).Int)
+	percentage := minerPower / float64(totalPower.Int64())
 	return minerPower, percentage, nil
 }
 

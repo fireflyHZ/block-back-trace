@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/specs-actors/v2/actors/builtin"
 	cbg "github.com/whyrusleeping/cbor-gen"
 	"io"
+	"math"
 	"profit-allocation/lotus/client"
 	"profit-allocation/models"
 	"profit-allocation/tool/bit"
@@ -112,7 +113,7 @@ func sleep() {
 	time.Sleep(time.Second * 60)
 }
 
-func calculateReward(ctx context.Context, tipsetKey types.TipSetKey, winCount int64, miner address.Address) (float64, float64, float64, error) {
+func calculateReward(ctx context.Context, tipsetKey types.TipSetKey, winCount int64, miner address.Address) (float64, float64, int64, error) {
 	rewardActor, err := client.Client.StateGetActor(ctx, builtin.RewardActorAddr, tipsetKey)
 	if err != nil {
 		blockLog.Errorf("StateGetActor err:%+v", err)
@@ -144,8 +145,9 @@ func calculateReward(ctx context.Context, tipsetKey types.TipSetKey, winCount in
 	}
 	var f float64 = 1024
 	minerPower := float64(power.MinerPower.QualityAdjPower.Int64()) / f / f / f / f
-	totalPower := float64(power.TotalPower.QualityAdjPower.Int64()) / f / f / f / f
-	return rewardFloat, minerPower, totalPower, nil
+	p := math.Pow(1024, 4)
+	totalPower := power.TotalPower.QualityAdjPower.Int.Div(power.TotalPower.QualityAdjPower.Int, big.NewInt(int64(p)).Int)
+	return rewardFloat, minerPower, totalPower.Int64(), nil
 }
 
 func unmarshalState(r io.Reader) *reward.State {

@@ -29,6 +29,8 @@ import (
 	"github.com/prometheus/common/log"
 	"io"
 	"io/ioutil"
+	"math"
+
 	//big2 "math/big"
 	"net/http"
 	"profit-allocation/models"
@@ -717,4 +719,44 @@ func Testmine() {
 	}
 	fmt.Println(p)
 	return
+}
+
+func TestPower() {
+	ctx := context.Background()
+
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	m, err := address.NewFromString("f0601583")
+	if err != nil {
+		fmt.Println(err)
+	}
+	round := abi.ChainEpoch(1026264)
+	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	power, err := nodeApi.StateMinerPower(ctx, m, tp.Key())
+	if err != nil {
+		return
+	}
+	var f float64 = 1024
+	minerPower := float64(power.MinerPower.QualityAdjPower.Int64()) / f / f / f / f
+
+	fmt.Println(math.Pow(1024, 4))
+	p := math.Pow(1024, 4)
+	ll := big.NewInt(0).Div(power.TotalPower.QualityAdjPower.Int, big.NewInt(int64(p)).Int)
+	fmt.Println(minerPower, minerPower/float64(ll.Int64()))
+
 }
