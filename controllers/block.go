@@ -41,6 +41,8 @@ func (c *BlockController) GetMinerMineBlockPercentage() {
 }
 
 func (c *BlockController) GetMinersLuck() {
+	blockLog.Info("GetMinersLuck ")
+
 	resp := new(models.GetMinersLuckResp)
 	from, err := c.GetFloat("from")
 	if err != nil {
@@ -65,7 +67,7 @@ func (c *BlockController) GetMinersLuck() {
 		c.ServeJSON()
 		return
 	}
-
+	blockLog.Infof("from: %+v to:%+v days: %+v", from, to, days)
 	miners := make([]models.AllMinersMined, 0)
 	o := orm.NewOrm()
 	t := time.Now().Add(-time.Hour * 24 * time.Duration(days))
