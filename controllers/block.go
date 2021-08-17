@@ -77,6 +77,15 @@ func (c *BlockController) GetMinersLuck() {
 		c.ServeJSON()
 		return
 	}
+
+	total, err := o.QueryTable("fly_all_miners_mined").Filter("time__gte", t).Count()
+	if total == 0 {
+		resp.Code = "failed"
+		resp.Msg = fmt.Sprintf("Get miners total mined blocks number error : %+v", err)
+		c.ServeJSON()
+		return
+	}
+	totalBlockNum := float64(total)
 	record := make(map[string][]models.AllMinersMined)
 	//对miner进行分组
 	for _, miner := range miners {
@@ -94,7 +103,7 @@ func (c *BlockController) GetMinersLuck() {
 		power := (infos[0].Power + infos[len(infos)-1].Power) / 2
 		totalPower := (infos[0].TotalPower + infos[len(infos)-1].TotalPower) / 2
 		powerPercent := power / float64(totalPower)
-		theoBlockNum := powerPercent * 2880 * float64(days)
+		theoBlockNum := powerPercent * totalBlockNum
 		actBlockNum := len(infos)
 		luckyValue := float64(actBlockNum) / theoBlockNum
 		totalReward := 0.0
