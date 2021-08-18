@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	//reward.TestPower()
+	//reward.TestAllMiners()
 	go lotus.Setup()
 	var shutdownCh <-chan struct{}
 	sigCh := make(chan os.Signal, 2)
@@ -92,6 +92,7 @@ func initDatabase() error {
 		new(models.MinerAndWalletRelation),
 		new(models.MineBlockRight),
 		new(models.AllMinersMined),
+		new(models.AllMinersPower),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		return err

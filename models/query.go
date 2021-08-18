@@ -100,6 +100,7 @@ type GetMinersLuckResp struct {
 type MinerLuck struct {
 	Miner       string
 	Luck        string
+	Power       float64
 	BlockNumber int
 	TotalValue  float64
 }

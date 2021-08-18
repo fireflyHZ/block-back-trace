@@ -764,3 +764,36 @@ func TestPower() {
 		fmt.Println("3", err)
 	}
 }
+
+func TestAllMiners() {
+	ctx := context.Background()
+
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+
+	round := abi.ChainEpoch(1032000)
+	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println("1", err)
+		return
+	}
+	ms, err := nodeApi.StateListMiners(ctx, tp.Key())
+	if err != nil {
+		fmt.Println("3", err)
+		return
+	}
+	fmt.Println(len(ms))
+	//fmt.Println(ms)
+
+}

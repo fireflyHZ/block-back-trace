@@ -141,6 +141,13 @@ type AllMinersMined struct {
 	Time       time.Time
 }
 
+type AllMinersPower struct {
+	Id         int     `orm:"pk;auto"`
+	MinerId    string  `orm:"index"`
+	Power      float64 `orm:"index"`
+	UpdateTime time.Time
+}
+
 type WalletBaseinfo struct {
 	Id       int `orm:"pk;auto"`
 	WalletId string

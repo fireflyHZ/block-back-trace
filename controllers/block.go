@@ -66,18 +66,20 @@ func (c *BlockController) GetMinersLuck() {
 		c.ServeJSON()
 		return
 	}
-
-	miners := make([]models.AllMinersMined, 0)
 	o := orm.NewOrm()
-	t := time.Now().Add(-time.Hour * 24 * time.Duration(days))
-	num, err := o.QueryTable("fly_all_miners_mined").Filter("power__gte", from).Filter("power__lte", to).Filter("time__gte", t).OrderBy("power").All(&miners)
+	//找出算力范围内的miner
+	minersInfo := make([]models.AllMinersPower, 0)
+	num, err := o.QueryTable("fly_all_miners_power").Filter("power__gte", from).Filter("power__lte", to).OrderBy("power").All(&minersInfo)
 	if num == 0 {
 		resp.Code = "failed"
-		resp.Msg = fmt.Sprintf("Get miners mined blocks info error : %+v", err)
+		resp.Msg = fmt.Sprintf("Get miners power info error : %+v", err)
 		c.ServeJSON()
 		return
 	}
 
+	t := time.Now().Add(-time.Hour * 24 * time.Duration(days))
+
+	//时间范围的总出块
 	total, err := o.QueryTable("fly_all_miners_mined").Filter("time__gte", t).Count()
 	if total == 0 {
 		resp.Code = "failed"
@@ -86,38 +88,44 @@ func (c *BlockController) GetMinersLuck() {
 		return
 	}
 	totalBlockNum := float64(total)
-	record := make(map[string][]models.AllMinersMined)
-	//对miner进行分组
-	for _, miner := range miners {
-		if _, ok := record[miner.MinerId]; ok {
-			record[miner.MinerId] = append(record[miner.MinerId], miner)
-		} else {
-			tmp := make([]models.AllMinersMined, 0)
-			tmp = append(tmp, miner)
-			record[miner.MinerId] = tmp
-		}
-	}
+
 	//对miner数据进行处理
 	minersLuck := make([]models.MinerLuck, 0)
-	for _, infos := range record {
-		power := (infos[0].Power + infos[len(infos)-1].Power) / 2
-		totalPower := (infos[0].TotalPower + infos[len(infos)-1].TotalPower) / 2
-		powerPercent := power / float64(totalPower)
-		theoBlockNum := powerPercent * totalBlockNum
-		actBlockNum := len(infos)
-		luckyValue := float64(actBlockNum) / theoBlockNum
-		totalReward := 0.0
-		for _, info := range infos {
-			totalReward += info.Reward
+	for _, miner := range minersInfo {
+		mms := make([]models.AllMinersMined, 0)
+		num, err = o.QueryTable("fly_all_miners_mined").Filter("miner_id", miner.MinerId).Filter("time__gte", t).OrderBy("power").All(&mms)
+		if num == 0 {
+			minerLuck := models.MinerLuck{
+				Miner:       miner.MinerId,
+				Luck:        fmt.Sprintf("%.2f%%", 0),
+				Power:       miner.Power,
+				BlockNumber: 0,
+				TotalValue:  0,
+			}
+			minersLuck = append(minersLuck, minerLuck)
+		} else {
+			power := (mms[0].Power + mms[len(mms)-1].Power) / 2
+			totalPower := (mms[0].TotalPower + mms[len(mms)-1].TotalPower) / 2
+			powerPercent := power / float64(totalPower)
+			theoBlockNum := powerPercent * totalBlockNum
+			actBlockNum := len(mms)
+			luckyValue := float64(actBlockNum) / theoBlockNum
+			totalReward := 0.0
+			for _, info := range mms {
+				totalReward += info.Reward
+			}
+			minerLuck := models.MinerLuck{
+				Miner:       miner.MinerId,
+				Luck:        fmt.Sprintf("%.2f%%", luckyValue*100),
+				Power:       miner.Power,
+				BlockNumber: actBlockNum,
+				TotalValue:  totalReward,
+			}
+			minersLuck = append(minersLuck, minerLuck)
 		}
-		minerLuck := models.MinerLuck{
-			Miner:       infos[0].MinerId,
-			Luck:        fmt.Sprintf("%.2f%%", luckyValue*100),
-			BlockNumber: actBlockNum,
-			TotalValue:  totalReward,
-		}
-		minersLuck = append(minersLuck, minerLuck)
+
 	}
+
 	resp.Code = "success"
 	resp.Msg = "ok"
 	resp.MinersLuck = minersLuck
