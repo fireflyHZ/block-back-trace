@@ -97,7 +97,7 @@ func (c *BlockController) GetMinersLuck() {
 		if num == 0 {
 			minerLuck := models.MinerLuck{
 				Miner:       miner.MinerId,
-				Luck:        fmt.Sprintf("%.2f%%", 0),
+				Luck:        "0.00%",
 				Power:       miner.Power,
 				BlockNumber: 0,
 				TotalValue:  0,
