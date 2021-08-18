@@ -27,6 +27,7 @@ func Setup() {
 
 	defer collectTime.Stop()
 	go block.RecordAllBlocks()
+	go reward.RecordAllMiners()
 	for {
 		select {
 		case <-collectTime.C:
