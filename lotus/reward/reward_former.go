@@ -13,6 +13,7 @@ import (
 	"github.com/filecoin-project/go-state-types/crypto"
 	"github.com/filecoin-project/lotus/api"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
+	"github.com/filecoin-project/lotus/api/v0api"
 	"github.com/filecoin-project/lotus/blockstore"
 	"github.com/filecoin-project/lotus/build"
 	"github.com/filecoin-project/lotus/chain/actors/adt"
@@ -541,7 +542,7 @@ func TestStateReplay() {
 		return
 	}
 	defer closer()
-	mcid, err := cid.Decode("bafy2bzacebjgniq5pnuhqbbq7wd3x3hf4rsj2zjqp7teiq5ogmezcenqfz3bm")
+	mcid, err := cid.Decode("bafy2bzacea6za6yl3poxxg7uxq4ciyiqpvkge66ehyfodeegfhabxqx2lmir4")
 	if err != nil {
 		fmt.Printf("message cid was invalid: %s\n", err)
 		return
@@ -659,7 +660,7 @@ func Testmine() {
 		fmt.Println(err)
 	}
 	ctx := context.Background()
-	round := abi.ChainEpoch(1009107)
+	round := abi.ChainEpoch(1060440)
 	tp, err := SignClient.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println(err)
@@ -675,7 +676,7 @@ func Testmine() {
 		fmt.Println("mbi == nil")
 		return
 	}
-	fmt.Printf("%+v", mbi)
+	fmt.Printf("%+v", mbi.Sectors)
 	if !mbi.EligibleForMining {
 		// slashed or just have no power yet
 		fmt.Println("EligibleForMining")
@@ -796,4 +797,180 @@ func TestAllMiners() {
 	fmt.Println(len(ms))
 	//fmt.Println(ms)
 
+}
+
+func TestSector() {
+	ctx := context.Background()
+
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+
+	round := abi.ChainEpoch(1060440)
+	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println("1", err)
+		return
+	}
+
+	minerAddr, _ := address.NewFromString("f0144528")
+
+	secCounts, err := nodeApi.StateMinerSectorCount(ctx, minerAddr, tp.Key())
+	if err != nil {
+		fmt.Println("2", err)
+		return
+	}
+	fmt.Printf("sector counts:%+v\n", secCounts)
+	mbi, err := nodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if mbi == nil {
+		fmt.Println("mbi == nil")
+		return
+	}
+	fmt.Printf("%+v", mbi.Sectors)
+}
+
+func TestFaultsSectors() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(ctx, LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+
+	minerAddr, _ := address.NewFromString("f0419945")
+
+	round := abi.ChainEpoch(1060440)
+	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	if err != nil {
+		fmt.Println("1", err)
+		return
+	}
+
+	fail, err := nodeApi.StateMinerFaults(ctx, minerAddr, tp.Key())
+	if err != nil {
+		fmt.Println("StateMinerFaults err:", err)
+		return
+	}
+	fmt.Printf("fail:%+v\n", fail)
+	fail.ForEach(func(num uint64) error {
+		_, _ = fmt.Printf("%d\n", num)
+		return nil
+	})
+
+	//ds,err:=nodeApi.StateMinerDeadlines(ctx,minerAddr,tp.Key())
+	//if err != nil {
+	//	fmt.Println("StateMinerFaults err:", err)
+	//	return
+	//}
+	di, err := nodeApi.StateMinerProvingDeadline(ctx, minerAddr, tp.Key())
+	if err != nil {
+		fmt.Println("StateMinerProvingDeadline err:", err)
+		return
+	}
+
+	fmt.Printf("deadline %+v\n", di)
+	mact, err := nodeApi.StateGetActor(ctx, minerAddr, tp.Key())
+	if err != nil {
+		return
+	}
+
+	//tbs := bufbstore.NewTieredBstore(apibstore.NewAPIBlockstore(api), blockstore.NewTemporary())
+	tbs := blockstore.NewTieredBstore(blockstore.NewAPIBlockstore(nodeApi), blockstore.NewMemory())
+	mas, err := miner.Load(adt.WrapStore(ctx, cbor.NewCborStore(tbs)), mact)
+	dl, err := mas.LoadDeadline(di.Index)
+	if err != nil {
+		fmt.Println("LoadDeadline err:", err)
+		return
+	}
+
+	par, err := dl.LoadPartition(0)
+	if err != nil {
+		fmt.Println("LoadPartition err:", err)
+		return
+	}
+	f, err := par.FaultySectors()
+	if err != nil {
+		fmt.Println("FaultySectors err:", err)
+		return
+	}
+	f.ForEach(func(num uint64) error {
+		_, _ = fmt.Printf("%d\n", num)
+		return nil
+	})
+	//net version
+	v, err := nodeApi.StateNetworkVersion(ctx, tp.Key())
+	if err != nil {
+		fmt.Println("StateNetworkVersion err:", err)
+		return
+	}
+	fmt.Println("ver:", v)
+
+	ast, err := nodeApi.StateReadState(ctx, builtin.StorageMarketActorAddr, tp.Key())
+	if err != nil {
+		fmt.Println("StateReadState err:", err)
+		return
+	}
+	fmt.Printf("ast:%+v\n", ast)
+
+	//msgs,err:=nodeApi.ChainGetParentMessages(ctx,tp.Blocks()[0].Cid())
+	//if err != nil {
+	//	fmt.Println("ChainGetParentMessages err:", err)
+	//	return
+	//}
+	//round = abi.ChainEpoch(1060449)
+	round = abi.ChainEpoch(1071724)
+	for {
+		fmt.Println(round)
+		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+		if err != nil {
+			fmt.Println("1", err)
+			return
+		}
+		coms, err := nodeApi.StateCompute(ctx, round, nil, tp.Key())
+		if err != nil {
+			fmt.Println("StateCompute err:", err)
+			return
+		}
+		for _, ins := range coms.Trace {
+
+			printSub(nodeApi, ins.Msg.Cid(), ins.ExecutionTrace.Subcalls)
+		}
+		round++
+	}
+
+}
+
+func printSub(nodeApi v0api.FullNode, msg cid.Cid, subs []types.ExecutionTrace) {
+	for _, sub := range subs {
+		if sub.Subcalls != nil {
+			printSub(nodeApi, msg, sub.Subcalls)
+		}
+		if sub.Msg.From.String() == "f0419945" && sub.Msg.To.String() == "f099" {
+			fmt.Println("msg:", msg)
+			fmt.Println(nodeApi.ChainGetMessage(context.Background(), msg))
+			fmt.Printf("sub :%+v\n", sub.Msg)
+		}
+	}
 }

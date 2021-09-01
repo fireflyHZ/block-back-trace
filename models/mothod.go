@@ -62,3 +62,9 @@ func (mbr *MineBlockRight) Update(t time.Time, value float64, winCount int64) er
 	}
 	return nil
 }
+
+func (msg *ExpendMessages) Insert() error {
+	o := orm.NewOrm()
+	_, err := o.Insert(msg)
+	return err
+}

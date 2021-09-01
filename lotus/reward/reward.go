@@ -138,6 +138,12 @@ func getRewardAndPledge(dealBlcokHeight int64, end int64) (int64, error) {
 			rewardLog.Errorf("get parents block message cid %s  err=%v", chainHeightAfter.Cids()[0].String(), err)
 			return i, err
 		}
+		//记录subcall惩罚
+		err = recordSubCallPenalty(chainHeightHandle)
+		if err != nil {
+			rewardLog.Error("record sub call panelty error")
+			return i, err
+		}
 
 		blocks := chainHeightHandle.Blocks()
 		bFlag := true
@@ -995,4 +1001,67 @@ func getBlockRightNum(miner string, t time.Time) (int64, error) {
 		return 0, err
 	}
 	return num, nil
+}
+
+func recordSubCallPenalty(tipset *types.TipSet) error {
+	coms, err := client.Client.StateCompute(context.Background(), tipset.Height(), nil, tipset.Key())
+	if err != nil {
+		rewardLog.Errorf("StateCompute error, height:%+v err=%+v", tipset.Height(), err)
+		return err
+	}
+	success := true
+	for _, ins := range coms.Trace {
+		if messageNotOnChain(ins.Msg.Cid()) {
+			recordSub(tipset, ins.Msg.Cid(), ins.ExecutionTrace.Subcalls, &success)
+		}
+	}
+	if success {
+		return nil
+	}
+	return errors.New("record sub call error")
+}
+
+func recordSub(tipset *types.TipSet, msg cid.Cid, subs []types.ExecutionTrace, success *bool) {
+	for _, sub := range subs {
+		if sub.Subcalls != nil {
+			recordSub(tipset, msg, sub.Subcalls, success)
+		}
+		if inMiners(sub.Msg.From.String()) && sub.Msg.To.String() == "f099" {
+			rewardLog.Infof("found a penalty msg id:%+v msg:%+v", msg, sub.Msg)
+			value, err := strconv.ParseFloat(bit.TransFilToFIL(sub.Msg.Value.String()), 64)
+			if err != nil {
+				*success = false
+				rewardForLog.Errorf("parse value to float err:%+v", err)
+				return
+			}
+			m := &models.ExpendMessages{
+				MinerId:            sub.Msg.From.String(),
+				MessageId:          msg.String(),
+				WalletId:           sub.Msg.From.String(),
+				To:                 "f099",
+				Epoch:              int64(tipset.Height()),
+				Gas:                0,
+				BaseBurnFee:        0,
+				OverEstimationBurn: 0,
+				Value:              value,
+				Penalty:            0,
+				Method:             0,
+				CreateTime:         time.Unix(int64(tipset.MinTimestamp()), 0),
+			}
+			err = m.Insert()
+			if err != nil {
+				*success = false
+				rewardForLog.Errorf("fail to insert penalty message:%+v err:%+v", sub.Msg, err)
+				return
+			}
+		}
+	}
+}
+
+func messageNotOnChain(msg cid.Cid) bool {
+	m, _ := client.Client.ChainGetMessage(context.Background(), msg)
+	if m == nil {
+		return true
+	}
+	return false
 }
