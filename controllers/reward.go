@@ -195,6 +195,32 @@ func (c *RewardController) GetRewardAndPledge() {
 		c.ServeJSON()
 		return
 	}
+
+	expendMsgs = make([]models.ExpendMessages, 0)
+	//sub call penalty
+	if mp == "f02420" {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id in ('f02420','f021695','f021704') and \"to\" = 'f099' and create_time::date=to_date(?,'YYYY-MM-DD')", t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			penalty += expendInfo.Value
+		}
+	} else {
+		_, err = o.Raw("select * from fly_expend_messages where miner_id=? and \"to\" = 'f099' and create_time::date=to_date(?,'YYYY-MM-DD')", mp, t).QueryRows(&expendMsgs)
+		for _, expendInfo := range expendMsgs {
+			penalty += expendInfo.Value
+		}
+	}
+
+	if err != nil {
+		rewardLog.Errorf("get expend info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code: "fail",
+			Msg:  "get expend info fail",
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",
@@ -409,6 +435,23 @@ func (c *RewardController) GetMinerInfo() {
 		c.ServeJSON()
 		return
 	}
+	// sub call penalty
+	expendMsgs = make([]models.ExpendMessages, 0)
+	_, err = o.Raw("select * from fly_expend_messages where miner_id=? and  \"to\" = 'f099' and create_time::date=to_date(?,'YYYY-MM-DD')", miner, t).QueryRows(&expendMsgs)
+	for _, expendInfo := range expendMsgs {
+		penalty += expendInfo.Value
+	}
+	if err != nil {
+		rewardLog.Errorf("get expend message info err:%+v,num:%+v", err, num)
+		resp := models.RewardResp{
+			Code: "fail",
+			Msg:  "get expend info fail",
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+
 	resp := models.RewardResp{
 		Code:           "ok",
 		Msg:            "successful",

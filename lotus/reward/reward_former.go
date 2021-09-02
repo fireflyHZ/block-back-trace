@@ -939,8 +939,8 @@ func TestFaultsSectors() {
 	//	fmt.Println("ChainGetParentMessages err:", err)
 	//	return
 	//}
-	//round = abi.ChainEpoch(1060449)
-	round = abi.ChainEpoch(1071724)
+	round = abi.ChainEpoch(1060449)
+	//	round = abi.ChainEpoch(1071724)
 	for {
 		fmt.Println(round)
 		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
@@ -967,7 +967,7 @@ func printSub(nodeApi v0api.FullNode, msg cid.Cid, subs []types.ExecutionTrace) 
 		if sub.Subcalls != nil {
 			printSub(nodeApi, msg, sub.Subcalls)
 		}
-		if sub.Msg.From.String() == "f0419945" && sub.Msg.To.String() == "f099" {
+		if sub.Msg.From.String() == "f0419945" && sub.Msg.To.String() == "f099" && sub.Msg.Method == builtin.MethodSend {
 			fmt.Println("msg:", msg)
 			fmt.Println(nodeApi.ChainGetMessage(context.Background(), msg))
 			fmt.Printf("sub :%+v\n", sub.Msg)

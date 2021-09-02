@@ -1026,7 +1026,7 @@ func recordSub(tipset *types.TipSet, msg cid.Cid, subs []types.ExecutionTrace, s
 		if sub.Subcalls != nil {
 			recordSub(tipset, msg, sub.Subcalls, success)
 		}
-		if inMiners(sub.Msg.From.String()) && sub.Msg.To.String() == "f099" {
+		if inMiners(sub.Msg.From.String()) && sub.Msg.To.String() == "f099" && sub.Msg.Method == builtin.MethodSend {
 			rewardLog.Infof("found a penalty msg id:%+v msg:%+v", msg, sub.Msg)
 			value, err := strconv.ParseFloat(bit.TransFilToFIL(sub.Msg.Value.String()), 64)
 			if err != nil {
@@ -1045,7 +1045,7 @@ func recordSub(tipset *types.TipSet, msg cid.Cid, subs []types.ExecutionTrace, s
 				OverEstimationBurn: 0,
 				Value:              value,
 				Penalty:            0,
-				Method:             0,
+				Method:             uint32(sub.Msg.Method),
 				CreateTime:         time.Unix(int64(tipset.MinTimestamp()), 0),
 			}
 			err = m.Insert()
