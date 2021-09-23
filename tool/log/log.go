@@ -42,6 +42,6 @@ func Init() error {
 	if err := logging.SetLogLevel("block-log", "DEBUG"); err != nil {
 		return err
 	}
-	logging.SetupLogging(logging.Config{File: "profit.log"})
+	//logging.SetupLogging(logging.Config{File: "profit.log"})
 	return nil
 }
