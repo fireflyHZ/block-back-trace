@@ -5,17 +5,11 @@ import (
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	"github.com/beego/beego/v2/server/web/filter/cors"
+	_ "github.com/lib/pq"
 	"profit-allocation/controllers"
 	"profit-allocation/lotus"
-	"profit-allocation/tool/log"
-
-	//_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
-	"os"
-	"os/signal"
 	"profit-allocation/models"
-	//_ "profit-allocation/routers"
-	"syscall"
+	"profit-allocation/tool/log"
 )
 
 func main() {
@@ -34,23 +28,8 @@ func main() {
 	}
 
 	//reward.TestSector()
-	//reward.TestFaultsSectors()
+	//reward.Testmine()
 	go lotus.Setup()
-	var shutdownCh <-chan struct{}
-	sigCh := make(chan os.Signal, 2)
-	shutdownDone := make(chan struct{})
-	go func() {
-		select {
-		case sig := <-sigCh:
-			fmt.Println("received shutdown", "signal", sig)
-		case <-shutdownCh:
-			fmt.Println("received shutdown")
-		}
-
-		fmt.Println("Shutting down...")
-		close(shutdownDone)
-	}()
-	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,

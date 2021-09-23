@@ -647,27 +647,34 @@ func TestMinerPower() {
 func Testmine() {
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
-	tokenHeader := fmt.Sprintf("Bearer %s", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.9cmZqbtPKaJ5q1KFeb67ZTnE-17G61Es6Gckf2eUVXM")
+	tokenHeader := fmt.Sprintf("Bearer %s", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4")
 	requestHeader.Set("Authorization", tokenHeader)
-	SignClient, _, err := lotusClient.NewFullNodeRPCV0(context.Background(), "http://172.16.10.243:1235/rpc/v0", requestHeader)
+	SignClient, _, err := lotusClient.NewFullNodeRPCV0(context.Background(), "http://172.16.10.245:1234/rpc/v0", requestHeader)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	m, err := address.NewFromString("f0601583")
+	requestHeader1 := http.Header{}
+	requestHeader1.Add("Content-Type", "application/json")
+	Client, _, err := lotusClient.NewFullNodeRPCV0(context.Background(), "http://172.16.10.245:1234/rpc/v0", requestHeader1)
+	if err != nil {
+		return
+	}
+
+	m, err := address.NewFromString("f0144528")
 	if err != nil {
 		fmt.Println(err)
 	}
 	ctx := context.Background()
-	round := abi.ChainEpoch(1060440)
-	tp, err := SignClient.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
+	round := abi.ChainEpoch(1126732)
+	tp, err := Client.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	mbi, err := SignClient.MinerGetBaseInfo(ctx, m, round, tp.Key())
+	mbi, err := Client.MinerGetBaseInfo(ctx, m, round, tp.Key())
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -960,6 +967,52 @@ func TestFaultsSectors() {
 		round++
 	}
 
+}
+
+func TestChainNotify() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	//nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(ctx, LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV1(ctx, LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	h, err := nodeApi.ChainHead(ctx)
+	if err != nil {
+		fmt.Println("chain head err:", err)
+		return
+	}
+	fmt.Println(h.String())
+	var result <-chan []*api.HeadChange
+	for {
+
+		result, err = nodeApi.ChainNotify(ctx)
+		if err != nil {
+			fmt.Println("chain notify error:", err)
+			time.Sleep(time.Second * 5)
+			continue
+		}
+		fmt.Println(result)
+
+		/*select {
+		case ch, ok := <-notifs:
+			if !ok {
+				fmt.Println("window post scheduler notifs channel closed")
+				notifs = nil
+				continue
+			}
+			fmt.Println(ch)
+		}*/
+
+	}
 }
 
 func printSub(nodeApi v0api.FullNode, msg cid.Cid, subs []types.ExecutionTrace) {
