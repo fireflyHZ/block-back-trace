@@ -13,7 +13,7 @@ import (
 	cbor "github.com/ipfs/go-ipld-cbor"
 	"net/http"
 	"profit-allocation/models"
-	"profit-allocation/tool/bit"
+	"profit-allocation/util/bit"
 	"strconv"
 )
 

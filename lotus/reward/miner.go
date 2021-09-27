@@ -9,7 +9,7 @@ import (
 	"math"
 	"profit-allocation/lotus/client"
 	"profit-allocation/models"
-	"profit-allocation/tool/bit"
+	"profit-allocation/util/bit"
 	"strconv"
 	"time"
 )

@@ -8,7 +8,7 @@ import (
 	"profit-allocation/lotus/client"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
-	"profit-allocation/tool/sync"
+	"profit-allocation/util/sync"
 	"time"
 )
 

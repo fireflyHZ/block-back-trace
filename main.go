@@ -22,8 +22,7 @@ func main() {
 		return
 	}
 
-	//reward.TestSector()
-	//reward.Testmine()
+	//dingTalk.TestSendDingTalk()
 	go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{

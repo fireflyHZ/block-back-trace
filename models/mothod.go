@@ -23,19 +23,22 @@ func InsertPledgeMsg(p []*PreAndProveMessages) error {
 	return nil
 }
 
-func (mbr *MineBlockRight) Insert() error {
+func (mbr *MineBlockRight) Insert() (bool, error) {
 	o := orm.NewOrm()
 	num, err := o.QueryTable("fly_mine_block_right").Filter("miner_id", mbr.MinerId).Filter("epoch", mbr.Epoch).All(mbr)
 	if err != nil {
-		return err
+		return true, err
 	}
 	if num == 0 {
-		_, err := o.Insert(mbr)
+		_, err = o.Insert(mbr)
 		if err != nil {
-			return err
+			return true, err
 		}
+		return true, nil
+	} else {
+		return false, nil
 	}
-	return nil
+
 }
 
 func (mbr *MineBlockRight) Update(t time.Time, value float64, winCount int64) error {

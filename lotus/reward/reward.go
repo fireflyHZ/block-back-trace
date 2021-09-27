@@ -19,8 +19,9 @@ import (
 	"math"
 	"profit-allocation/lotus/client"
 	"profit-allocation/models"
-	"profit-allocation/tool/bit"
-	"profit-allocation/tool/sync"
+	"profit-allocation/util/bit"
+	"profit-allocation/util/dingTalk"
+	"profit-allocation/util/sync"
 	"strconv"
 	"time"
 )
@@ -909,19 +910,29 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 	for miner, _ := range models.Miners {
 		minerAddr, _ := address.NewFromString(miner)
 		if ok, winCount := calculateMinerRight(tipset.Height()-1, minerAddr); ok {
+			t := time.Unix(int64(tipset.MinTimestamp()), 0)
 			mbr := new(models.MineBlockRight)
 			mbr.MinerId = miner
 			mbr.Epoch = int64(tipset.Height())
 			mbr.Missed = true
 			mbr.WinCount = winCount
-			mbr.Time = time.Unix(int64(tipset.MinTimestamp()), 0)
+			mbr.Time = t
 			mbr.UpdateTime = time.Unix(int64(tipset.MinTimestamp()), 0)
-			err := mbr.Insert()
+			lost, err := mbr.Insert()
 			if err != nil {
 				rewardLog.Errorf("calculate miner right err:%+v", err)
 				return err
 			}
-			rewardLog.Infof("miner %+v have a mine right in epoch %+v", miner, tipset.Height())
+			if lost {
+				rewardLog.Warnf("miner %+v have lost a mine right in epoch %+v", miner, tipset.Height())
+
+				err = dingTalk.SendDingtalkData(mbr.MinerId, mbr.Epoch, mbr.WinCount, mbr.Time.Format(time.RFC3339))
+				if err != nil {
+					rewardLog.Warnf("send dingtalk error, miner:%+v epoch:%+v err:%+v", mbr.MinerId, mbr.Epoch, err)
+				}
+			} else {
+				rewardLog.Infof("miner %+v have a mine right in epoch %+v", miner, tipset.Height())
+			}
 		}
 
 	}
@@ -985,7 +996,7 @@ func updateMineBlockRight(epoch int64, miner string, t time.Time, value float64,
 	mbr.Time = t
 	mbr.UpdateTime = t
 	//err := mbr.Update(t, value, winCount)
-	err := mbr.Insert()
+	_, err := mbr.Insert()
 	if err != nil {
 		rewardLog.Errorf("calculate miner right err:%+v", err)
 		return err

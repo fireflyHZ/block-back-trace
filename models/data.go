@@ -12,6 +12,9 @@ var (
 	Miners         = make(map[string]int)
 	LotusHost      string
 	LotusSignToken string
+	DingTalkToken  string
+	DingTalkSecret string
+	GrafanaLink    string
 )
 
 var log = logging.Logger("models")
@@ -43,7 +46,22 @@ func InitData() error {
 	}
 	LotusSignToken, err = web.AppConfig.String("LotusSignToken")
 	if err != nil {
-		log.Errorf("get lotusHost  err:%+v\n", err)
+		log.Errorf("get LotusSignToken  err:%+v\n", err)
+		return err
+	}
+	DingTalkToken, err = web.AppConfig.String("DingtalkToken")
+	if err != nil {
+		log.Errorf("get DingTalkToken  err:%+v\n", err)
+		return err
+	}
+	DingTalkSecret, err = web.AppConfig.String("DingtalkSecret")
+	if err != nil {
+		log.Errorf("get DingTalkSecret  err:%+v\n", err)
+		return err
+	}
+	GrafanaLink, err = web.AppConfig.String("GrafanaLink")
+	if err != nil {
+		log.Errorf("get GrafanaLink  err:%+v\n", err)
 		return err
 	}
 	return nil
