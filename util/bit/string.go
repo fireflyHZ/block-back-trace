@@ -247,7 +247,6 @@ func TransRewardToFilAndAttoFil(reward string) (fil, attoFil string) {
 
 }
 
-
 func CalculateReward(beforeAmount string, nowAmount string) string {
 	before := strings.Split(beforeAmount, ".")
 	now := strings.Split(nowAmount, ".")
@@ -260,8 +259,8 @@ func CalculateReward(beforeAmount string, nowAmount string) string {
 		fil = StringAdd(fil, attoFil[0:1])
 		attoFil = attoFil[1:]
 	}
-	if len(attoFil)<18{
-		attoFil=String18BitByLeftAddZero(attoFil)
+	if len(attoFil) < 18 {
+		attoFil = String18BitByLeftAddZero(attoFil)
 	}
 	return fil + "." + attoFil
 }
