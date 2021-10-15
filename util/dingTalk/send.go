@@ -33,7 +33,7 @@ func parsePowerDingTalkData(mpi *models.MinerPartitionInfo, name string) string 
 	tipset := strings.Split(mpi.TipsetTime, " ")
 	open := strings.Split(mpi.DeadlineOpenTime, " ")
 	closeT := strings.Split(mpi.DeadlineCloseTime, " ")
-	return fmt.Sprintf("#### 时空证明告警(测试)：\n\t"+
+	return fmt.Sprintf("#### 时空证明告警：\n\t"+
 		"- 矿工编号:   %s(%s)\n\t"+
 		"- 网络当前高度:   %s\n\t"+
 		"- 消耗时间:   %s\n\t"+

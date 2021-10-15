@@ -7,7 +7,7 @@ import (
 	"github.com/beego/beego/v2/server/web/filter/cors"
 	_ "github.com/lib/pq"
 	"profit-allocation/controllers"
-	"profit-allocation/lotus/power"
+	"profit-allocation/lotus"
 	"profit-allocation/models"
 )
 
@@ -22,8 +22,8 @@ func main() {
 		return
 	}
 
-	power.PartitionCheck()
-	//go lotus.Setup()
+	//power.PartitionCheck()
+	go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
