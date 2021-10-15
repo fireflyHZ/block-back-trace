@@ -147,17 +147,19 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 		}
 		msgLog.Infof("listen wallet number :%+v ", len(models.Wallets))
 
-		//计算支出
-		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key(), i)
-		if err != nil {
-			return i, err
-		}
-
 		//记录wallet状态
 		err = recordWallets(chainHeightHandle.MinTimestamp())
 		if err != nil {
 			return i, err
 		}
+
+		//计算支出
+		err = calculateWalletCost(*blocks[0], blockMessageResp, blocks[0].ParentBaseFee, chainHeightAfter.Cids()[0], chainHeightHandle.Key(), i)
+		if err != nil {
+			msgLog.Errorf("calculate wallet cost error:%+v", err)
+			return i, err
+		}
+
 		chainHeightHandle = chainHeightAfter
 
 	}
@@ -230,11 +232,9 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 
 		//记录收入msg
 		if inWallets(message.Message.To.String()) {
-			err := reportReceiveFaultPenalty(block, message)
+			err := recordReceiveMsg(block, message)
 			if err != nil {
-				if err != nil {
-					return err
-				}
+				return err
 			}
 		}
 
@@ -251,6 +251,7 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 }
 
 func recordWallets(t uint64) error {
+	msgLog.Info("begin record wallets")
 	ctx := context.Background()
 	wim := make(map[string]*models.WalletInfo)
 	for wallet, _ := range models.Wallets {
@@ -270,6 +271,7 @@ func recordWallets(t uint64) error {
 			msgLog.Errorf("parse address balance error, address:%+v err:%+v", w, err)
 			return err
 		}
+		msgLog.Infof("address:%+v balance:%+v", wallet, balance)
 		wim[wallet] = &models.WalletInfo{
 			WalletId:   wallet,
 			Balance:    balanceFloat,
@@ -710,7 +712,7 @@ func withdrawMsgValue(msg api.Message) (abi.TokenAmount, error) {
 	return params.AmountRequested, nil
 }
 
-func reportReceiveFaultPenalty(block types.BlockHeader, msg api.Message) error {
+func recordReceiveMsg(block types.BlockHeader, msg api.Message) error {
 	o := orm.NewOrm()
 	receiveMsg := new(models.ReceiveMessages)
 	n, err := o.QueryTable("fly_receice_messages").Filter("message_id", msg.Cid.String()).All(receiveMsg)
