@@ -3,7 +3,7 @@ package reward
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/filecoin-project/go-address"
@@ -574,7 +574,11 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			msgLog.Errorf("record preCommit msg:%+v parse sector number err:%+v", msg.Cid, err)
 			return err
 		}
-
+		paramsData, err := json.Marshal(params)
+		if err != nil {
+			msgLog.Errorf("json marshal preCommit params msg:%+v parse sector number err:%+v", msg.Cid, err)
+			return err
+		}
 		m.SectorNumber = sectorNum
 		m.Method = 6
 		m.MessageId = msg.Cid.String()
@@ -582,7 +586,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 		m.To = msg.Message.To.String()
 		m.Epoch = epoch
 		m.Status = int(msgLookup.Receipt.ExitCode)
-		m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
+		m.Params = string(paramsData)
 		m.CreateTime = time.Unix(int64(timeStamp), 0)
 		ms = append(ms, m)
 	case builtin.MethodsMiner.PreCommitSectorBatch:
@@ -605,6 +609,11 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 				msgLog.Errorf("record preCommit msg:%+v parse sector number err:%+v", msg.Cid, err)
 				return err
 			}
+			paramsData, err := json.Marshal(&param)
+			if err != nil {
+				msgLog.Errorf("json marshal preCommit params msg:%+v parse sector number err:%+v", msg.Cid, err)
+				return err
+			}
 			m.SectorNumber = sectorNum
 			m.Method = 6
 			m.MessageId = msg.Cid.String()
@@ -612,7 +621,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			m.To = msg.Message.To.String()
 			m.Epoch = epoch
 			m.Status = int(msgLookup.Receipt.ExitCode)
-			m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
+			m.Params = string(paramsData)
 			m.CreateTime = time.Unix(int64(timeStamp), 0)
 			ms = append(ms, m)
 		}
@@ -635,6 +644,11 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			msgLog.Errorf("record proveCommit msg:%+v parse sector number err:%+v", msg.Cid, err)
 			return err
 		}
+		paramsData, err := json.Marshal(params)
+		if err != nil {
+			msgLog.Errorf("json marshal preCommit params msg:%+v parse sector number err:%+v", msg.Cid, err)
+			return err
+		}
 		m.SectorNumber = sectorNum
 		m.Method = 7
 		m.MessageId = msg.Cid.String()
@@ -642,7 +656,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 		m.To = msg.Message.To.String()
 		m.Epoch = epoch
 		m.Status = int(msgLookup.Receipt.ExitCode)
-		m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
+		m.Params = string(paramsData)
 		m.CreateTime = time.Unix(int64(timeStamp), 0)
 		ms = append(ms, m)
 	case builtin.MethodsMiner.ProveCommitAggregate:
@@ -669,6 +683,11 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			msgLog.Errorf("record  proveCommit msg:%+v get sectors info err:%+v", msg.Cid, err)
 			return err
 		}
+		paramsData, err := json.Marshal(params)
+		if err != nil {
+			msgLog.Errorf("json marshal preCommit params msg:%+v parse sector number err:%+v", msg.Cid, err)
+			return err
+		}
 		for sector, ok := range sectors {
 			m := new(models.PreAndProveMessages)
 			if ok {
@@ -683,7 +702,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			m.From = msg.Message.From.String()
 			m.To = msg.Message.To.String()
 			m.Epoch = epoch
-			m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
+			m.Params = string(paramsData)
 			m.CreateTime = time.Unix(int64(timeStamp), 0)
 			ms = append(ms, m)
 		}
