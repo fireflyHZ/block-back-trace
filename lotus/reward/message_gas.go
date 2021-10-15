@@ -251,7 +251,6 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 }
 
 func recordWallets(t uint64) error {
-	msgLog.Info("begin record wallets")
 	ctx := context.Background()
 	wim := make(map[string]*models.WalletInfo)
 	for wallet, _ := range models.Wallets {
@@ -271,7 +270,7 @@ func recordWallets(t uint64) error {
 			msgLog.Errorf("parse address balance error, address:%+v err:%+v", w, err)
 			return err
 		}
-		msgLog.Infof("address:%+v balance:%+v", wallet, balance)
+		//msgLog.Infof("address:%+v balance:%+v", wallet, balance)
 		wim[wallet] = &models.WalletInfo{
 			WalletId:   wallet,
 			Balance:    balanceFloat,
@@ -371,7 +370,7 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		//if errTx != nil {
 		//	msgLog.Errorf("DEBUG: collectWalletData orm transation rollback error: %+v", errTx)
 		//}
-		msgLog.Warnf("message is already exist:%+v\n", msgId)
+		msgLog.Warnf("message is already exist:%+v", msgId)
 		err = txOmer.Commit()
 		if err != nil {
 			msgLog.Errorf("DEBUG: recordCostMessageInfo orm transation Commit error: %+v", err)
@@ -715,7 +714,7 @@ func withdrawMsgValue(msg api.Message) (abi.TokenAmount, error) {
 func recordReceiveMsg(block types.BlockHeader, msg api.Message) error {
 	o := orm.NewOrm()
 	receiveMsg := new(models.ReceiveMessages)
-	n, err := o.QueryTable("fly_receice_messages").Filter("message_id", msg.Cid.String()).All(receiveMsg)
+	n, err := o.QueryTable("fly_receive_messages").Filter("message_id", msg.Cid.String()).All(receiveMsg)
 	if err != nil {
 		msgLog.Errorf("query fly_receice_messages error msg:%+v err:%+v num:%+v ", msg.Cid, err, n)
 		return err
