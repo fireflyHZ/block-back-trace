@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"time"
 )
@@ -81,10 +82,18 @@ func UpdateWalletsInfo(newWalletInfos map[string]*WalletInfo) error {
 		if err != nil {
 			return err
 		}
-		if num == 0 || info.Balance != wallets[0].Balance {
+		fmt.Printf("wallets:%+v\n", wallets)
+		if num == 0 {
 			_, err = o.Insert(info)
 			if err != nil {
 				return err
+			}
+		} else {
+			if info.Balance != wallets[0].Balance {
+				_, err = o.Insert(info)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
