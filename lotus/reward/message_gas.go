@@ -253,7 +253,7 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 func recordWallets(t uint64) error {
 	ctx := context.Background()
 	wim := make(map[string]*models.WalletInfo)
-	for _, wallet := range models.Wallets {
+	for wallet, _ := range models.Wallets {
 		w, err := address.NewFromString(wallet)
 		if err != nil {
 			msgLog.Errorf("address new from string error, address:%+v err:%+v", w, err)
