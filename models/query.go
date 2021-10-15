@@ -35,26 +35,6 @@ type OrderInfoRequest struct {
 	Power   float64
 }
 
-type OrderDailyRewardResp struct {
-	Code string
-	Msg  string
-	Data []OrderDailyRewardInfo
-}
-
-type UserInfoResp struct {
-	Code string
-	Msg  string
-	Data UserInfo
-}
-
-type UserDailyInfoResp struct {
-	Code       string
-	Msg        string
-	TotalCount int
-	TotalPage  int
-	Data       []UserDailyRewardInfo
-}
-
 //--------------------------------
 type RewardResp struct {
 	Code           string
