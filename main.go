@@ -7,7 +7,7 @@ import (
 	"github.com/beego/beego/v2/server/web/filter/cors"
 	_ "github.com/lib/pq"
 	"profit-allocation/controllers"
-	"profit-allocation/lotus"
+	"profit-allocation/lotus/power"
 	"profit-allocation/models"
 )
 
@@ -22,8 +22,8 @@ func main() {
 		return
 	}
 
-	//dingTalk.TestSendDingTalk()
-	go lotus.Setup()
+	power.PartitionCheck()
+	//go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
@@ -76,6 +76,8 @@ func initDatabase() error {
 		new(models.MineBlockRight),
 		new(models.AllMinersMined),
 		new(models.AllMinersPower),
+		new(models.WalletInfo),
+		new(models.ReceiveMessages),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		return err

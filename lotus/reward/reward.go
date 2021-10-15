@@ -926,7 +926,7 @@ func recordMineBlockRight(tipset *types.TipSet) error {
 			if lost {
 				rewardLog.Warnf("miner %+v have lost a mine right in epoch %+v", miner, tipset.Height())
 
-				err = dingTalk.SendDingtalkData(mbr.MinerId, mbr.Epoch, mbr.WinCount, mbr.Time.Format(time.RFC3339))
+				err = dingTalk.SendMineDingtalkData(mbr.MinerId, mbr.Epoch, mbr.WinCount, mbr.Time.Format(time.RFC3339))
 				if err != nil {
 					rewardLog.Warnf("send dingtalk error, miner:%+v epoch:%+v err:%+v", mbr.MinerId, mbr.Epoch, err)
 				}

@@ -104,6 +104,7 @@ type PreAndProveMessages struct {
 	Method       uint64
 	SectorNumber int64
 	Status       int
+	Params       string
 	CreateTime   time.Time
 }
 
@@ -148,99 +149,22 @@ type AllMinersPower struct {
 	UpdateTime time.Time
 }
 
-type WalletBaseinfo struct {
-	Id       int `orm:"pk;auto"`
-	WalletId string
-	//NodeId         string
-	BalanceFil     string
-	BalanceAttofil string
-	CreateTime     int64
-	UpdateTime     int64
-	Status         string
-}
-
-type WalletProfitInfo struct {
-	Id             int `orm:"pk;auto"`
-	SettlementType string
-	SettlementDate string
-	WalletId       string
-	//MinerId        string
-	StartAmount string
-	EndAmount   string
-	Amount      string
-	CreateTime  int64
-	Status      string
-}
-
-type NetRunDataPro struct {
-	Id                 int `orm:"pk;auto"`
-	ReceiveBlockHeight int
-	TotalShare         int
-	AllShare           int
-	CreateTime         int64
-	UpdateTime         int64
-}
-
-//分配至order和user版本使用 以下
-type UserInfo struct {
-	Id            int `orm:"pk;auto"`
-	UserId        int
-	Share         int
-	Power         float64 //算力
-	Available     float64 //可用余额
-	TotalPleage   float64 //总质押
-	AdvancePleage float64 //垫付质押
-	Vesting       float64 //锁定金额
-	Release       float64 //已释放
-	Reward        float64 //总奖励
-	Fee           float64 //总奖励
-	UpdateTime    string
-}
-
-type UserDailyRewardInfo struct {
-	Id               int `orm:"pk;auto"`
-	UserId           int
-	Reward           float64
-	Power            float64
-	Pledge           float64
-	Fee              float64
-	ImmediateRelease float64
-	LinearRelease    float64
-	Time             string
-}
-
-type OrderInfo struct {
+type WalletInfo struct {
 	Id         int `orm:"pk;auto"`
-	OrderId    int
-	UserId     int
-	Share      int
-	Power      float64
-	Reward     float64
-	Epoch      int
-	Time       string
-	UpdateTime uint64
+	WalletId   string
+	Balance    float64
+	CreateTime time.Time
 }
 
-type OrderDailyRewardInfo struct {
-	Id      int `orm:"pk;auto"`
-	OrderId int
-	//MinerId    string
-	Reward     float64
-	Pleage     float64
-	Power      float64
-	Fee        float64
-	Epoch      int
-	Time       string
-	UpdateTime uint64
-}
-
-type VestingInfo struct {
-	Id        int `orm:"pk;auto"`
-	UserId    int
-	Vesting   float64
-	Release   float64
-	Times     int32
-	StartTime string
+type ReceiveMessages struct {
+	Id         int `orm:"pk;auto"`
+	MessageId  string
+	From       string
+	To         string
+	Epoch      int64
+	Value      float64
+	Method     uint32
+	CreateTime time.Time
 }
 
 type MinerAndWalletRelation struct {

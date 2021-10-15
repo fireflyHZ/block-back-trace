@@ -71,3 +71,22 @@ func (msg *ExpendMessages) Insert() error {
 	_, err := o.Insert(msg)
 	return err
 }
+
+func UpdateWalletsInfo(newWalletInfos map[string]*WalletInfo) error {
+	o := orm.NewOrm()
+	wallets := make([]WalletInfo, 0)
+
+	for id, info := range newWalletInfos {
+		num, err := o.QueryTable("fly_wallet_info").Filter("wallet_id", id).OrderBy("-create_time").All(&wallets)
+		if err != nil {
+			return err
+		}
+		if num == 0 || info.Balance != wallets[0].Balance {
+			_, err = o.Insert(info)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}

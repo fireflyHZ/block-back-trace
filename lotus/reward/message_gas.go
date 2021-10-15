@@ -3,6 +3,7 @@ package reward
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/filecoin-project/go-address"
@@ -151,6 +152,12 @@ func handleMsgGasInfo(dealBlcokHeight int64, end int64) (int64, error) {
 		if err != nil {
 			return i, err
 		}
+
+		//记录wallet状态
+		err = recordWallets(chainHeightHandle.MinTimestamp())
+		if err != nil {
+			return i, err
+		}
 		chainHeightHandle = chainHeightAfter
 
 	}
@@ -221,6 +228,16 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 			}
 		}
 
+		//记录收入msg
+		if inWallets(message.Message.To.String()) {
+			err := reportReceiveFaultPenalty(block, message)
+			if err != nil {
+				if err != nil {
+					return err
+				}
+			}
+		}
+
 	}
 	h, err := strconv.ParseInt(block.Height.String(), 10, 64)
 	if err != nil {
@@ -231,6 +248,36 @@ func calculateWalletCost(block types.BlockHeader, messages []api.Message, basefe
 		msgLog.Errorf("update hight:%+v err:%+v", h, err)
 	}
 	return nil
+}
+
+func recordWallets(t uint64) error {
+	ctx := context.Background()
+	wim := make(map[string]*models.WalletInfo)
+	for _, wallet := range models.Wallets {
+		w, err := address.NewFromString(wallet)
+		if err != nil {
+			msgLog.Errorf("address new from string error, address:%+v err:%+v", w, err)
+			return err
+		}
+		balance, err := client.Client.WalletBalance(ctx, w)
+		if err != nil {
+			msgLog.Errorf("Get address balance error, address:%+v err:%+v", w, err)
+			return err
+		}
+		balanceStr := bit.TransFilToFIL(balance.String())
+		balanceFloat, err := strconv.ParseFloat(balanceStr, 64)
+		if err != nil {
+			msgLog.Errorf("parse address balance error, address:%+v err:%+v", w, err)
+			return err
+		}
+		wim[wallet] = &models.WalletInfo{
+			WalletId:   wallet,
+			Balance:    balanceFloat,
+			CreateTime: time.Unix(int64(t), 0),
+		}
+
+	}
+	return models.UpdateWalletsInfo(wim)
 }
 
 func isPledgeMessage(method abi.MethodNum) bool {
@@ -383,7 +430,6 @@ func recordCostMessage(gasout vm.GasOutputs, message api.Message, block types.Bl
 		expendInfo.BaseBurnFee = burnFee
 		expendInfo.OverEstimationBurn = overBurn
 		expendInfo.Value = valueFloat
-		//	expendInfo.Time = t.Format("2006-01-02")
 		expendInfo.UpdateTime = t
 
 		_, err = txOmer.Insert(expendInfo)
@@ -527,6 +573,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			msgLog.Errorf("record preCommit msg:%+v parse sector number err:%+v", msg.Cid, err)
 			return err
 		}
+
 		m.SectorNumber = sectorNum
 		m.Method = 6
 		m.MessageId = msg.Cid.String()
@@ -534,6 +581,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 		m.To = msg.Message.To.String()
 		m.Epoch = epoch
 		m.Status = int(msgLookup.Receipt.ExitCode)
+		m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
 		m.CreateTime = time.Unix(int64(timeStamp), 0)
 		ms = append(ms, m)
 	case builtin.MethodsMiner.PreCommitSectorBatch:
@@ -563,6 +611,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			m.To = msg.Message.To.String()
 			m.Epoch = epoch
 			m.Status = int(msgLookup.Receipt.ExitCode)
+			m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
 			m.CreateTime = time.Unix(int64(timeStamp), 0)
 			ms = append(ms, m)
 		}
@@ -592,6 +641,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 		m.To = msg.Message.To.String()
 		m.Epoch = epoch
 		m.Status = int(msgLookup.Receipt.ExitCode)
+		m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
 		m.CreateTime = time.Unix(int64(timeStamp), 0)
 		ms = append(ms, m)
 	case builtin.MethodsMiner.ProveCommitAggregate:
@@ -632,7 +682,7 @@ func recordPreAndProveCommitMsg(msg api.Message, epoch int64, timeStamp uint64) 
 			m.From = msg.Message.From.String()
 			m.To = msg.Message.To.String()
 			m.Epoch = epoch
-
+			m.Params = base64.StdEncoding.EncodeToString(msg.Message.Params)
 			m.CreateTime = time.Unix(int64(timeStamp), 0)
 			ms = append(ms, m)
 		}
@@ -658,6 +708,41 @@ func withdrawMsgValue(msg api.Message) (abi.TokenAmount, error) {
 	}
 
 	return params.AmountRequested, nil
+}
+
+func reportReceiveFaultPenalty(block types.BlockHeader, msg api.Message) error {
+	o := orm.NewOrm()
+	receiveMsg := new(models.ReceiveMessages)
+	n, err := o.QueryTable("fly_receice_messages").Filter("message_id", msg.Cid.String()).All(receiveMsg)
+	if err != nil {
+		msgLog.Errorf("query fly_receice_messages error msg:%+v err:%+v num:%+v ", msg.Cid, err, n)
+		return err
+	}
+	if n != 0 {
+		msgLog.Warnf("message is already exist:%+v\n", msg.Cid)
+		return nil
+	}
+	value, err := strconv.ParseFloat(bit.TransFilToFIL(msg.Message.Value.String()), 64)
+	if err != nil {
+		rewardForLog.Errorf("parse value to float err:%+v", err)
+		return err
+	}
+	t := time.Unix(int64(block.Timestamp), 0)
+	epoch := int64(block.Height)
+	receiveMsg.MessageId = msg.Cid.String()
+	receiveMsg.From = msg.Message.From.String()
+	receiveMsg.To = msg.Message.To.String()
+	receiveMsg.Epoch = epoch
+	receiveMsg.Value = value
+	receiveMsg.Method = uint32(msg.Message.Method)
+	receiveMsg.CreateTime = t
+
+	_, err = o.Insert(receiveMsg)
+	if err != nil {
+		msgLog.Errorf("Insert receive msg error msg:%+v err:%+v ", msg.Cid, err)
+		return err
+	}
+	return nil
 }
 
 func getMinerByWallte(walletId string) (string, error) {
