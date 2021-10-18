@@ -99,7 +99,7 @@ func checkMinersPartitions(miners string) {
 			continue
 		}
 
-		if min*60+sec > 60*3*info.AllPartitions {
+		if min*60+sec > 210*info.AllPartitions {
 			if info.AllPartitions > info.ProvenPartitions {
 				log.Warnf("window post warning,miner:%+v,deadline:%+v", info.Maddr, info.DeadlineIndex)
 				err = dingTalk.SendPowerDingtalkData(&info)
