@@ -30,6 +30,7 @@ func PartitionCheck() {
 		}
 		miners = strings.TrimLeft(miners, ",")
 		checkMinersPartitions(miners)
+		log.Info("checked")
 		time.Sleep(time.Minute * 3)
 	}
 }
@@ -97,20 +98,10 @@ func checkMinersPartitions(miners string) {
 			}
 			continue
 		}
-		if info.Maddr == "f044315" {
-			fmt.Println(info)
-			fmt.Println(min)
-			fmt.Println(sec)
-		}
+
 		if min*60+sec > 60*3*(1+info.AllPartitions/2) {
-			if info.Maddr == "f044315" {
-				fmt.Println(info)
-				fmt.Println(min)
-				fmt.Println(sec)
-				fmt.Println(info.AllPartitions)
-				fmt.Println(info.ProvenPartitions)
-			}
 			if info.AllPartitions > info.ProvenPartitions {
+				log.Warnf("window post warning,miner:%+v,deadline:%+v", info.Maddr, info.DeadlineIndex)
 				err = dingTalk.SendPowerDingtalkData(&info)
 				if err != nil {
 					log.Errorf("SendPowerDingtalkData call error:%+v", err)
@@ -123,7 +114,6 @@ func checkMinersPartitions(miners string) {
 
 func doOneceTest() {
 	ctx := context.Background()
-	client2.CreateLotusClient()
 	miners := ""
 	for minerId, _ := range models.Miners {
 		miners += fmt.Sprintf(",\"%s\"", minerId)
