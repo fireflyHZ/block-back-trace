@@ -54,12 +54,13 @@ func SendPowerDingtalkData(mpi *models.MinerPartitionInfo) error {
 	mi := new(models.MinerInfo)
 	_, err := o.QueryTable("fly_miner_info").Filter("miner_id", mpi.Maddr).All(mi)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	msg := parsePowerDingTalkData(mpi, mi.Name)
 	bot := dingtalk.InitDingTalkWithSecret(models.DingTalkToken, models.DingTalkSecret)
-
 	if err := bot.SendMarkDownMessage("### 时空证明告警：\n", msg); err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return nil
@@ -78,6 +79,43 @@ func SendCheckPowerErrorDingtalkData(errStr string) error {
 		return err
 	}
 	return nil
+}
+
+func SendTestPowerDingtalkData(mpi *models.MinerPartitionInfo) error {
+	o := orm.NewOrm()
+	mi := new(models.MinerInfo)
+	_, err := o.QueryTable("fly_miner_info").Filter("miner_id", mpi.Maddr).All(mi)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	msg := parseTestPowerDingTalkData(mpi, mi.Name)
+	bot := dingtalk.InitDingTalkWithSecret(models.DingTalkToken, models.DingTalkSecret)
+	if err := bot.SendMarkDownMessage("### 时空证明告警：\n", msg); err != nil {
+		fmt.Println(err)
+		return err
+	}
+	return nil
+}
+
+func parseTestPowerDingTalkData(mpi *models.MinerPartitionInfo, name string) string {
+	tipset := strings.Split(mpi.TipsetTime, " ")
+	open := strings.Split(mpi.DeadlineOpenTime, " ")
+	closeT := strings.Split(mpi.DeadlineCloseTime, " ")
+	return fmt.Sprintf("#### 时空证明告警(test)：\n\t"+
+		"- 矿工编号:   %s(%s)\n\t"+
+		"- 网络当前高度:   %s\n\t"+
+		"- 消耗时间:   %s\n\t"+
+		"- 开启时间:   %s\n\t"+
+		"- 关闭时间:   %s\n\t"+
+		"- 窗口编号:   %d\n\t"+
+		"- 扇区数量:   %d\n\t"+
+		"- 错误扇区数量:   %d\n\t"+
+		"- AllPartitions:   %d\n\t"+
+		"- ProvenPartitions:   %d\n\t",
+		mpi.Maddr, name, tipset[1], mpi.DeadlineElapsedTime,
+		open[1], closeT[1], mpi.DeadlineIndex, mpi.AllSectors,
+		mpi.FaultSectors, mpi.AllPartitions, mpi.ProvenPartitions)
 }
 
 func TestSendDingTalk() {

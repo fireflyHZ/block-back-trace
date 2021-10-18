@@ -6,6 +6,7 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"profit-allocation/lotus/block"
 	"profit-allocation/lotus/client"
+	"profit-allocation/lotus/power"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
 	"profit-allocation/util/sync"
@@ -28,6 +29,7 @@ func Setup() {
 	defer collectTime.Stop()
 	go block.RecordAllBlocks()
 	go reward.RecordAllMiners()
+	go power.PartitionCheck()
 	for {
 		select {
 		case <-collectTime.C:
