@@ -19,7 +19,7 @@ import (
 	"github.com/filecoin-project/lotus/chain/actors/adt"
 	"github.com/filecoin-project/lotus/chain/actors/builtin/miner"
 	"github.com/filecoin-project/lotus/chain/gen"
-	"github.com/filecoin-project/lotus/chain/store"
+	lrand "github.com/filecoin-project/lotus/chain/rand"
 	"github.com/filecoin-project/lotus/chain/types"
 	"github.com/filecoin-project/specs-actors/actors/builtin/reward"
 	"github.com/filecoin-project/specs-actors/v5/actors/builtin"
@@ -446,6 +446,7 @@ func TestMinerInfo() {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
 	}
+	fmt.Println(LotusHost)
 	defer closer()
 	minerAddr, err := address.NewFromString("f0144528")
 	if err != nil {
@@ -494,13 +495,15 @@ func TestProveCommitAggregateParams() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
+	fmt.Println(LotusHost)
+
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
 	}
 	defer closer()
-	tip, _ := nodeApi.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(905185), types.EmptyTSK)
+	tip, _ := nodeApi.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(1210077), types.EmptyTSK)
 	msgs, _ := nodeApi.ChainGetParentMessages(ctx, tip.Cids()[0])
 	var msg api.Message
 	for _, m := range msgs {
@@ -703,7 +706,7 @@ func Testmine() {
 		return
 	}
 
-	input, err := store.DrawRandomness(rbase.Data, crypto.DomainSeparationTag_TicketProduction, round-build.TicketRandomnessLookback, buf.Bytes())
+	input, err := lrand.DrawRandomness(rbase.Data, crypto.DomainSeparationTag_TicketProduction, round-build.TicketRandomnessLookback, buf.Bytes())
 	if err != nil {
 		return
 	}

@@ -21,7 +21,7 @@ import (
 var log = logging.Logger("reward-log")
 
 func PartitionCheck() {
-	doOneceTest()
+	//doOneceTest()
 	for {
 		//获取所有miner
 		miners := ""

@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-
 	if err := initDatabase(); err != nil {
 		fmt.Println("init database error:", err)
 		return
@@ -22,7 +21,7 @@ func main() {
 		return
 	}
 
-	//power.PartitionCheck()
+	//reward.TestProveCommitAggregateParams()
 	go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
