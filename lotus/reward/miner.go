@@ -2,6 +2,7 @@ package reward
 
 import (
 	"context"
+	"errors"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-state-types/big"
@@ -41,26 +42,23 @@ func QueryMinerAddressBalance(minerId string) (addrs map[string][]*MinerBalance,
 	return addrs, err
 }
 
-func QueryMinerWorkerAddressBalance(minerId string) ([]*MinerBalance, error) {
+func QueryMinerWorkerAddressBalance(minerId string) (float64, error) {
 	addrs, err := getMinerAddress(minerId)
 	if err != nil {
 		msgLog.Errorf("Get miner address error, miner:%+v err:%+v", minerId, err)
-		return nil, err
+		return 0, err
 	}
 	ctx := context.Background()
-
-	for _, mb := range addrs["worker"] {
-		balance, err := client.Client.WalletBalance(ctx, mb.Address)
-		if err != nil {
-			msgLog.Errorf("Get address balance error, miner:%+v address:%+v err:%+v", minerId, mb.Address, err)
-			return nil, err
-		}
-		balanceStr := bit.TransFilToFIL(balance.String())
-		balanceFloat, err := strconv.ParseFloat(balanceStr, 64)
-		mb.Balance = balanceFloat
+	if len(addrs["worker"]) != 1 {
+		return 0, errors.New("worker address's number  is not 1")
 	}
-
-	return addrs["worker"], err
+	balance, err := client.Client.WalletBalance(ctx, addrs["worker"][0].Address)
+	if err != nil {
+		msgLog.Errorf("Get address balance error, miner:%+v address:%+v err:%+v", minerId, addrs["worker"][0].Address, err)
+		return 0, err
+	}
+	balanceStr := bit.TransFilToFIL(balance.String())
+	return strconv.ParseFloat(balanceStr, 64)
 }
 
 func getMinerAddress(minerId string) (minerAddrs map[string][]*MinerBalance, err error) {

@@ -18,9 +18,9 @@ type MinerBalanceResp struct {
 }
 
 type MinerWorkerBalanceResp struct {
-	Code         string
-	Msg          string
-	MinerBalacne []*reward.MinerBalance
+	Code    string
+	Msg     string
+	Balacne float64
 }
 
 var minerLog = logging.Logger("miner-ctr-log")
@@ -80,9 +80,9 @@ func (c *MinerController) GetMinerWorkerAddressBalance() {
 		return
 	}
 	resp := MinerWorkerBalanceResp{
-		Code:         "ok",
-		Msg:          "success",
-		MinerBalacne: result,
+		Code:    "ok",
+		Msg:     "success",
+		Balacne: result,
 	}
 	c.Data["json"] = &resp
 	c.ServeJSON()
