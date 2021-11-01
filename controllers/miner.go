@@ -17,6 +17,12 @@ type MinerBalanceResp struct {
 	MinerBalacne map[string][]*reward.MinerBalance
 }
 
+type MinerWorkerBalanceResp struct {
+	Code         string
+	Msg          string
+	MinerBalacne []*reward.MinerBalance
+}
+
 var minerLog = logging.Logger("miner-ctr-log")
 
 func (c *MinerController) GetMinerBalance() {
@@ -42,6 +48,38 @@ func (c *MinerController) GetMinerBalance() {
 		return
 	}
 	resp := MinerBalanceResp{
+		Code:         "ok",
+		Msg:          "success",
+		MinerBalacne: result,
+	}
+	c.Data["json"] = &resp
+	c.ServeJSON()
+	return
+}
+
+func (c *MinerController) GetMinerWorkerAddressBalance() {
+	minerId := c.GetString("miner")
+	if minerId == "" {
+		resp := MinerWorkerBalanceResp{
+			Code: "faile",
+			Msg:  "wallet id is nil",
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+	minerLog.Infof("Query miner worker balance :%+v", minerId)
+	result, err := reward.QueryMinerWorkerAddressBalance(minerId)
+	if err != nil {
+		resp := MinerWorkerBalanceResp{
+			Code: "faile",
+			Msg:  fmt.Sprintf("Query miner address balance error:%v", err),
+		}
+		c.Data["json"] = &resp
+		c.ServeJSON()
+		return
+	}
+	resp := MinerWorkerBalanceResp{
 		Code:         "ok",
 		Msg:          "success",
 		MinerBalacne: result,

@@ -40,6 +40,7 @@ func main() {
 	web.Router("/firefly/profit/block", &controllers.BlockController{}, "get:GetMinerMineBlockPercentage")
 	web.Router("/firefly/profit/luck", &controllers.BlockController{}, "get:GetMinersLuck")
 	web.Router("/firefly/profit/balance", &controllers.MinerController{}, "get:GetMinerBalance")
+	web.Router("/firefly/profit/worker_balance", &controllers.MinerController{}, "get:GetMinerWorkerAddressBalance")
 
 	web.Run()
 }

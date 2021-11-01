@@ -41,6 +41,28 @@ func QueryMinerAddressBalance(minerId string) (addrs map[string][]*MinerBalance,
 	return addrs, err
 }
 
+func QueryMinerWorkerAddressBalance(minerId string) ([]*MinerBalance, error) {
+	addrs, err := getMinerAddress(minerId)
+	if err != nil {
+		msgLog.Errorf("Get miner address error, miner:%+v err:%+v", minerId, err)
+		return nil, err
+	}
+	ctx := context.Background()
+
+	for _, mb := range addrs["worker"] {
+		balance, err := client.Client.WalletBalance(ctx, mb.Address)
+		if err != nil {
+			msgLog.Errorf("Get address balance error, miner:%+v address:%+v err:%+v", minerId, mb.Address, err)
+			return nil, err
+		}
+		balanceStr := bit.TransFilToFIL(balance.String())
+		balanceFloat, err := strconv.ParseFloat(balanceStr, 64)
+		mb.Balance = balanceFloat
+	}
+
+	return addrs["worker"], err
+}
+
 func getMinerAddress(minerId string) (minerAddrs map[string][]*MinerBalance, err error) {
 	minerAddrs = make(map[string][]*MinerBalance, 0)
 	ctx := context.Background()
