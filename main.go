@@ -21,7 +21,7 @@ func main() {
 		return
 	}
 
-	//reward.TestProveCommitAggregateParams()
+	//reward.TestWorkerMine()
 	go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{

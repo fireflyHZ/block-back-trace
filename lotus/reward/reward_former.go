@@ -368,25 +368,43 @@ func TestMine() {
 	ctx := context.Background()
 	requestHeader := http.Header{}
 	requestHeader.Add("Content-Type", "application/json")
-	tokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
+	tokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.SvNQK12qzZOqPf_-6hwAfNJ6ZPba6w8mSatgf5JKexc"
+	//tokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
 	requestHeader.Set("Authorization", tokenHeader)
 	LotusHost, err := web.AppConfig.String("lotusHost")
 	if err != nil {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
+	LotusHost = "http://172.16.11.3:1237/rpc/v0"
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
 		return
 	}
 	defer closer()
-	minerAddr, err := address.NewFromString("f02420")
+	ws, err := nodeApi.WalletList(ctx)
+	if err != nil {
+		fmt.Println("wallet list error:", err)
+		return
+	}
+	fmt.Println(ws)
+	mmmm := make(map[address.Address][]int)
+	for _, w := range ws {
+		if w.String()[1] == '3' {
+			//fmt.Println("=====",w)
+			es := []int{}
+			mmmm[w] = es
+		}
+	}
+
+	minerAddr, err := address.NewFromString("f0748101")
 	if err != nil {
 		fmt.Println("NewFromString err:", err)
 		return
 	}
-	for i := 579560; i < 590800; i++ {
+	for i := 1256700; i < 1256710; i++ {
+		fmt.Println(i)
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := nodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
@@ -394,7 +412,7 @@ func TestMine() {
 			fmt.Println("ChainGetTipSetByHeight err:", err)
 			return
 		}
-
+		fmt.Println(tp.Key())
 		mbi, err := nodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
 		if err != nil {
 			fmt.Println("MinerGetBaseInfo err:", err)
@@ -402,7 +420,6 @@ func TestMine() {
 		}
 
 		if mbi == nil {
-
 			return
 		}
 		if !mbi.EligibleForMining {
@@ -417,19 +434,32 @@ func TestMine() {
 		if len(bvals) > 0 {
 			rbase = bvals[len(bvals)-1]
 		}
+		for m, _ := range mmmm {
+			mbi.WorkerKey = m
+			p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, nodeApi)
+			if err != nil {
+				fmt.Println("IsRoundWinner err:", err)
+				return
+			}
 
-		p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, nodeApi)
-		if err != nil {
-			fmt.Println("IsRoundWinner err:", err)
-			return
+			if p != nil {
+				//fmt.Printf("height:%+v\n", round)
+				//fmt.Printf("ppp:%+v\n", p)
+				mmmm[m] = append(mmmm[m], int(round))
+			}
 		}
 
-		if p != nil {
-			fmt.Printf("height:%+v\n", round)
-			fmt.Printf("ppp:%+v\n", p)
-		}
 	}
-
+	data := fmt.Sprint("number \t\t wallet \t\t epoch\n")
+	for m, es := range mmmm {
+		eps := ""
+		for _, e := range es {
+			eps += fmt.Sprintf("%d,", e)
+		}
+		data += fmt.Sprintf("%d \t\t %+v \t\t %s\n", len(es), m, eps)
+	}
+	ioutil.WriteFile("mined", []byte(data), 0755)
+	fmt.Println("ok")
 }
 
 func TestMinerInfo() {
@@ -601,8 +631,8 @@ func TestMinerPower() {
 		return
 	}
 	defer closer()
-	minerAddr, _ := address.NewFromString("f0144528")
-	var epoch = abi.ChainEpoch(926640)
+	minerAddr, _ := address.NewFromString("f01402131")
+	var epoch = abi.ChainEpoch(1252080)
 	//tipset, _ := nodeApi.ChainHead(context.Background())
 	//fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
@@ -819,6 +849,7 @@ func TestSector() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
+	LotusHost = "https://172.16.1.206:1234/rpc/v0"
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
@@ -826,14 +857,14 @@ func TestSector() {
 	}
 	defer closer()
 
-	round := abi.ChainEpoch(1060440)
+	round := abi.ChainEpoch(1252080)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println("1", err)
 		return
 	}
 
-	minerAddr, _ := address.NewFromString("f0144528")
+	minerAddr, _ := address.NewFromString("f01402131")
 
 	secCounts, err := nodeApi.StateMinerSectorCount(ctx, minerAddr, tp.Key())
 	if err != nil {
@@ -1029,4 +1060,109 @@ func printSub(nodeApi v0api.FullNode, msg cid.Cid, subs []types.ExecutionTrace) 
 			fmt.Printf("sub :%+v\n", sub.Msg)
 		}
 	}
+}
+
+func TestWorkerMine() {
+
+	ctx := context.Background()
+	walletRequestHeader := http.Header{}
+	walletRequestHeader.Add("Content-Type", "application/json")
+	walletTokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.SvNQK12qzZOqPf_-6hwAfNJ6ZPba6w8mSatgf5JKexc"
+	walletRequestHeader.Set("Authorization", walletTokenHeader)
+	walletLotusHost := "http://172.16.11.3:1237/rpc/v0"
+	walletNodeApi, walletCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), walletLotusHost, walletRequestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer walletCloser()
+	dataRequestHeader := http.Header{}
+	dataRequestHeader.Add("Content-Type", "application/json")
+	dataTokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
+	dataRequestHeader.Set("Authorization", dataTokenHeader)
+	dataLotusHost := "http://172.16.10.245:1234/rpc/v0"
+	dataNodeApi, dataCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer dataCloser()
+	ws, err := walletNodeApi.WalletList(ctx)
+	if err != nil {
+		fmt.Println("wallet list error:", err)
+		return
+	}
+	fmt.Println(ws)
+	mmmm := make(map[address.Address][]int)
+	for _, w := range ws {
+		if w.String()[1] == '3' {
+			//fmt.Println("=====",w)
+			es := []int{}
+			mmmm[w] = es
+		}
+	}
+
+	minerAddr, err := address.NewFromString("f0748101")
+	if err != nil {
+		fmt.Println("NewFromString err:", err)
+		return
+	}
+	for i := 1256700; i < 1256710; i++ {
+		fmt.Println(i)
+		var h = abi.ChainEpoch(i)
+		round := h + 1
+		tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
+		if err != nil {
+			fmt.Println("ChainGetTipSetByHeight err:", err)
+			return
+		}
+
+		mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
+		if err != nil {
+			fmt.Println("MinerGetBaseInfo err:", err)
+			return
+		}
+
+		if mbi == nil {
+			return
+		}
+		if !mbi.EligibleForMining {
+			// slashed or just have no power yet
+			return
+		}
+
+		beaconPrev := mbi.PrevBeaconEntry
+		bvals := mbi.BeaconEntries
+
+		rbase := beaconPrev
+		if len(bvals) > 0 {
+			rbase = bvals[len(bvals)-1]
+		}
+		for m, _ := range mmmm {
+			mbi.WorkerKey = m
+			p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, walletNodeApi)
+			if err != nil {
+				fmt.Println("IsRoundWinner err:", err)
+				return
+			}
+
+			if p != nil {
+				//fmt.Printf("height:%+v\n", round)
+				//fmt.Printf("ppp:%+v\n", p)
+				mmmm[m] = append(mmmm[m], int(round))
+			}
+		}
+
+	}
+	data := fmt.Sprint("number \t\t wallet \t\t epoch\n")
+	for m, es := range mmmm {
+		eps := ""
+		for _, e := range es {
+			eps += fmt.Sprintf("%d,", e)
+		}
+		data += fmt.Sprintf("%d \t\t %+v \t\t %s\n", len(es), m, eps)
+	}
+	ioutil.WriteFile("mined", []byte(data), 0755)
+	fmt.Println("ok")
+
 }
