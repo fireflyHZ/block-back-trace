@@ -4,25 +4,26 @@ import (
 	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
-	"github.com/beego/beego/v2/server/web/filter/cors"
 	_ "github.com/lib/pq"
-	"profit-allocation/controllers"
-	"profit-allocation/lotus"
+	"os"
+	"os/signal"
+	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
+	"syscall"
 )
 
 func main() {
-	if err := initDatabase(); err != nil {
-		fmt.Println("init database error:", err)
-		return
-	}
-	if err := models.InitData(); err != nil {
-		fmt.Println("init data error:", err)
-		return
-	}
+	//if err := initDatabase(); err != nil {
+	//	fmt.Println("init database error:", err)
+	//	return
+	//}
+	//if err := models.InitData(); err != nil {
+	//	fmt.Println("init data error:", err)
+	//	return
+	//}
 
-	//reward.TestWorkerMine()
-	go lotus.Setup()
+	reward.TestWorkerMine()
+	/*go lotus.Setup()
 
 	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
 		AllowAllOrigins:  true,
@@ -42,7 +43,28 @@ func main() {
 	web.Router("/firefly/profit/balance", &controllers.MinerController{}, "get:GetMinerBalance")
 	web.Router("/firefly/profit/worker_balance", &controllers.MinerController{}, "get:GetMinerWorkerAddressBalance")
 
-	web.Run()
+	web.Run()*/
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
+	var shutdownCh <-chan struct{}
+	sigCh := make(chan os.Signal, 2)
+	shutdownDone := make(chan struct{})
+	go func() {
+		select {
+		case sig := <-sigCh:
+			fmt.Println("received shutdown", "signal", sig)
+		case <-shutdownCh:
+			fmt.Println("received shutdown")
+		}
+
+		fmt.Println("Shutting down...")
+		close(shutdownDone)
+	}()
+	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
+
+	<-quit
+	return
 }
 
 //初始化mysql

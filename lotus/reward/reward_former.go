@@ -31,6 +31,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"strings"
 
 	//big2 "math/big"
 	"net/http"
@@ -1062,6 +1063,12 @@ func printSub(nodeApi v0api.FullNode, msg cid.Cid, subs []types.ExecutionTrace) 
 	}
 }
 
+type ei struct {
+	epoch int
+	win   int
+	t     string
+}
+
 func TestWorkerMine() {
 
 	ctx := context.Background()
@@ -1072,7 +1079,7 @@ func TestWorkerMine() {
 	walletLotusHost := "http://172.16.11.3:1237/rpc/v0"
 	walletNodeApi, walletCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), walletLotusHost, walletRequestHeader)
 	if err != nil {
-		fmt.Println("NewFullNodeRPC err:", err)
+		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
 		return
 	}
 	defer walletCloser()
@@ -1083,43 +1090,43 @@ func TestWorkerMine() {
 	dataLotusHost := "http://172.16.10.245:1234/rpc/v0"
 	dataNodeApi, dataCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
 	if err != nil {
-		fmt.Println("NewFullNodeRPC err:", err)
+		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
 		return
 	}
 	defer dataCloser()
 	ws, err := walletNodeApi.WalletList(ctx)
 	if err != nil {
-		fmt.Println("wallet list error:", err)
+		rewardLog.Errorf("wallet list error:%+v", err)
 		return
 	}
-	fmt.Println(ws)
-	mmmm := make(map[address.Address][]int)
+	rewardLog.Infof("wallets number:%+v,\nwallets:%+v", len(ws), ws)
+	mmmm := make(map[address.Address][]*ei)
 	for _, w := range ws {
 		if w.String()[1] == '3' {
 			//fmt.Println("=====",w)
-			es := []int{}
+			es := []*ei{}
 			mmmm[w] = es
 		}
 	}
 
 	minerAddr, err := address.NewFromString("f0748101")
 	if err != nil {
-		fmt.Println("NewFromString err:", err)
+		rewardLog.Errorf("NewFromString err:%+v", err)
 		return
 	}
-	for i := 1256700; i < 1256710; i++ {
-		fmt.Println(i)
+	for i := 1234800; i < 1257840; i++ {
+		rewardLog.Info(i)
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
 		if err != nil {
-			fmt.Println("ChainGetTipSetByHeight err:", err)
+			rewardLog.Errorf("ChainGetTipSetByHeight err:%+v", err)
 			return
 		}
 
 		mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
 		if err != nil {
-			fmt.Println("MinerGetBaseInfo err:", err)
+			rewardLog.Errorf("MinerGetBaseInfo err:%+v", err)
 			return
 		}
 
@@ -1128,6 +1135,7 @@ func TestWorkerMine() {
 		}
 		if !mbi.EligibleForMining {
 			// slashed or just have no power yet
+			rewardLog.Errorf("eligible!!!!!!!!!!!")
 			return
 		}
 
@@ -1142,27 +1150,39 @@ func TestWorkerMine() {
 			mbi.WorkerKey = m
 			p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, walletNodeApi)
 			if err != nil {
-				fmt.Println("IsRoundWinner err:", err)
+				rewardLog.Errorf("IsRoundWinner err:%+v", err)
 				return
 			}
 
 			if p != nil {
 				//fmt.Printf("height:%+v\n", round)
 				//fmt.Printf("ppp:%+v\n", p)
-				mmmm[m] = append(mmmm[m], int(round))
+				t := time.Unix(int64(tp.MinTimestamp()+30), 0)
+				ts := strings.Trim(t.Format(time.RFC3339), "2021")
+				ts = strings.Trim(ts, "-")
+				ts = strings.TrimRight(ts, "+08:00")
+
+				e := new(ei)
+				e.epoch = int(round)
+				e.win = int(p.WinCount)
+				e.t = ts
+				mmmm[m] = append(mmmm[m], e)
 			}
 		}
 
 	}
-	data := fmt.Sprint("number \t\t wallet \t\t epoch\n")
+	data := fmt.Sprintf("block number \t\t win count \t\t wallet \t\t %70.10s \t\t %50.20s \n", "epoch", "time")
 	for m, es := range mmmm {
 		eps := ""
+		w := 0
+		ts := ""
 		for _, e := range es {
-			eps += fmt.Sprintf("%d,", e)
+			w += e.win
+			eps += fmt.Sprintf("%d:", e.epoch)
+			ts += fmt.Sprintf("%s\t", e.t)
 		}
-		data += fmt.Sprintf("%d \t\t %+v \t\t %s\n", len(es), m, eps)
+		data += fmt.Sprintf("%d \t\t %d \t\t %+v \t\t %s \t\t %s\n", len(es), w, m, eps, ts)
 	}
 	ioutil.WriteFile("mined", []byte(data), 0755)
-	fmt.Println("ok")
-
+	rewardLog.Info("ok")
 }
