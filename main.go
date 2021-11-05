@@ -1,15 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	"github.com/beego/beego/v2/server/web"
 	_ "github.com/lib/pq"
-	"os"
-	"os/signal"
 	"profit-allocation/lotus/reward"
 	"profit-allocation/models"
-	"syscall"
 )
 
 func main() {
@@ -44,27 +40,6 @@ func main() {
 	web.Router("/firefly/profit/worker_balance", &controllers.MinerController{}, "get:GetMinerWorkerAddressBalance")
 
 	web.Run()*/
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-
-	var shutdownCh <-chan struct{}
-	sigCh := make(chan os.Signal, 2)
-	shutdownDone := make(chan struct{})
-	go func() {
-		select {
-		case sig := <-sigCh:
-			fmt.Println("received shutdown", "signal", sig)
-		case <-shutdownCh:
-			fmt.Println("received shutdown")
-		}
-
-		fmt.Println("Shutting down...")
-		close(shutdownDone)
-	}()
-	signal.Notify(sigCh, syscall.SIGTERM, syscall.SIGINT)
-
-	<-quit
-	return
 }
 
 //初始化mysql
