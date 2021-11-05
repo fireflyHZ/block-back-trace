@@ -1116,6 +1116,7 @@ func TestWorkerMine() {
 	}
 	for i := 1234800; i < 1257840; i++ {
 		rewardLog.Info(i)
+		fmt.Println(i)
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
