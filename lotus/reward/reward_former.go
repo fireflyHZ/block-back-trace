@@ -31,6 +31,8 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
+	"os"
+	"strconv"
 	"strings"
 
 	//big2 "math/big"
@@ -1070,7 +1072,22 @@ type ei struct {
 }
 
 func TestWorkerMine() {
-
+	startStr := os.Getenv("LOTUS_START")
+	start, err := strconv.Atoi(startStr)
+	if err != nil {
+		rewardLog.Errorf("get lotus start err:%+v", err)
+		return
+	}
+	endStr := os.Getenv("LOTUS_END")
+	end, err := strconv.Atoi(endStr)
+	if err != nil {
+		rewardLog.Errorf("get lotus end err:%+v", err)
+		return
+	}
+	if start == 0 || end == 0 {
+		rewardLog.Errorf("start:%+v or end:%+v is 0", start, end)
+		return
+	}
 	ctx := context.Background()
 	walletRequestHeader := http.Header{}
 	walletRequestHeader.Add("Content-Type", "application/json")
@@ -1114,9 +1131,8 @@ func TestWorkerMine() {
 		rewardLog.Errorf("NewFromString err:%+v", err)
 		return
 	}
-	for i := 1234800; i < 1257840; i++ {
+	for i := start; i < end; i++ {
 		rewardLog.Info(i)
-		fmt.Println(i)
 		var h = abi.ChainEpoch(i)
 		round := h + 1
 		tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, h, types.NewTipSetKey())
