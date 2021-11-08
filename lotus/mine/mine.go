@@ -61,6 +61,7 @@ func CalculateMineRight() {
 		}
 		if round > int64(head.Height())-10 {
 			niceSleep()
+			continue
 		}
 		log.Infof("calculate mine right round: %v ", round)
 		err = calculate(round, walletNodeApi, dataNodeApi)
@@ -170,7 +171,7 @@ func calculate(round int64, walletNodeApi, dataNodeApi v0api.FullNode) error {
 		log.Errorf("get miners error:%+v", err)
 		return err
 	}
-
+	log.Infof("miners number:%+v", len(miners))
 	ws, err := walletNodeApi.WalletList(ctx)
 	if err != nil {
 		log.Errorf("wallet list error:%+v", err)
