@@ -852,7 +852,7 @@ func TestSector() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	LotusHost = "https://172.16.1.206:1234/rpc/v0"
+	LotusHost = "https://lotus.fireflyminer.com:12345/"
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
@@ -1088,12 +1088,21 @@ func TestWorkerMine() {
 		rewardLog.Errorf("start:%+v or end:%+v is 0", start, end)
 		return
 	}
+	walletLotusHost := os.Getenv("WALLTE_LOTUS")
+	walletToken := os.Getenv("WALLET_LOTUS_TOKEN")
+	dataLotusHost := os.Getenv("DATA_LOTUS")
+	dataToken := os.Getenv("DATA_LOTUS_TOKEN")
+	m := os.Getenv("MINER")
+	if walletLotusHost == "" || walletToken == "" || dataLotusHost == "" || dataToken == "" || m == "" {
+		rewardLog.Errorf("WALLTE_LOTUS:%+v or WALLET_LOTUS_TOKEN:%+v or DATA_LOTUS:%+v or DATA_LOTUS_TOKEN:%+v or MINER:%+v is \"\"", walletLotusHost, walletToken, dataLotusHost, dataToken, m)
+		return
+	}
 	ctx := context.Background()
 	walletRequestHeader := http.Header{}
 	walletRequestHeader.Add("Content-Type", "application/json")
-	walletTokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.SvNQK12qzZOqPf_-6hwAfNJ6ZPba6w8mSatgf5JKexc"
+	walletTokenHeader := fmt.Sprintf("Bearer %s", walletToken)
 	walletRequestHeader.Set("Authorization", walletTokenHeader)
-	walletLotusHost := "http://172.16.11.3:1237/rpc/v0"
+	//walletLotusHost := "http://172.16.11.3:1237/rpc/v0"
 	walletNodeApi, walletCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), walletLotusHost, walletRequestHeader)
 	if err != nil {
 		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
@@ -1102,9 +1111,9 @@ func TestWorkerMine() {
 	defer walletCloser()
 	dataRequestHeader := http.Header{}
 	dataRequestHeader.Add("Content-Type", "application/json")
-	dataTokenHeader := "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
+	dataTokenHeader := fmt.Sprintf("Bearer %s", dataToken)
 	dataRequestHeader.Set("Authorization", dataTokenHeader)
-	dataLotusHost := "http://172.16.10.245:1234/rpc/v0"
+	//dataLotusHost := "http://172.16.10.245:1234/rpc/v0"
 	dataNodeApi, dataCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
 	if err != nil {
 		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
@@ -1126,7 +1135,7 @@ func TestWorkerMine() {
 		}
 	}
 
-	minerAddr, err := address.NewFromString("f0748101")
+	minerAddr, err := address.NewFromString(m)
 	if err != nil {
 		rewardLog.Errorf("NewFromString err:%+v", err)
 		return
