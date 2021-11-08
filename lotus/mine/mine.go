@@ -204,7 +204,8 @@ func calculate(round int64, walletNodeApi, dataNodeApi v0api.FullNode) error {
 		}
 
 		if mbi == nil {
-			return fmt.Errorf("miner: %+v epoch: %+v mbi is nil", m.MinerId, round)
+			log.Warnf("miner: %+v epoch: %+v mbi is nil", m.MinerId, round)
+			continue
 		}
 		if !mbi.EligibleForMining {
 			// slashed or just have no power yet
