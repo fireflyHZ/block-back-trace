@@ -1,45 +1,21 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"github.com/beego/beego/v2/client/orm"
-	"github.com/beego/beego/v2/server/web"
 	_ "github.com/lib/pq"
-	"profit-allocation/lotus/reward"
+	"os"
+	"profit-allocation/lotus/mine"
 	"profit-allocation/models"
 )
 
 func main() {
-	//if err := initDatabase(); err != nil {
-	//	fmt.Println("init database error:", err)
-	//	return
-	//}
-	//if err := models.InitData(); err != nil {
-	//	fmt.Println("init data error:", err)
-	//	return
-	//}
-
-	reward.TestWorkerMine()
-	/*go lotus.Setup()
-
-	web.InsertFilter("*", web.BeforeRouter, cors.Allow(&cors.Options{
-		AllowAllOrigins:  true,
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
-		AllowCredentials: true,
-	}))
-
-	web.Router("/firefly/profit/total_reward_info", &controllers.RewardController{}, "get:GetRewardAndPledge")
-
-	web.Router("/firefly/profit/total_messages_gas_info", &controllers.RewardController{}, "get:GetMessagesGas")
-
-	web.Router("/firefly/profit/total_miner_info", &controllers.RewardController{}, "get:GetMinerInfo")
-	web.Router("/firefly/profit/block", &controllers.BlockController{}, "get:GetMinerMineBlockPercentage")
-	web.Router("/firefly/profit/luck", &controllers.BlockController{}, "get:GetMinersLuck")
-	web.Router("/firefly/profit/balance", &controllers.MinerController{}, "get:GetMinerBalance")
-	web.Router("/firefly/profit/worker_balance", &controllers.MinerController{}, "get:GetMinerWorkerAddressBalance")
-
-	web.Run()*/
+	if err := initDatabase(); err != nil {
+		fmt.Println("init database error:", err)
+		return
+	}
+	mine.CalculateMineRight()
 }
 
 //初始化mysql
@@ -49,9 +25,9 @@ func initDatabase() error {
 		return err
 	}
 
-	url, err := web.AppConfig.String("postgres")
-	if err != nil {
-		return err
+	url := os.Getenv("POSTGRES")
+	if url == "" {
+		return errors.New("get POSTGRES error")
 	}
 	maxIdle := 200
 	maxConn := 200
@@ -61,24 +37,12 @@ func initDatabase() error {
 	}
 
 	orm.RegisterModelWithPrefix("fly_",
-		new(models.ListenMsgGasNetStatus),
-		new(models.ListenRewardNetStatus),
-		new(models.ExpendInfo),
-		new(models.MinerInfo),
-		new(models.ExpendMessages),
-		new(models.PreAndProveMessages),
-		new(models.MineMessages),
-		new(models.MinerStatusAndDailyChange),
-		new(models.MinerAndWalletRelation),
-		new(models.MineBlockRight),
-		new(models.AllMinersMined),
-		new(models.AllMinersPower),
-		new(models.WalletInfo),
-		new(models.ReceiveMessages),
+		new(models.CalculateMineRightStatus),
+		new(models.MineRight),
 	)
 	if err := orm.RunSyncdb("default", false, true); err != nil {
 		return err
 	}
-	//lotus.InitMinerData()
+
 	return nil
 }

@@ -98,3 +98,21 @@ func UpdateWalletsInfo(newWalletInfos map[string]*WalletInfo) error {
 	}
 	return nil
 }
+
+func (mr *MineRight) Insert() error {
+	o := orm.NewOrm()
+	num, err := o.QueryTable("fly_mine_right").Filter("miner_id", mr.MinerId).Filter("wallet", mr.Wallet).Filter("epoch", mr.Epoch).All(mr)
+	if err != nil {
+		return err
+	}
+	if num == 0 {
+		_, err = o.Insert(mr)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return nil
+	}
+
+}

@@ -852,7 +852,7 @@ func TestSector() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	LotusHost = "https://lotus.fireflyminer.com:12345/"
+	//LotusHost = "https://lotus.fireflyminer.com:12345/"
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
@@ -860,14 +860,14 @@ func TestSector() {
 	}
 	defer closer()
 
-	round := abi.ChainEpoch(1252080)
+	round := abi.ChainEpoch(1180080)
 	tp, err := nodeApi.ChainGetTipSetByHeight(ctx, round, types.NewTipSetKey())
 	if err != nil {
 		fmt.Println("1", err)
 		return
 	}
 
-	minerAddr, _ := address.NewFromString("f01402131")
+	minerAddr, _ := address.NewFromString("f02420")
 
 	secCounts, err := nodeApi.StateMinerSectorCount(ctx, minerAddr, tp.Key())
 	if err != nil {

@@ -172,3 +172,22 @@ type MinerAndWalletRelation struct {
 	MinerId  string
 	WalletId string
 }
+
+//记录出块权多worker计算的高度状态
+type CalculateMineRightStatus struct {
+	Id                 int `orm:"pk;auto"`
+	ReceiveBlockHeight int64
+	CreateTime         time.Time
+	UpdateTime         time.Time
+}
+
+//记录出块权多worker计算结果
+type MineRight struct {
+	Id         int    `orm:"pk;auto"`
+	MinerId    string `orm:"index"`
+	Wallet     string `orm:"index"`
+	Epoch      int64  `orm:"index"`
+	WinCount   int64
+	Time       time.Time `orm:"type(date)"`
+	UpdateTime time.Time
+}
