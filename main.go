@@ -37,6 +37,20 @@ func initDatabase() error {
 	}
 
 	orm.RegisterModelWithPrefix("fly_",
+		new(models.ListenMsgGasNetStatus),
+		new(models.ListenRewardNetStatus),
+		new(models.ExpendInfo),
+		new(models.MinerInfo),
+		new(models.ExpendMessages),
+		new(models.PreAndProveMessages),
+		new(models.MineMessages),
+		new(models.MinerStatusAndDailyChange),
+		new(models.MinerAndWalletRelation),
+		new(models.MineBlockRight),
+		new(models.AllMinersMined),
+		new(models.AllMinersPower),
+		new(models.WalletInfo),
+		new(models.ReceiveMessages),
 		new(models.CalculateMineRightStatus),
 		new(models.MineRight),
 	)

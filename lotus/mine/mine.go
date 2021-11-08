@@ -70,12 +70,14 @@ func CalculateMineRight() {
 			niceSleep()
 			continue
 		}
+		log.Debug("calculate complete")
 		err = updateCalculateMineRightStatus(round)
 		if err != nil {
 			log.Errorf("update calculate mine right status error:%+v ", err)
 			continue
 		}
 		round++
+		log.Debugf("complete round:%+v", round)
 	}
 }
 
@@ -166,6 +168,7 @@ func getMiners() ([]models.MinerInfo, error) {
 }
 func calculate(round int64, walletNodeApi, dataNodeApi v0api.FullNode) error {
 	ctx := context.Background()
+	log.Debug("get miners")
 	miners, err := getMiners()
 	if err != nil {
 		log.Errorf("get miners error:%+v", err)
