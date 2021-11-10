@@ -1157,12 +1157,13 @@ func TestWorkerMine() {
 		}
 
 		if mbi == nil {
-			return
+			rewardLog.Warn("mbi==nil")
+			continue
 		}
 		if !mbi.EligibleForMining {
 			// slashed or just have no power yet
-			rewardLog.Errorf("eligible!!!!!!!!!!!")
-			return
+			rewardLog.Warn("eligible!!!!!!!!!!!")
+			continue
 		}
 
 		beaconPrev := mbi.PrevBeaconEntry
