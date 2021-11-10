@@ -2,20 +2,20 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"github.com/beego/beego/v2/client/orm"
 	_ "github.com/lib/pq"
 	"os"
-	"profit-allocation/lotus/reward"
+	"profit-allocation/lotus/mine"
 	"profit-allocation/models"
 )
 
 func main() {
-	//if err := initDatabase(); err != nil {
-	//	fmt.Println("init database error:", err)
-	//	return
-	//}
-	//mine.CalculateMineRight()
-	reward.TestWorkerMine()
+	if err := initDatabase(); err != nil {
+		fmt.Println("init database error:", err)
+		return
+	}
+	mine.CalculateOne()
 }
 
 //初始化mysql
