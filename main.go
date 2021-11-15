@@ -15,7 +15,8 @@ func main() {
 		fmt.Println("init database error:", err)
 		return
 	}
-	mine.CalculateOne()
+	mine.CalculateMineRight()
+	//reward.Wakaka()
 }
 
 //初始化mysql

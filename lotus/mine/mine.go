@@ -18,6 +18,7 @@ import (
 	"profit-allocation/models"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -182,72 +183,107 @@ func calculate(round int64, walletNodeApi, dataNodeApi v0api.FullNode) error {
 		return err
 	}
 	log.Infof("wallets number:%+v", len(ws))
+	wait := new(sync.WaitGroup)
+	success := true
 	for _, m := range miners {
-		minerAddr, err := address.NewFromString(m.MinerId)
-		if err != nil {
-			log.Errorf("NewFromString err:%+v", err)
-			return err
-		}
-
-		tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(round-1), types.NewTipSetKey())
-		if err != nil {
-			log.Errorf("ChainGetTipSetByHeight err:%+v", err)
-			return err
-		}
-
-		mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, abi.ChainEpoch(round), tp.Key())
-		if err != nil {
-			if strings.Contains(err.Error(), "actor not found") {
-				continue
-			}
-			log.Errorf("MinerGetBaseInfo err:%+v", err)
-			return err
-		}
-
-		if mbi == nil {
-			log.Warnf("miner: %+v epoch: %+v mbi is nil", m.MinerId, round)
-			continue
-		}
-		if !mbi.EligibleForMining {
-			// slashed or just have no power yet
-			log.Errorf("eligible!!!!!!!!!!!")
-			continue
-		}
-
-		beaconPrev := mbi.PrevBeaconEntry
-		bvals := mbi.BeaconEntries
-
-		rbase := beaconPrev
-		if len(bvals) > 0 {
-			rbase = bvals[len(bvals)-1]
-		}
-		for _, w := range ws {
-			mbi.WorkerKey = w
-			p, err := gen.IsRoundWinner(ctx, tp, abi.ChainEpoch(round), minerAddr, rbase, mbi, walletNodeApi)
-			if err != nil {
-				log.Errorf("IsRoundWinner err:%+v", err)
-				return err
-			}
-
-			if p != nil {
-				t := time.Unix(int64(tp.MinTimestamp()+30), 0)
-				mr := &models.MineRight{
-					MinerId:    m.MinerId,
-					Wallet:     w.String(),
-					Epoch:      round,
-					WinCount:   p.WinCount,
-					Time:       t,
-					UpdateTime: time.Now(),
-				}
-				err := mr.Insert()
-				if err != nil {
-					log.Errorf("miner: %+v wallet: %+v epoch: %+v record error:%+v", m.MinerId, w, round, err)
-					return err
-				}
-			}
-		}
+		wait.Add(1)
+		go calculateMiner(ctx, wait, round, walletNodeApi, dataNodeApi, m, ws, &success)
+	}
+	wait.Wait()
+	if !success {
+		return errors.New("calculate not success!!!!")
 	}
 	return nil
+}
+
+func calculateMiner(ctx context.Context, waitMiner *sync.WaitGroup, round int64, walletNodeApi, dataNodeApi v0api.FullNode, m models.MinerInfo, ws []address.Address, success *bool) {
+	defer waitMiner.Done()
+	minerAddr, err := address.NewFromString(m.MinerId)
+	if err != nil {
+		log.Errorf("NewFromString err:%+v", err)
+		*success = false
+		return
+	}
+
+	tp, err := dataNodeApi.ChainGetTipSetByHeight(ctx, abi.ChainEpoch(round-1), types.NewTipSetKey())
+	if err != nil {
+		log.Errorf("ChainGetTipSetByHeight err:%+v", err)
+		*success = false
+		return
+	}
+
+	mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, abi.ChainEpoch(round), tp.Key())
+	if err != nil {
+		if strings.Contains(err.Error(), "actor not found") {
+			return
+		}
+		*success = false
+		log.Errorf("MinerGetBaseInfo err:%+v", err)
+		return
+	}
+
+	if mbi == nil {
+		log.Warnf("miner: %+v epoch: %+v mbi is nil", m.MinerId, round)
+		return
+	}
+	if !mbi.EligibleForMining {
+		// slashed or just have no power yet
+		log.Warnf("eligible!!!!!!!!!!!")
+		return
+	}
+
+	beaconPrev := mbi.PrevBeaconEntry
+	bvals := mbi.BeaconEntries
+
+	rbase := beaconPrev
+	if len(bvals) > 0 {
+		rbase = bvals[len(bvals)-1]
+	}
+	wait := new(sync.WaitGroup)
+	for _, w := range ws {
+		wait.Add(1)
+		go calculateWallet(ctx, wait, round, walletNodeApi, dataNodeApi, minerAddr, tp, w, rbase, success)
+	}
+	wait.Wait()
+}
+
+func calculateWallet(ctx context.Context, waitWallet *sync.WaitGroup, round int64, walletNodeApi, dataNodeApi v0api.FullNode, minerAddr address.Address, tp *types.TipSet, w address.Address, rbase types.BeaconEntry, success *bool) {
+	defer waitWallet.Done()
+	mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, abi.ChainEpoch(round), tp.Key())
+	if err != nil {
+		if strings.Contains(err.Error(), "actor not found") {
+			return
+		}
+		*success = false
+		log.Errorf("MinerGetBaseInfo err:%+v", err)
+		return
+	}
+	mbi.WorkerKey = w
+	p, err := gen.IsRoundWinner(ctx, tp, abi.ChainEpoch(round), minerAddr, rbase, mbi, walletNodeApi)
+	if err != nil {
+		log.Errorf("IsRoundWinner err:%+v", err)
+		*success = false
+		return
+	}
+
+	if p != nil {
+		t := time.Unix(int64(tp.MinTimestamp()+30), 0)
+		mr := &models.MineRight{
+			MinerId:    minerAddr.String(),
+			Wallet:     w.String(),
+			Epoch:      round,
+			WinCount:   p.WinCount,
+			Time:       t,
+			UpdateTime: time.Now(),
+		}
+		err := mr.Insert()
+		if err != nil {
+			*success = false
+			log.Errorf("miner: %+v wallet: %+v epoch: %+v record error:%+v", minerAddr, w, round, err)
+			return
+		}
+	}
+
 }
 
 func CalculateOne() {

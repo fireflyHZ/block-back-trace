@@ -1073,26 +1073,37 @@ type ei struct {
 
 func TestWorkerMine() {
 	startStr := os.Getenv("LOTUS_START")
+	startStr = "1276544"
 	start, err := strconv.Atoi(startStr)
 	if err != nil {
 		rewardLog.Errorf("get lotus start err:%+v", err)
 		return
 	}
+	start = 1276568
 	endStr := os.Getenv("LOTUS_END")
+	endStr = "1276545"
 	end, err := strconv.Atoi(endStr)
 	if err != nil {
 		rewardLog.Errorf("get lotus end err:%+v", err)
 		return
 	}
+	end = 1276569
 	if start == 0 || end == 0 {
 		rewardLog.Errorf("start:%+v or end:%+v is 0", start, end)
 		return
 	}
 	walletLotusHost := os.Getenv("WALLTE_LOTUS")
+	walletLotusHost = "http://172.16.11.3:1237/rpc/v0"
+
 	walletToken := os.Getenv("WALLET_LOTUS_TOKEN")
+	walletToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.SvNQK12qzZOqPf_-6hwAfNJ6ZPba6w8mSatgf5JKexc"
 	dataLotusHost := os.Getenv("DATA_LOTUS")
+	dataLotusHost = "http://172.16.10.245:1234/rpc/v0"
+
 	dataToken := os.Getenv("DATA_LOTUS_TOKEN")
+	dataToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
 	m := os.Getenv("MINER")
+	m = "f01402131"
 	if walletLotusHost == "" || walletToken == "" || dataLotusHost == "" || dataToken == "" || m == "" {
 		rewardLog.Errorf("WALLTE_LOTUS:%+v or WALLET_LOTUS_TOKEN:%+v or DATA_LOTUS:%+v or DATA_LOTUS_TOKEN:%+v or MINER:%+v is \"\"", walletLotusHost, walletToken, dataLotusHost, dataToken, m)
 		return
@@ -1102,7 +1113,6 @@ func TestWorkerMine() {
 	walletRequestHeader.Add("Content-Type", "application/json")
 	walletTokenHeader := fmt.Sprintf("Bearer %s", walletToken)
 	walletRequestHeader.Set("Authorization", walletTokenHeader)
-	//walletLotusHost := "http://172.16.11.3:1237/rpc/v0"
 	walletNodeApi, walletCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), walletLotusHost, walletRequestHeader)
 	if err != nil {
 		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
@@ -1113,7 +1123,6 @@ func TestWorkerMine() {
 	dataRequestHeader.Add("Content-Type", "application/json")
 	dataTokenHeader := fmt.Sprintf("Bearer %s", dataToken)
 	dataRequestHeader.Set("Authorization", dataTokenHeader)
-	//dataLotusHost := "http://172.16.10.245:1234/rpc/v0"
 	dataNodeApi, dataCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
 	if err != nil {
 		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
@@ -1173,8 +1182,10 @@ func TestWorkerMine() {
 		if len(bvals) > 0 {
 			rbase = bvals[len(bvals)-1]
 		}
+		fmt.Println("worker---", mbi.WorkerKey)
 		for m, _ := range mmmm {
-			mbi.WorkerKey = m
+			//fmt.Println(m)
+			//mbi.WorkerKey = m
 			p, err := gen.IsRoundWinner(ctx, tp, round, minerAddr, rbase, mbi, walletNodeApi)
 			if err != nil {
 				rewardLog.Errorf("IsRoundWinner err:%+v", err)
@@ -1212,4 +1223,41 @@ func TestWorkerMine() {
 	}
 	ioutil.WriteFile("mined", []byte(data), 0755)
 	rewardLog.Info("ok")
+}
+func Wakaka() {
+	walletRequestHeader := http.Header{}
+	walletRequestHeader.Add("Content-Type", "application/json")
+	//walletTokenHeader := fmt.Sprintf("Bearer %s", walletToken)
+	//walletRequestHeader.Set("Authorization", walletTokenHeader)
+	walletNodeApi, walletCloser, err := lotusClient.NewFullNodeRPCV0(context.Background(), "http://192.168.20.111:1234/rpc/v0", walletRequestHeader)
+	if err != nil {
+		fmt.Println(err)
+		rewardLog.Errorf("NewFullNodeRPC err:%+v", err)
+		return
+	}
+	defer walletCloser()
+	ctx := context.Background()
+	adr, err := address.NewFromString("t2ongybrjfw2pck4gtykr7ivg4kf2ekbvjkcdyvai")
+	//adr,err:=address.NewFromString("f025053")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(adr)
+
+	//mi,err:=walletNodeApi.StateMinerInfo(ctx,adr,types.EmptyTSK)
+	//if err != nil {
+	//	fmt.Println(err)
+	//	return
+	//}
+	//fmt.Printf("=======%+v\n",mi)
+
+	act, err := walletNodeApi.StateLookupID(ctx, adr, types.EmptyTSK)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Printf("------%+v\n", act)
 }
