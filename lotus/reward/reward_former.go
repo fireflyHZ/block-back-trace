@@ -1225,6 +1225,9 @@ func TestWorkerMine() {
 	rewardLog.Info("ok")
 }
 func Wakaka() {
+	sss := "\"kkkkk\""
+	fmt.Println(sss)
+	fmt.Println(strings.Trim(sss, "\""))
 	walletRequestHeader := http.Header{}
 	walletRequestHeader.Add("Content-Type", "application/json")
 	//walletTokenHeader := fmt.Sprintf("Bearer %s", walletToken)

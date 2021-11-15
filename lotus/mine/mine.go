@@ -8,6 +8,7 @@ import (
 	"github.com/filecoin-project/go-address"
 	"github.com/filecoin-project/go-jsonrpc"
 	"github.com/filecoin-project/go-state-types/abi"
+	"github.com/filecoin-project/lotus/api"
 	lotusClient "github.com/filecoin-project/lotus/api/client"
 	"github.com/filecoin-project/lotus/api/v0api"
 	"github.com/filecoin-project/lotus/chain/gen"
@@ -239,25 +240,26 @@ func calculateMiner(ctx context.Context, waitMiner *sync.WaitGroup, round int64,
 	if len(bvals) > 0 {
 		rbase = bvals[len(bvals)-1]
 	}
-	wait := new(sync.WaitGroup)
+	//wait := new(sync.WaitGroup)
 	for _, w := range ws {
-		wait.Add(1)
-		go calculateWallet(ctx, wait, round, walletNodeApi, dataNodeApi, minerAddr, tp, w, rbase, success)
+		//wait.Add(1)
+		//go calculateWallet(ctx, wait, round, walletNodeApi, dataNodeApi, minerAddr, tp, w, rbase, success)
+		calculateWallet(ctx, round, walletNodeApi, mbi, minerAddr, tp, w, rbase, success)
 	}
-	wait.Wait()
+	//wait.Wait()
 }
 
-func calculateWallet(ctx context.Context, waitWallet *sync.WaitGroup, round int64, walletNodeApi, dataNodeApi v0api.FullNode, minerAddr address.Address, tp *types.TipSet, w address.Address, rbase types.BeaconEntry, success *bool) {
-	defer waitWallet.Done()
-	mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, abi.ChainEpoch(round), tp.Key())
-	if err != nil {
-		if strings.Contains(err.Error(), "actor not found") {
-			return
-		}
-		*success = false
-		log.Errorf("MinerGetBaseInfo err:%+v", err)
-		return
-	}
+func calculateWallet(ctx context.Context, round int64, walletNodeApi v0api.FullNode, mbi *api.MiningBaseInfo, minerAddr address.Address, tp *types.TipSet, w address.Address, rbase types.BeaconEntry, success *bool) {
+	//defer waitWallet.Done()
+	//mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, abi.ChainEpoch(round), tp.Key())
+	//if err != nil {
+	//	if strings.Contains(err.Error(), "actor not found") {
+	//		return
+	//	}
+	//	*success = false
+	//	log.Errorf("MinerGetBaseInfo err:%+v", err)
+	//	return
+	//}
 	mbi.WorkerKey = w
 	p, err := gen.IsRoundWinner(ctx, tp, abi.ChainEpoch(round), minerAddr, rbase, mbi, walletNodeApi)
 	if err != nil {
