@@ -16,7 +16,7 @@ func main() {
 		return
 	}
 	mine.CalculateMineRight()
-	//reward.Wakaka()
+	//reward.TestSector()
 }
 
 //初始化mysql

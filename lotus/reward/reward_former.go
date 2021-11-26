@@ -852,7 +852,7 @@ func TestSector() {
 		log.Errorf("get lotusHost  err:%+v\n", err)
 		return
 	}
-	//LotusHost = "https://lotus.fireflyminer.com:12345/"
+	LotusHost = "https://lotus.fireflyminer.com:12345/"
 	nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(context.Background(), LotusHost, requestHeader)
 	if err != nil {
 		fmt.Println("NewFullNodeRPC err:", err)
@@ -1073,21 +1073,21 @@ type ei struct {
 
 func TestWorkerMine() {
 	startStr := os.Getenv("LOTUS_START")
-	startStr = "1276544"
+	startStr = "1290000"
 	start, err := strconv.Atoi(startStr)
 	if err != nil {
 		rewardLog.Errorf("get lotus start err:%+v", err)
 		return
 	}
-	start = 1276568
+	start = 1290000
 	endStr := os.Getenv("LOTUS_END")
-	endStr = "1276545"
+	endStr = "1290689"
 	end, err := strconv.Atoi(endStr)
 	if err != nil {
 		rewardLog.Errorf("get lotus end err:%+v", err)
 		return
 	}
-	end = 1276569
+	end = 1290689
 	if start == 0 || end == 0 {
 		rewardLog.Errorf("start:%+v or end:%+v is 0", start, end)
 		return
@@ -1103,7 +1103,7 @@ func TestWorkerMine() {
 	dataToken := os.Getenv("DATA_LOTUS_TOKEN")
 	dataToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIl19.pL24pbzfXE-ZdEdfYGJabnMORAHvGr7WmEmUnVeiuW4"
 	m := os.Getenv("MINER")
-	m = "f01402131"
+	m = "f0748101"
 	if walletLotusHost == "" || walletToken == "" || dataLotusHost == "" || dataToken == "" || m == "" {
 		rewardLog.Errorf("WALLTE_LOTUS:%+v or WALLET_LOTUS_TOKEN:%+v or DATA_LOTUS:%+v or DATA_LOTUS_TOKEN:%+v or MINER:%+v is \"\"", walletLotusHost, walletToken, dataLotusHost, dataToken, m)
 		return
@@ -1158,6 +1158,13 @@ func TestWorkerMine() {
 			rewardLog.Errorf("ChainGetTipSetByHeight err:%+v", err)
 			return
 		}
+
+		mi, err := dataNodeApi.StateMinerInfo(ctx, minerAddr, tp.Key())
+		if err != nil {
+			fmt.Println("state miner info error:", err)
+			return
+		}
+		fmt.Println("mi worker:", mi.Worker)
 
 		mbi, err := dataNodeApi.MinerGetBaseInfo(ctx, minerAddr, round, tp.Key())
 		if err != nil {
@@ -1225,9 +1232,9 @@ func TestWorkerMine() {
 	rewardLog.Info("ok")
 }
 func Wakaka() {
-	sss := "\"kkkkk\""
+	sss := "\"12000000000000000000\"}"
 	fmt.Println(sss)
-	fmt.Println(strings.Trim(sss, "\""))
+	fmt.Println(strings.Trim(sss, "\"}"))
 	walletRequestHeader := http.Header{}
 	walletRequestHeader.Add("Content-Type", "application/json")
 	//walletTokenHeader := fmt.Sprintf("Bearer %s", walletToken)
