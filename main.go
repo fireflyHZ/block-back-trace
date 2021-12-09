@@ -15,7 +15,8 @@ func main() {
 		fmt.Println("init database error:", err)
 		return
 	}
-	mine.CalculateMineRight()
+	//mine.CalculateMineRight()
+	mine.CalculateOne()
 	//reward.TestSector()
 }
 

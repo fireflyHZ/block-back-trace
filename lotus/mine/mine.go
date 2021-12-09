@@ -113,6 +113,13 @@ func initDataClient() (v0api.FullNode, jsonrpc.ClientCloser, error) {
 	return lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
 }
 
+func initGlifClient() (v0api.FullNode, jsonrpc.ClientCloser, error) {
+	dataLotusHost := "https://api.node.glif.io"
+	dataRequestHeader := http.Header{}
+	dataRequestHeader.Add("Content-Type", "application/json")
+	return lotusClient.NewFullNodeRPCV0(context.Background(), dataLotusHost, dataRequestHeader)
+}
+
 func getCalculateMineRightStatus() (height int64, err error) {
 	o := orm.NewOrm()
 	status := new(models.CalculateMineRightStatus)
@@ -296,7 +303,7 @@ func CalculateOne() {
 	}
 	defer walletClose()
 
-	dataNodeApi, dataClose, err := initDataClient()
+	dataNodeApi, dataClose, err := initGlifClient()
 	if err != nil {
 		log.Errorf("init data client err=%+v", err)
 		return
