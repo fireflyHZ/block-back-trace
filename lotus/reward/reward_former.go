@@ -634,8 +634,8 @@ func TestMinerPower() {
 		return
 	}
 	defer closer()
-	minerAddr, _ := address.NewFromString("f01402131")
-	var epoch = abi.ChainEpoch(1252080)
+	minerAddr, _ := address.NewFromString("f02420")
+	var epoch = abi.ChainEpoch(1360673)
 	//tipset, _ := nodeApi.ChainHead(context.Background())
 	//fmt.Printf("444444%+v \n ", time.Unix(int64(tipset.Blocks()[0].Timestamp), 0).Format("2006-01-02 15:04:05"))
 	t := types.NewTipSetKey()
@@ -1069,6 +1069,46 @@ type ei struct {
 	epoch int
 	win   int
 	t     string
+}
+
+func TestRand() {
+	ctx := context.Background()
+	requestHeader := http.Header{}
+	requestHeader.Add("Content-Type", "application/json")
+	LotusHost, err := web.AppConfig.String("lotusHost")
+	if err != nil {
+		log.Errorf("get lotusHost  err:%+v\n", err)
+		return
+	}
+	//nodeApi, closer, err := lotusClient.NewFullNodeRPCV0(ctx, LotusHost, requestHeader)
+	nodeApi, closer, err := lotusClient.NewFullNodeRPCV1(ctx, LotusHost, requestHeader)
+	if err != nil {
+		fmt.Println("NewFullNodeRPC err:", err)
+		return
+	}
+	defer closer()
+	m, err := address.NewFromString("f0144528")
+	buf := new(bytes.Buffer)
+
+	if err := m.MarshalCBOR(buf); err != nil {
+		fmt.Printf("failed to marshal address to cbor: %+v\n", err)
+		return
+	}
+	h, err := nodeApi.ChainHead(ctx)
+	if err != nil {
+		fmt.Println("chain head error:", err)
+		return
+	}
+	fmt.Println(h.Height())
+	h, err = nodeApi.ChainGetTipSetByHeight(ctx, 1368566, types.EmptyTSK)
+	rand, err := nodeApi.StateGetRandomnessFromBeacon(ctx, crypto.DomainSeparationTag_WindowedPoStChallengeSeed, abi.ChainEpoch(1368500), buf.Bytes(), h.Key())
+	if err != nil {
+		fmt.Println("get rand error:", err)
+		return
+	}
+
+	fmt.Println(rand)
+
 }
 
 func TestWorkerMine() {
