@@ -1,11 +1,11 @@
-#eg : make miner=f02420
-all: profit
+
+all: minebacktrace
 
 deps:
-	#git submodule update --init  --recursive
+	git submodule update --init  --recursive
 	make -C extern/filecoin-ffi all
 
-profit: deps
-	go build -o firefly main.go
+minebacktrace: deps
+	go build -o backtrace main.go
 
 
